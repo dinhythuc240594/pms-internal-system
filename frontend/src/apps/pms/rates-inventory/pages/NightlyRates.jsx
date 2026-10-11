@@ -1,0 +1,76 @@
+import { useState } from 'react';
+import { usePms } from '../../data/usePms';
+import { today, addDays, nights, money as formatMoney } from '../../data/model';
+import { useInventoryQuery } from '../../inventory/useInventoryQuery';
+import { rateRangeError } from '../rateRange';
+import '../../components/DomainForms.css';
+import '../RatesInventory.css';
+
+export default function NightlyRates() {
+  const { tenantId, user } = usePms();
+  return <NightlyEditor key={`${tenantId}:${user?.id}`} />;
+}
+
+function NightlyEditor() {
+  const { roomTypes, rooms, roomBlocks, settings, access, saveRate, addBlock, deleteBlock } = usePms();
+  const activeTypes = roomTypes.filter(type => type.active !== false);
+  const activeRooms = rooms.filter(room => room.active !== false);
+  const [range, setRange] = useState({ start: today(settings.timezone), end: addDays(today(settings.timezone), 7) });
+  const [rate, setRate] = useState({ roomTypeId: activeTypes[0]?.id || '', price: '', stopSell: false });
+  const [block, setBlock] = useState({ room: activeRooms[0]?.id || '', reason: '' });
+  const [busy, setBusy] = useState(false), [error, setError] = useState(''), [notice, setNotice] = useState('');
+  const [feedbackGroup, setFeedbackGroup] = useState('rates');
+  const rangeError = rateRangeError(range);
+  const query = useInventoryQuery(rangeError ? null : '/rates?' + new URLSearchParams(range));
+  const rows = query.data?.rates || [];
+  const canWrite = access('settings.write', 'ARI_MANAGEMENT', true).allowed;
+
+  async function run(action, message, requiresRange = true, group = 'rates') {
+    if (busy || !canWrite || (requiresRange && rangeError)) return;
+    setBusy(true); setError(''); setNotice(''); setFeedbackGroup(group);
+    try { await action(); query.refresh(); setNotice(message); }
+    catch (err) { setError(err.message); }
+    finally { setBusy(false); }
+  }
+
+  return <section className="rates-nightly" aria-label="Giá theo ngày và khóa phòng">
+    <section className="domain-panel">
+      <div className="rates-section-heading"><div><h2>Giá theo ngày</h2><p>Áp dụng giá riêng hoặc dừng bán một loại phòng trong khoảng ngày đã chọn.</p></div></div>
+      <div className="domain-fields rates-date-range">
+        <label>Từ ngày<input aria-label="Giá từ ngày" type="date" required disabled={busy} value={range.start} onChange={event => setRange(old => ({ ...old, start: event.target.value }))} /></label>
+        <label>Đến ngày (không gồm ngày này)<input aria-label="Giá đến ngày" type="date" required disabled={busy} min={range.start ? addDays(range.start, 1) : undefined} max={range.start ? addDays(range.start, 366) : undefined} value={range.end} onChange={event => setRange(old => ({ ...old, end: event.target.value }))} /></label>
+      </div>
+      {rangeError ? <p className="domain-error" role="alert">{rangeError}</p> : <p className="rates-muted">Áp dụng cho {nights(range.start, range.end)} đêm. Ngày kết thúc không nằm trong khoảng áp dụng.</p>}
+      {((feedbackGroup === 'rates' && error) || query.error) && <p className="domain-error" role="alert">{feedbackGroup === 'rates' && error ? error : query.error}</p>}
+      {feedbackGroup === 'rates' && notice && <p className="rates-notice" role="status">{notice}</p>}
+      {!canWrite && <p className="rates-notice">Bạn có quyền xem. Cần quyền quản lý để thay đổi giá hoặc khóa phòng.</p>}
+      <form onSubmit={event => { event.preventDefault(); run(() => saveRate({ ...range, ...rate }), 'Đã cập nhật giá và trạng thái bán trong khoảng ngày đã chọn.'); }}>
+        <fieldset className="rates-form-section" disabled={busy || !canWrite || Boolean(rangeError) || query.loading || Boolean(query.error) || !activeTypes.length}>
+          <div className="rates-form-grid">
+            <label>Loại phòng<select aria-label="Loại phòng áp dụng giá" required value={rate.roomTypeId} onChange={event => setRate(old => ({ ...old, roomTypeId: event.target.value }))}>{!activeTypes.length && <option value="">Chưa có loại phòng</option>}{activeTypes.map(type => <option key={type.id} value={type.id}>{type.name}</option>)}</select></label>
+            <label>Giá / đêm ({settings.currency})<input aria-label="Giá từng đêm" required min="0" step="0.0001" type="number" placeholder="Nhập giá áp dụng" value={rate.price} onChange={event => setRate(old => ({ ...old, price: event.target.value }))} /></label>
+          </div>
+          <div className="rates-form-actions"><label className="rates-checkbox"><input type="checkbox" checked={rate.stopSell} onChange={event => setRate(old => ({ ...old, stopSell: event.target.checked }))} />Dừng bán loại phòng trong khoảng ngày này</label><button type="submit" className="primary">{busy ? 'Đang lưu…' : 'Áp dụng giá theo ngày'}</button></div>
+        </fieldset>
+      </form>
+      {query.loading ? <p className="rates-empty" role="status">Đang tải giá theo ngày…</p> : !rangeError && !query.error && <details className="rates-details"><summary>Xem giá áp dụng theo ngày ({rows.length} dòng)</summary><div className="rates-scroll"><table><thead><tr><th>Loại phòng</th><th>Ngày áp dụng</th><th>Giá / đêm</th><th>Trạng thái bán</th></tr></thead><tbody>{rows.length ? rows.map(row => <tr key={row.roomTypeId + row.date}><td>{roomTypes.find(type => type.id === row.roomTypeId)?.name || 'Loại phòng không còn hoạt động'}</td><td>{row.date}</td><td>{formatMoney(row.price, settings.currency)}</td><td><span className={`rates-badge ${row.stopSell ? 'is-paused' : 'is-active'}`}>{row.stopSell ? 'Dừng bán' : 'Đang bán'}</span></td></tr>) : <tr><td colSpan="4" className="rates-empty">Chưa thiết lập giá theo ngày trong khoảng này. Giá cơ bản vẫn áp dụng.</td></tr>}</tbody></table></div></details>}
+      {query.error && <button type="button" disabled={busy} onClick={query.refresh}>Tải lại giá</button>}
+    </section>
+    <section className="domain-panel">
+      <div className="rates-section-heading"><div><h2>Khóa phòng</h2><p>Tạm ngừng nhận đặt phòng cho một phòng cụ thể. Khoảng ngày áp dụng giống phần giá theo ngày phía trên.</p></div></div>
+      {feedbackGroup === 'blocks' && error && <p className="domain-error" role="alert">{error}</p>}
+      {feedbackGroup === 'blocks' && notice && <p className="rates-notice" role="status">{notice}</p>}
+      <form onSubmit={event => { event.preventDefault(); run(() => addBlock({ ...range, ...block }), 'Đã khóa phòng trong khoảng ngày đã chọn.', true, 'blocks'); }}>
+        <fieldset className="rates-form-section" disabled={busy || !canWrite || Boolean(rangeError) || query.loading || Boolean(query.error) || !activeRooms.length}>
+          <div className="rates-form-grid">
+            <label>Phòng cần khóa<select aria-label="Phòng cần khóa" required value={block.room} onChange={event => setBlock(old => ({ ...old, room: event.target.value }))}>{!activeRooms.length && <option value="">Chưa có phòng</option>}{activeRooms.map(room => <option key={room.id} value={room.id}>Phòng {room.id}</option>)}</select></label>
+            <label>Lý do khóa phòng<input aria-label="Lý do khóa phòng" required maxLength="500" placeholder="Ví dụ: bảo trì hoặc sửa chữa" value={block.reason} onChange={event => setBlock(old => ({ ...old, reason: event.target.value }))} /></label>
+          </div>
+          <div className="rates-form-actions"><span className="rates-muted">Phòng có đặt chỗ trong khoảng này sẽ không thể khóa.</span><button type="submit" className="primary">{busy ? 'Đang lưu…' : 'Khóa phòng'}</button></div>
+        </fieldset>
+      </form>
+      <div className="rates-section-heading"><h3>Các khoảng khóa phòng</h3><span className="rates-muted">{roomBlocks.length} khoảng đã cấu hình</span></div>
+      <div className="rates-scroll"><table><thead><tr><th>Phòng</th><th>Từ ngày</th><th>Đến ngày (không gồm)</th><th>Lý do</th><th>Thao tác</th></tr></thead><tbody>{roomBlocks.length ? roomBlocks.map(row => <tr key={row.id}><td>Phòng {row.room}</td><td>{row.start}</td><td>{row.end}</td><td>{row.reason}</td><td><button type="button" disabled={busy || !canWrite} onClick={() => run(() => deleteBlock(row.id), `Đã mở khóa phòng ${row.room}.`, false, 'blocks')} aria-label={`Mở khóa phòng ${row.room} từ ${row.start} đến ${row.end}`}>Mở khóa</button></td></tr>) : <tr><td colSpan="5" className="rates-empty">Chưa có phòng bị khóa. Các phòng vẫn nhận đặt chỗ theo tình trạng hiện tại.</td></tr>}</tbody></table></div>
+    </section>
+  </section>;
+}

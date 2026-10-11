@@ -1,0 +1,206 @@
+{
+  "node_count": 407,
+  "unverified_node_count": 0,
+  "raw_edge_count": 907,
+  "non_object_edges": 0,
+  "missing_endpoint_edges": 0,
+  "dangling_endpoint_edges": 4,
+  "external_reference_edges": 2,
+  "self_loop_edges": 0,
+  "valid_candidate_edges": 901,
+  "exact_duplicate_edges": 0,
+  "directed_unique_endpoint_pairs": 889,
+  "directed_same_endpoint_collapsed_edges": 12,
+  "undirected_unique_endpoint_pairs": 889,
+  "undirected_same_endpoint_collapsed_edges": 12,
+  "same_endpoint_group_count": 12,
+  "relation_variant_groups": 12,
+  "source_file_variant_groups": 0,
+  "source_location_variant_groups": 0,
+  "context_variant_groups": 0,
+  "post_build_graph_type": "Graph",
+  "post_build_node_count": 412,
+  "post_build_edge_count": 895,
+  "post_build_error": "",
+  "producer_suppression": {
+    "path": "C:\\Users\\Laptop\\Documents\\GitHub\\pms-system\\graphify-out\\.venv\\Lib\\site-packages\\graphify\\extract.py",
+    "total_sites": 12,
+    "sites": [
+      {
+        "line": 1661,
+        "name": "seen_ids",
+        "tuple_arity": 0,
+        "sample": "seen_ids = {n[\"id\"] for n in nodes}"
+      },
+      {
+        "line": 2194,
+        "name": "seen_ids",
+        "tuple_arity": 0,
+        "sample": "seen_ids = {n[\"id\"] for n in nodes}"
+      },
+      {
+        "line": 2196,
+        "name": "seen_doc_refs",
+        "tuple_arity": 0,
+        "sample": "seen_doc_refs: set[str] = set()"
+      },
+      {
+        "line": 2613,
+        "name": "seen_ids",
+        "tuple_arity": 0,
+        "sample": "seen_ids: set[str] = {n[\"id\"] for n in nodes}"
+      },
+      {
+        "line": 2760,
+        "name": "seen_ids",
+        "tuple_arity": 0,
+        "sample": "seen_ids = {n.get(\"id\") for n in nodes}"
+      },
+      {
+        "line": 3486,
+        "name": "seen_keys",
+        "tuple_arity": 0,
+        "sample": "seen_keys: set[tuple] = set()"
+      },
+      {
+        "line": 3655,
+        "name": "seen_keys",
+        "tuple_arity": 0,
+        "sample": "seen_keys: set[tuple] = set()"
+      },
+      {
+        "line": 5762,
+        "name": "seen_ids",
+        "tuple_arity": 0,
+        "sample": "seen_ids: set[str] = set()"
+      },
+      {
+        "line": 5870,
+        "name": "seen_ids",
+        "tuple_arity": 0,
+        "sample": "seen_ids: set[str] = set()"
+      },
+      {
+        "line": 5949,
+        "name": "seen_ids",
+        "tuple_arity": 0,
+        "sample": "seen_ids: set[str] = set()"
+      },
+      {
+        "line": 6464,
+        "name": "seen_ids",
+        "tuple_arity": 0,
+        "sample": "seen_ids: set[str] = set()"
+      },
+      {
+        "line": 6465,
+        "name": "seen_edges",
+        "tuple_arity": 4,
+        "sample": "seen_edges: set[tuple[str, str, str, str | None]] = set()"
+      }
+    ],
+    "error": ""
+  },
+  "examples": [
+    {
+      "source": "frontend_src_apps_pms_components_legacyoverlay_legacyoverlay",
+      "target": "frontend_src_apps_pms_components_legacyoverlay_legacyoverlay_onkey",
+      "edge_count": 2,
+      "relations": [
+        "contains",
+        "indirect_call"
+      ],
+      "source_files": [
+        "frontend/src/apps/pms/components/LegacyOverlay.jsx"
+      ],
+      "source_locations": [
+        "L13",
+        "L24"
+      ],
+      "contexts": [
+        "",
+        "argument"
+      ]
+    },
+    {
+      "source": "frontend_src_apps_pms_data_pmsprovider_pmsprovider",
+      "target": "frontend_src_apps_pms_data_pmsprovider_pmsprovider_createbooking",
+      "edge_count": 2,
+      "relations": [
+        "contains",
+        "indirect_call"
+      ],
+      "source_files": [
+        "frontend/src/apps/pms/data/PmsProvider.jsx"
+      ],
+      "source_locations": [
+        "L18",
+        "L68"
+      ],
+      "contexts": [
+        "",
+        "collection"
+      ]
+    },
+    {
+      "source": "frontend_src_apps_pms_data_pmsprovider_pmsprovider",
+      "target": "frontend_src_apps_pms_data_pmsprovider_pmsprovider_changestatus",
+      "edge_count": 2,
+      "relations": [
+        "contains",
+        "indirect_call"
+      ],
+      "source_files": [
+        "frontend/src/apps/pms/data/PmsProvider.jsx"
+      ],
+      "source_locations": [
+        "L27",
+        "L68"
+      ],
+      "contexts": [
+        "",
+        "collection"
+      ]
+    },
+    {
+      "source": "frontend_src_apps_pms_data_pmsprovider_pmsprovider",
+      "target": "frontend_src_apps_pms_data_pmsprovider_pmsprovider_cleanroom",
+      "edge_count": 2,
+      "relations": [
+        "contains",
+        "indirect_call"
+      ],
+      "source_files": [
+        "frontend/src/apps/pms/data/PmsProvider.jsx"
+      ],
+      "source_locations": [
+        "L41",
+        "L68"
+      ],
+      "contexts": [
+        "",
+        "collection"
+      ]
+    },
+    {
+      "source": "frontend_src_apps_pms_data_pmsprovider_pmsprovider",
+      "target": "frontend_src_apps_pms_data_pmsprovider_pmsprovider_dirtyroom",
+      "edge_count": 2,
+      "relations": [
+        "contains",
+        "indirect_call"
+      ],
+      "source_files": [
+        "frontend/src/apps/pms/data/PmsProvider.jsx"
+      ],
+      "source_locations": [
+        "L45",
+        "L68"
+      ],
+      "contexts": [
+        "",
+        "collection"
+      ]
+    }
+  ]
+}

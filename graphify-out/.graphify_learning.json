@@ -1,0 +1,400 @@
+{
+  "generated_at": "2026-10-10T09:49:06.801450+00:00",
+  "nodes": {
+    "backend_app": {
+      "code_fingerprint": "f23ff4cd2b02a213b6cb10cdb45fb7a8a56a00cea792e9b6156523ae15af8d34",
+      "label": "app.py",
+      "last": "2026-10-03T07:15:55.065123+00:00",
+      "provenance": [
+        {
+          "date": "2026-10-03T07:15:55.065123+00:00",
+          "outcome": "useful",
+          "q": "vậy bây giờ code local thì kết nối postgres local xong lúc commit lên coolify thì tôi đang thắc mắc chỗ database_url có cần phải thay đổi không tôi sợ nó dính database url local"
+        },
+        {
+          "date": "2026-10-02T17:58:56.540915+00:00",
+          "outcome": "useful",
+          "q": "bạn xem qua file system_design_final và đánh giá là dự án public như này còn thiếu gì nữa không ? dự án sẽ release giữa tháng 12 lận nên tôi phải chuẩn bị kỹ càng và theo kinh nghiệm senior software developer của bạn thì nên nâng cấp gì , hay là dư cái gì hay là bỏ cái gì và viết lại 1 cái báo cáo đầy đủ cho tôi"
+        },
+        {
+          "date": "2026-10-02T15:40:08.964385+00:00",
+          "outcome": "useful",
+          "q": "bạn xem file system design final và dự án còn thiếu gì không nhỉ , nếu thiếu bạn cho báo cáo"
+        }
+      ],
+      "score": 2.522308348,
+      "source_file": "backend/app.py",
+      "status": "preferred",
+      "uses": 3
+    },
+    "frontend_src_apps_manager_billing_pages_adminbilling_adminbilling": {
+      "code_fingerprint": "9f9d45f9bf77499e08a7ceafa8dafd6db28debccb1a501fe92e19614e181560e",
+      "label": "AdminBilling()",
+      "last": "2026-10-09T09:14:44.711180+00:00",
+      "neg": 1,
+      "provenance": [
+        {
+          "date": "2026-10-09T09:14:44.711180+00:00",
+          "outcome": "corrected",
+          "q": "Role Manager da day du chuc nang chua, dang thieu quan ly khach hang?"
+        },
+        {
+          "date": "2026-10-06T12:06:34.592171+00:00",
+          "outcome": "useful",
+          "q": "về phần be manager làm được gì rồi"
+        }
+      ],
+      "score": -0.062885663,
+      "source_file": "frontend/src/apps/manager/billing/pages/AdminBilling.jsx",
+      "status": "contested",
+      "uses": 1,
+      "verdict": "dead end"
+    },
+    "frontend_src_apps_manager_logs_pages_adminlogs": {
+      "code_fingerprint": "125675cf0ad879b8e2eaf011fc127e4b26696337b75360bebdec54062f070591",
+      "label": "AdminLogs.jsx",
+      "last": "2026-10-06T12:06:34.592171+00:00",
+      "provenance": [
+        {
+          "date": "2026-10-06T12:06:34.592171+00:00",
+          "outcome": "useful",
+          "q": "về phần be manager làm được gì rồi"
+        }
+      ],
+      "score": 0.913735609,
+      "source_file": "frontend/src/apps/manager/logs/pages/AdminLogs.jsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "frontend_src_apps_manager_tenants_pages_admintenants": {
+      "code_fingerprint": "6149bfea008f3b2be2068ff333600dcf9bb0751e4aff69852d415a2fe7570fe8",
+      "label": "AdminTenants.jsx",
+      "last": "2026-10-06T12:06:34.592171+00:00",
+      "provenance": [
+        {
+          "date": "2026-10-06T12:06:34.592171+00:00",
+          "outcome": "useful",
+          "q": "về phần be manager làm được gì rồi"
+        }
+      ],
+      "score": 0.913735609,
+      "source_file": "frontend/src/apps/manager/tenants/pages/AdminTenants.jsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "frontend_src_apps_manager_users_pages_adminusers": {
+      "code_fingerprint": "645fbde6e5b8c2157a2783fcf84d58ccbcd5d4ed2df1a71600fcefb65277e7c5",
+      "label": "AdminUsers.jsx",
+      "last": "2026-10-06T12:06:34.592171+00:00",
+      "provenance": [
+        {
+          "date": "2026-10-06T12:06:34.592171+00:00",
+          "outcome": "useful",
+          "q": "về phần be manager làm được gì rồi"
+        }
+      ],
+      "score": 0.913735609,
+      "source_file": "frontend/src/apps/manager/users/pages/AdminUsers.jsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "frontend_src_apps_pms_data_pmsprovider_pmsprovider": {
+      "code_fingerprint": "91906b74573ac026277e11bbfc75bbe214b80804a2f31d2017d15b8b506f7255",
+      "label": "PmsProvider()",
+      "last": "2026-10-03T07:57:10.232590+00:00",
+      "provenance": [
+        {
+          "date": "2026-10-03T07:57:10.232590+00:00",
+          "outcome": "useful",
+          "q": "bây giờ kết nối postgresql local ok rồi giờ làm chức năng thôi liệt kê chức năng theo ưu tiên"
+        },
+        {
+          "date": "2026-10-02T17:58:56.540915+00:00",
+          "outcome": "useful",
+          "q": "bạn xem qua file system_design_final và đánh giá là dự án public như này còn thiếu gì nữa không ? dự án sẽ release giữa tháng 12 lận nên tôi phải chuẩn bị kỹ càng và theo kinh nghiệm senior software developer của bạn thì nên nâng cấp gì , hay là dư cái gì hay là bỏ cái gì và viết lại 1 cái báo cáo đầy đủ cho tôi"
+        },
+        {
+          "date": "2026-10-02T15:40:08.964385+00:00",
+          "outcome": "useful",
+          "q": "bạn xem file system design final và dự án còn thiếu gì không nhỉ , nếu thiếu bạn cho báo cáo"
+        }
+      ],
+      "score": 2.522870212,
+      "source_file": "frontend/src/apps/pms/data/PmsProvider.jsx",
+      "status": "preferred",
+      "uses": 3
+    },
+    "frontend_src_apps_pms_finance_pages_cashflow_cashflow": {
+      "code_fingerprint": "48d97c3158d7de30d82ef68e051a8baba3d48c3febe4ac0c6eaf7da25fd63658",
+      "label": "Cashflow()",
+      "last": "2026-10-03T15:50:54.408349+00:00",
+      "provenance": [
+        {
+          "date": "2026-10-03T15:50:54.408349+00:00",
+          "outcome": "useful",
+          "q": "ủa từ backend về client làm tới đâu rồi và báo cáo cho tôi những backend client ưu tiên"
+        }
+      ],
+      "score": 0.855619647,
+      "source_file": "frontend/src/apps/pms/finance/pages/Cashflow.jsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "frontend_src_apps_pms_housekeeping_pages_housekeeping_housekeeping": {
+      "code_fingerprint": "8238b818df4a473be8b6a494cc7923435e9fa25688e040cf42f9c3f93022d993",
+      "label": "Housekeeping()",
+      "last": "2026-10-03T15:50:54.408349+00:00",
+      "provenance": [
+        {
+          "date": "2026-10-03T15:50:54.408349+00:00",
+          "outcome": "useful",
+          "q": "ủa từ backend về client làm tới đâu rồi và báo cáo cho tôi những backend client ưu tiên"
+        }
+      ],
+      "score": 0.855619647,
+      "source_file": "frontend/src/apps/pms/housekeeping/pages/Housekeeping.jsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "frontend_src_apps_pms_reports_pages_reports_reports": {
+      "code_fingerprint": "0485b2698b82e90f8e639ab54aa4a81510c0058d7c36f7f8fe480ad59721f14f",
+      "label": "Reports()",
+      "last": "2026-10-03T15:50:54.408349+00:00",
+      "provenance": [
+        {
+          "date": "2026-10-03T15:50:54.408349+00:00",
+          "outcome": "useful",
+          "q": "ủa từ backend về client làm tới đâu rồi và báo cáo cho tôi những backend client ưu tiên"
+        },
+        {
+          "date": "2026-10-02T15:40:08.964385+00:00",
+          "outcome": "useful",
+          "q": "bạn xem file system design final và dự án còn thiếu gì không nhỉ , nếu thiếu bạn cho báo cáo"
+        }
+      ],
+      "score": 1.691552616,
+      "source_file": "frontend/src/apps/pms/reports/pages/Reports.jsx",
+      "status": "preferred",
+      "uses": 2
+    },
+    "frontend_src_apps_pms_reservations_pages_reservations_reservations": {
+      "code_fingerprint": "f7f99c8277d84f72e7fbf20f5f3e6c169bc70b34f9a3f41b9e07af6324c2f95f",
+      "label": "Reservations()",
+      "last": "2026-10-02T15:40:08.964385+00:00",
+      "provenance": [
+        {
+          "date": "2026-10-02T15:40:08.964385+00:00",
+          "outcome": "useful",
+          "q": "bạn xem file system design final và dự án còn thiếu gì không nhỉ , nếu thiếu bạn cho báo cáo"
+        }
+      ],
+      "score": 0.83593297,
+      "source_file": "frontend/src/apps/pms/reservations/pages/Reservations.jsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "frontend_src_apps_pms_settings_pages_settings_settings": {
+      "code_fingerprint": "a76e87749dc96b619c0286362deed65ab82fa9fc6fe4add94b8c4499ea8de62a",
+      "label": "Settings()",
+      "last": "2026-10-02T15:40:08.964385+00:00",
+      "provenance": [
+        {
+          "date": "2026-10-02T15:40:08.964385+00:00",
+          "outcome": "useful",
+          "q": "bạn xem file system design final và dự án còn thiếu gì không nhỉ , nếu thiếu bạn cho báo cáo"
+        }
+      ],
+      "score": 0.83593297,
+      "source_file": "frontend/src/apps/pms/settings/pages/Settings.jsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "pms_system_design_final_architecture": {
+      "code_fingerprint": "bb94295da44f172bf6f2b8b5d8254c35443d7fdd32d68f97f23adefb2640c868",
+      "label": "Planned SaaS PMS architecture",
+      "last": "2026-10-03T07:57:10.232590+00:00",
+      "provenance": [
+        {
+          "date": "2026-10-03T07:57:10.232590+00:00",
+          "outcome": "useful",
+          "q": "bây giờ kết nối postgresql local ok rồi giờ làm chức năng thôi liệt kê chức năng theo ưu tiên"
+        },
+        {
+          "date": "2026-10-02T17:58:56.540915+00:00",
+          "outcome": "useful",
+          "q": "bạn xem qua file system_design_final và đánh giá là dự án public như này còn thiếu gì nữa không ? dự án sẽ release giữa tháng 12 lận nên tôi phải chuẩn bị kỹ càng và theo kinh nghiệm senior software developer của bạn thì nên nâng cấp gì , hay là dư cái gì hay là bỏ cái gì và viết lại 1 cái báo cáo đầy đủ cho tôi"
+        },
+        {
+          "date": "2026-10-02T15:40:08.964385+00:00",
+          "outcome": "useful",
+          "q": "bạn xem file system design final và dự án còn thiếu gì không nhỉ , nếu thiếu bạn cho báo cáo"
+        }
+      ],
+      "score": 2.522870212,
+      "source_file": "pms_system_design_final.md",
+      "status": "preferred",
+      "uses": 3
+    },
+    "pms_system_design_final_daily_inventory": {
+      "code_fingerprint": "bb94295da44f172bf6f2b8b5d8254c35443d7fdd32d68f97f23adefb2640c868",
+      "label": "Planned room_type_availabilities daily inventory",
+      "last": "2026-10-02T17:58:56.540915+00:00",
+      "provenance": [
+        {
+          "date": "2026-10-02T17:58:56.540915+00:00",
+          "outcome": "useful",
+          "q": "bạn xem qua file system_design_final và đánh giá là dự án public như này còn thiếu gì nữa không ? dự án sẽ release giữa tháng 12 lận nên tôi phải chuẩn bị kỹ càng và theo kinh nghiệm senior software developer của bạn thì nên nâng cấp gì , hay là dư cái gì hay là bỏ cái gì và viết lại 1 cái báo cáo đầy đủ cho tôi"
+        }
+      ],
+      "score": 0.837796619,
+      "source_file": "pms_system_design_final.md",
+      "status": "tentative",
+      "uses": 1
+    },
+    "pms_system_design_final_expand_contract": {
+      "code_fingerprint": "bb94295da44f172bf6f2b8b5d8254c35443d7fdd32d68f97f23adefb2640c868",
+      "label": "Planned Expand and Contract migrations",
+      "last": "2026-10-02T17:58:56.540915+00:00",
+      "provenance": [
+        {
+          "date": "2026-10-02T17:58:56.540915+00:00",
+          "outcome": "useful",
+          "q": "bạn xem qua file system_design_final và đánh giá là dự án public như này còn thiếu gì nữa không ? dự án sẽ release giữa tháng 12 lận nên tôi phải chuẩn bị kỹ càng và theo kinh nghiệm senior software developer của bạn thì nên nâng cấp gì , hay là dư cái gì hay là bỏ cái gì và viết lại 1 cái báo cáo đầy đủ cho tôi"
+        }
+      ],
+      "score": 0.837796619,
+      "source_file": "pms_system_design_final.md",
+      "status": "tentative",
+      "uses": 1
+    },
+    "pms_system_design_final_flask_backend": {
+      "code_fingerprint": "bb94295da44f172bf6f2b8b5d8254c35443d7fdd32d68f97f23adefb2640c868",
+      "label": "Planned Flask REST API core",
+      "last": "2026-10-03T15:50:54.408349+00:00",
+      "provenance": [
+        {
+          "date": "2026-10-03T15:50:54.408349+00:00",
+          "outcome": "useful",
+          "q": "ủa từ backend về client làm tới đâu rồi và báo cáo cho tôi những backend client ưu tiên"
+        }
+      ],
+      "score": 0.855619647,
+      "source_file": "pms_system_design_final.md",
+      "status": "tentative",
+      "uses": 1
+    },
+    "pms_system_design_final_notification_pipeline": {
+      "code_fingerprint": "bb94295da44f172bf6f2b8b5d8254c35443d7fdd32d68f97f23adefb2640c868",
+      "label": "Planned notification dispatch pipeline",
+      "last": "2026-10-06T11:50:52.390531+00:00",
+      "provenance": [
+        {
+          "date": "2026-10-06T11:50:52.390531+00:00",
+          "outcome": "useful",
+          "q": "giờ còn BE nào để tiếp tục làm nhỉ"
+        }
+      ],
+      "score": 0.913505412,
+      "source_file": "pms_system_design_final.md",
+      "status": "tentative",
+      "uses": 1
+    },
+    "pms_system_design_final_pitr": {
+      "code_fingerprint": "bb94295da44f172bf6f2b8b5d8254c35443d7fdd32d68f97f23adefb2640c868",
+      "label": "Planned Point-in-Time Recovery",
+      "last": "2026-10-02T17:58:56.540915+00:00",
+      "provenance": [
+        {
+          "date": "2026-10-02T17:58:56.540915+00:00",
+          "outcome": "useful",
+          "q": "bạn xem qua file system_design_final và đánh giá là dự án public như này còn thiếu gì nữa không ? dự án sẽ release giữa tháng 12 lận nên tôi phải chuẩn bị kỹ càng và theo kinh nghiệm senior software developer của bạn thì nên nâng cấp gì , hay là dư cái gì hay là bỏ cái gì và viết lại 1 cái báo cáo đầy đủ cho tôi"
+        }
+      ],
+      "score": 0.837796619,
+      "source_file": "pms_system_design_final.md",
+      "status": "tentative",
+      "uses": 1
+    },
+    "pms_system_design_final_rbac": {
+      "code_fingerprint": "bb94295da44f172bf6f2b8b5d8254c35443d7fdd32d68f97f23adefb2640c868",
+      "label": "Planned global and tenant RBAC",
+      "last": "2026-10-03T07:57:10.232590+00:00",
+      "provenance": [
+        {
+          "date": "2026-10-03T07:57:10.232590+00:00",
+          "outcome": "useful",
+          "q": "bây giờ kết nối postgresql local ok rồi giờ làm chức năng thôi liệt kê chức năng theo ưu tiên"
+        }
+      ],
+      "score": 0.849140623,
+      "source_file": "pms_system_design_final.md",
+      "status": "tentative",
+      "uses": 1
+    },
+    "pms_system_design_final_read_write_replica": {
+      "code_fingerprint": "bb94295da44f172bf6f2b8b5d8254c35443d7fdd32d68f97f23adefb2640c868",
+      "label": "Planned PostgreSQL read/write replicas",
+      "last": "2026-10-02T17:58:56.540915+00:00",
+      "provenance": [
+        {
+          "date": "2026-10-02T17:58:56.540915+00:00",
+          "outcome": "useful",
+          "q": "bạn xem qua file system_design_final và đánh giá là dự án public như này còn thiếu gì nữa không ? dự án sẽ release giữa tháng 12 lận nên tôi phải chuẩn bị kỹ càng và theo kinh nghiệm senior software developer của bạn thì nên nâng cấp gì , hay là dư cái gì hay là bỏ cái gì và viết lại 1 cái báo cáo đầy đủ cho tôi"
+        }
+      ],
+      "score": 0.837796619,
+      "source_file": "pms_system_design_final.md",
+      "status": "tentative",
+      "uses": 1
+    },
+    "pms_system_design_final_tenant_features": {
+      "code_fingerprint": "bb94295da44f172bf6f2b8b5d8254c35443d7fdd32d68f97f23adefb2640c868",
+      "label": "Planned tenant_features entitlements",
+      "last": "2026-10-02T15:40:08.964385+00:00",
+      "provenance": [
+        {
+          "date": "2026-10-02T15:40:08.964385+00:00",
+          "outcome": "useful",
+          "q": "bạn xem file system design final và dự án còn thiếu gì không nhỉ , nếu thiếu bạn cho báo cáo"
+        }
+      ],
+      "score": 0.83593297,
+      "source_file": "pms_system_design_final.md",
+      "status": "tentative",
+      "uses": 1
+    },
+    "pms_system_design_final_tenant_notification_settings": {
+      "code_fingerprint": "bb94295da44f172bf6f2b8b5d8254c35443d7fdd32d68f97f23adefb2640c868",
+      "label": "Planned tenant_notification_settings table",
+      "last": "2026-10-02T15:40:08.964385+00:00",
+      "provenance": [
+        {
+          "date": "2026-10-02T15:40:08.964385+00:00",
+          "outcome": "useful",
+          "q": "bạn xem file system design final và dự án còn thiếu gì không nhỉ , nếu thiếu bạn cho báo cáo"
+        }
+      ],
+      "score": 0.83593297,
+      "source_file": "pms_system_design_final.md",
+      "status": "tentative",
+      "uses": 1
+    },
+    "pms_system_design_final_warehouse_master_data": {
+      "code_fingerprint": "bb94295da44f172bf6f2b8b5d8254c35443d7fdd32d68f97f23adefb2640c868",
+      "label": "Planned warehouse item supplier and opening-stock master data",
+      "last": "2026-10-06T11:50:52.390531+00:00",
+      "provenance": [
+        {
+          "date": "2026-10-06T11:50:52.390531+00:00",
+          "outcome": "useful",
+          "q": "giờ còn BE nào để tiếp tục làm nhỉ"
+        }
+      ],
+      "score": 0.913505412,
+      "source_file": "pms_system_design_final.md",
+      "status": "tentative",
+      "uses": 1
+    }
+  },
+  "version": 1
+}

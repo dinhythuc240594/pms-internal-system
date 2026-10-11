@@ -1,21 +1,32 @@
 {
-  "name": "pms-internal-frontend",
+  "name": "pms-system",
   "private": true,
-  "version": "1.0.0",
+  "version": "0.0.0",
   "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "lint": "vite build",
+    "lint": "oxlint src vite.config.js",
+    "test": "node --test --test-isolation=none",
     "preview": "vite preview"
   },
   "dependencies": {
-    "lucide-react": "^0.344.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "framer-motion": "^13.1.1",
+    "lucide-react": "^1.38.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "react-is": "^19.3.0",
+    "react-router-dom": "^7.18.3",
+    "recharts": "^3.10.1"
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "^4.2.1",
-    "vite": "^5.1.4"
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^6.1.0",
+    "oxlint": "^1.79.0",
+    "vite": "^8.2.2"
   }
 }

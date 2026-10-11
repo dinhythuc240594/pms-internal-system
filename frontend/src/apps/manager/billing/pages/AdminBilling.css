@@ -1,0 +1,269 @@
+.manager-billing {
+  color: var(--manager-ink);
+}
+
+.manager-billing-page-badge {
+  padding: 8px 12px;
+  border: 1px solid var(--manager-line);
+  border-radius: 8px;
+  background: var(--manager-soft);
+  color: var(--manager-muted);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.manager-billing-section-heading {
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.manager-billing-cycle {
+  flex-shrink: 0;
+  border-radius: 10px !important;
+}
+
+.manager-billing-cycle button {
+  border-radius: 7px !important;
+  min-height: 36px;
+}
+
+.manager-billing-plans,
+.manager-billing-plan,
+.manager-billing-features > *,
+.manager-billing-stats > * {
+  min-width: 0;
+}
+
+.manager-billing-plan {
+  border-color: var(--manager-line) !important;
+}
+
+.manager-billing-plan-pro {
+  border-color: var(--manager-accent) !important;
+}
+
+.manager-billing-price {
+  overflow-wrap: anywhere;
+}
+
+.manager-billing-stats > div {
+  padding: 18px 20px !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
+}
+
+.manager-billing-filters {
+  min-width: 0;
+}
+
+.manager-billing-filters label {
+  min-width: 0;
+}
+
+.manager-subscription-status {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 6px;
+  color: var(--manager-muted);
+  background: var(--manager-soft);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.manager-subscription-status.active {
+  color: var(--manager-accent);
+  background: var(--manager-accent-bg);
+}
+
+.manager-subscription-status.expiring,
+.manager-subscription-status.expired,
+.manager-subscription-status.cancelled {
+  color: var(--manager-danger);
+}
+
+.manager-billing :where(input, select, fieldset) {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.manager-billing :where(button, input, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--manager-accent);
+  outline-offset: 3px;
+}
+
+.manager-billing textarea:focus-visible { outline: 2px solid var(--manager-accent); outline-offset: 3px; }
+.manager-invoices { min-width: 0; overflow: hidden; }
+.manager-invoice-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 20px; border-bottom: 1px solid var(--manager-line); }
+.manager-invoice-heading h2 { margin: 0; color: var(--manager-ink); font-size: 16px; font-weight: 700; }
+.manager-invoice-heading p { margin: 6px 0 0; color: var(--manager-muted); font-size: 12px; line-height: 1.6; }
+.manager-invoice-filters { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; padding: 20px; }
+.manager-invoice-filters label, .manager-invoice-form label { display: grid; gap: 6px; min-width: 0; color: var(--manager-ink); font-size: 12px; }
+.manager-invoice-filters label:first-child { flex: 1 1 180px; }
+.manager-invoices :where(input, select, textarea) { box-sizing: border-box; width: 100%; min-width: 0; min-height: 40px; padding: 9px 12px; border: 1px solid var(--manager-line); border-radius: 8px; background: var(--manager-surface); color: var(--manager-ink); font: inherit; }
+.manager-invoices textarea { resize: vertical; }
+.manager-invoice-state { padding: 20px; margin: 0; font-size: 13px; color: var(--manager-muted); overflow-wrap: anywhere; }
+.manager-invoice-error, .manager-invoice-success { margin: 12px 20px; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
+.manager-invoice-error { color: var(--manager-danger, #b91c1c); }
+.manager-invoice-success { color: var(--manager-accent); }
+.manager-invoice-table { min-width: 1100px; width: 100%; border-collapse: collapse; text-align: left; font-size: 12px; }
+.manager-invoice-table :where(th, td) { padding: 14px 16px; border-bottom: 1px solid var(--manager-line); vertical-align: middle; }
+.manager-invoice-table th { color: var(--manager-muted); font-size: 11px; font-weight: 600; background: var(--manager-soft); }
+.manager-invoice-table td { color: var(--manager-ink); font-variant-numeric: tabular-nums; }
+.manager-invoice-secondary { display: block; margin-top: 5px; color: var(--manager-muted); font-size: 12px; }
+.manager-invoice-description { min-width: 160px; max-width: 280px; overflow-wrap: anywhere; line-height: 1.6; }
+.manager-invoice-status { display: inline-flex; padding: 5px 8px; border-radius: 6px; background: var(--manager-soft); color: var(--manager-muted); font-size: 11px; white-space: nowrap; }
+.manager-invoice-status-paid { background: var(--manager-accent-bg); color: var(--manager-accent); }
+.manager-invoice-status-partial, .manager-invoice-status-unpaid { border: 1px solid var(--manager-line); color: var(--manager-ink); }
+.manager-invoice-pagination { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 16px 20px; color: var(--manager-muted); font-size: 12px; }
+.manager-invoice-pagination > div, .manager-invoice-actions { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+.manager-invoice-dialog { width: 100%; max-width: 720px; max-height: 90dvh; padding: 24px; overflow-y: auto; border: 1px solid var(--manager-line); border-radius: 16px; background: var(--manager-surface); color: var(--manager-ink); }
+.manager-invoice-dialog-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.manager-invoice-dialog h2 { margin: 0; font-size: 18px; }
+.manager-invoice-dialog h3 { font-size: 14px; margin-top: 24px; }
+.manager-invoice-dialog > p { font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
+.manager-invoice-dialog .manager-invoice-description { max-width: 100%; }
+.manager-invoice-dialog :where(.manager-invoice-error, .manager-invoice-success) { margin: 12px 0; }
+.manager-invoice-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin: 20px 0; padding: 16px; border: 1px solid var(--manager-line); border-radius: 10px; background: var(--manager-soft); }
+.manager-invoice-summary dt { color: var(--manager-muted); font-size: 12px; }
+.manager-invoice-summary dd { margin: 6px 0 0; font-size: 14px; font-weight: 650; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.manager-invoice-actions { margin-top: 20px; }
+.manager-invoice-payments { list-style: none; margin: 0; padding: 0; }
+.manager-invoice-payments li { padding: 14px 0; border-top: 1px solid var(--manager-line); font-size: 13px; }
+.manager-invoice-payments li > div { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.manager-invoice-payments time, .manager-invoice-payments p { color: var(--manager-muted); font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+.manager-invoice-payments p { margin: 6px 0 0; }
+.manager-invoice-form { margin-top: 20px; }
+.manager-invoice-form fieldset { display: grid; gap: 16px; min-width: 0; padding: 0; border: 0; }
+.manager-invoice-form small, .manager-invoice-form fieldset > p { margin: 0; color: var(--manager-muted); font-size: 12px; line-height: 1.6; }
+.manager-invoice-form-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+
+@media (max-width: 640px) {
+  .manager-invoice-filters { padding: 16px; }
+  .manager-invoice-filters label { flex: 1 1 100%; }
+  .manager-invoice-filters button[type="submit"] { flex: 1; }
+  .manager-invoice-heading > button { width: 100%; }
+  .manager-invoice-summary, .manager-invoice-form-row { grid-template-columns: minmax(0, 1fr); }
+  .manager-invoice-actions > button { flex: 1; }
+}
+
+.manager-billing button:disabled {
+  opacity: .5;
+  cursor: not-allowed !important;
+}
+
+.manager-billing-dialog {
+  box-sizing: border-box;
+  overscroll-behavior: contain;
+}
+
+.manager-billing-dialog > div:first-child {
+  align-items: flex-start !important;
+  gap: 16px;
+}
+
+.manager-billing-dialog h2 {
+  margin-top: 4px;
+  overflow-wrap: anywhere;
+}
+
+.manager-billing-dialog button[aria-label] {
+  min-width: 40px;
+  min-height: 40px;
+  flex-shrink: 0;
+}
+
+.manager-billing-dialog form > label {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.manager-billing-dialog form > label:has(input[type="checkbox"]) {
+  display: flex;
+  align-items: center;
+}
+
+.manager-billing-dialog fieldset {
+  padding: 12px;
+}
+
+.manager-billing-dialog fieldset > div {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)) !important;
+}
+
+.manager-billing-dialog fieldset label {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.manager-billing-dialog fieldset input {
+  margin-top: 3px;
+  flex-shrink: 0;
+  accent-color: var(--manager-accent);
+}
+
+.manager-billing-dialog table {
+  min-width: 640px;
+}
+
+@media (min-width: 1100px) {
+  .manager-billing-features {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 16px !important;
+  }
+
+  .manager-billing-features > div:first-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 640px) {
+  .manager-billing-page-badge {
+    align-self: flex-start;
+  }
+
+  .manager-billing-plan {
+    padding: 18px !important;
+  }
+
+  .manager-billing-price {
+    font-size: 25px !important;
+  }
+
+  .manager-billing-table-heading {
+    padding: 16px !important;
+  }
+
+  .manager-billing-filters,
+  .manager-billing-filters label,
+  .manager-billing-filters select {
+    width: 100%;
+  }
+
+  .manager-billing-filters input {
+    width: 100% !important;
+  }
+
+  .manager-billing .pms-legacy-overlay {
+    padding: 12px !important;
+  }
+
+  .manager-billing-dialog {
+    padding: 18px !important;
+    max-height: calc(100dvh - 24px) !important;
+  }
+
+  .manager-billing-dialog :where(input:not([type="checkbox"]), select) {
+    font-size: 16px !important;
+  }
+
+  .manager-billing-dialog form > div:last-child {
+    flex-wrap: wrap;
+  }
+}

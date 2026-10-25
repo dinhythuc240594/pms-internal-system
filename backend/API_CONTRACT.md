@@ -115,6 +115,17 @@ Guest objects with existing `id` and supplied profile fields update within the s
 reservation transaction. Failure rolls back both the profile and booking edit.
 Unchanged historical sources remain editable after source rename/deactivation.
 POST `/reservations/<id>/status` `{status}`; POST `/rooms/<number>/condition` `{condition}`.
+Stay and report dates require the calendar format `YYYY-MM-DD`; compact dates,
+ISO week dates and non-date JSON values return 422. Stay intervals are half-open.
+`CONFIRMED -> IN_HOUSE` requires the hotel's business date within the stay and
+every assigned physical room to be active and clean. Another `IN_HOUSE` stay in
+any assigned room returns 409 `room_occupied`, even if its scheduled checkout has
+passed. Checkout must complete and cleaning must finish before the next check-in.
+Changing a confirmed stay's dates/rooms cancels its open housekeeping tasks in
+the same transaction; contact-only edits preserve them. Replanning after moving
+back creates fresh work while retaining cancelled task history. Cancellation
+also cancels only that reservation's open tasks and preserves money history;
+fees and refunds remain explicit financial operations.
 `CONFIRMED -> NO_SHOW` is permitted only on or after check-in in the hotel's
 timezone. Booking JSON adds nullable `noShowAt`. NO_SHOW is terminal for stay
 edits/check-in; it releases room inventory and cancels this reservation's open
@@ -145,6 +156,9 @@ payments acquire a shared fund lock before writing ledger. Configuration edits t
 exclusive locks, so history guards serialize with first booking/payment creation.
 Booking lock order room numbers sorted then daily inventory. Edits retain original
 nightly snapshots if rooms/dates unchanged. RLS all tables, row exclusion/lock prevents races.
+OTA revisions use the same housekeeping invalidation on a changed stay or
+cancellation. Revisions that only refresh guest details retain assigned physical
+rooms and their tasks. Import, receipt and queued ACK commit before remote ACK.
 
 Root GET `/workspace` merges snapshots and `{users,tenant}`.
 For HOUSEKEEPING it omits catalog `price`/`commission`/`tax` and daily-rate `price`

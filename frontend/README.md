@@ -1,4 +1,4 @@
-# Frontend PMS — API BE01–05
+# Frontend PMS
 
 Cấu trúc mã nguồn và trách nhiệm các phân hệ: [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md).
 
@@ -48,27 +48,30 @@ phải số đo thời gian deploy trên VPS. Log Coolify được cung cấp d�
 ## Các luồng đã nối máy chủ
 
 - Đặt phòng nhiều phòng và nhiều khách; kiểm tra khả dụng và báo giá từng đêm từ API. Giá chốt được giữ trên booking.
-- Check-in, hủy và check-out; chỉ được trả phòng khi số dư bằng 0. Check-out đánh dấu toàn bộ phòng trong booking là bẩn.
+- Check-in, hủy, no-show và check-out; chỉ được trả phòng khi số dư bằng 0. Check-in kiểm tra mọi phòng sạch, hoạt động và không còn khách ở lượt trước, kể cả khách quá hạn. Check-out đánh dấu toàn bộ phòng trong booking là bẩn và tạo task dọn.
 - Chi tiết booking có khách, dịch vụ/phụ thu, giá từng đêm, thanh toán/hoàn tiền, ghi chú và lịch sử. Kế toán được ghi thanh toán, hoàn tiền và phụ thu theo quyền máy chủ.
 - Phòng, Tape Chart, dashboard và công suất tính mọi phòng của booking nhiều phòng. Phòng/loại phòng đã ngưng hoạt động không được chọn mới.
 - Settings: loại phòng/phòng vật lý, dịch vụ/nhóm, nguồn đặt phòng, bữa ăn, loại giường, đơn vị, phương thức thanh toán/quỹ và cấu hình khách sạn.
 - Người dùng khách sạn: tạo hoặc gán tài khoản, vai trò và trạng thái membership. Tài khoản đã có chỉ sửa quyền tại khách sạn; frontend không sửa danh tính toàn hệ thống.
-- Hồ sơ khách CRUD; giá từng đêm, stop sell, khóa phòng theo khoảng ngày và MatrixRate dùng dữ liệu API.
+- Hồ sơ khách được tạo/sửa trong booking; giá từng đêm, stop sell, khóa phòng theo khoảng ngày và MatrixRate dùng dữ liệu API. Không có API quản lý khách độc lập.
 - Quản trị: danh sách khách sạn, tạo khách sạn cùng chủ và tạm ngưng/mở lại. Hồ sơ quản trị đọc tài khoản thật, đổi mật khẩu dùng API.
-- Thu chi đọc ledger thanh toán/hoàn tiền từ booking. Đây chưa phải sổ quỹ nâng cao BE06; số dư đầu kỳ, rút/chuyển quỹ và phiếu thu/chi riêng đang tắt.
+- Thu chi, phiếu thu/chi/chuyển quỹ và POS dùng API, ledger và chứng từ đối ứng; khoản thu/hoàn booking chống ghi trùng bằng Idempotency-Key.
+- Buồng phòng có nhân viên, ca, lập kế hoạch, phân công và kiểm tra. Nhân viên gửi inspection; lễ tân/chủ duyệt completed để phòng sạch. Sửa lịch/phòng hoặc hủy booking vô hiệu task liên quan trong cùng transaction, kể cả booking OTA.
+- Giá nâng cao, voucher/khuyến mãi, tỷ giá, kho, hoa hồng, báo cáo cơ bản/chuyên sâu, hồ sơ và thông báo có module API. Giao diện áp dụng quyền và feature do backend trả về.
+- OTA/Channex có cấu hình, mapping, lịch sử và job đồng bộ. Webhook xếp job; worker import revision rồi ACK sau commit. Kiểm thử local dùng provider giả lập.
 
-Quyền dựa vào vai trò và membership. Gói thương mại, quota và feature gating BE09 chưa triển khai; không khởi tạo gói Trial/Basic/Pro trong provider. Khách sạn tạm ngưng vẫn cho đọc theo API nhưng chặn ghi. Tenant đổi sẽ xóa form và loại bỏ kết quả request của tenant cũ.
+Quyền dựa vào vai trò, membership, gói, quota và feature được backend kiểm tra. Khách sạn tạm ngưng chặn ghi. Tenant đổi sẽ xóa form và loại bỏ kết quả request của tenant cũ. Workspace có nút tải lại; không tự polling nền.
 
 ## Giới hạn hiện tại
 
-Giữ giao diện các màn hình chưa có backend để xem cấu trúc, nhưng các thao tác ghi bị tắt và có thông báo: POS, kho/mua hàng, OTA, voucher/khuyến mãi, kế hoạch/nhân sự buồng phòng, billing/feature thương mại, người dùng nội bộ toàn hệ thống và bảo mật nâng cao/2FA. Giờ theo booking, số người lớn/trẻ em/em bé và FOC chưa có schema; các điều khiển hiển thị nhưng không chỉnh sửa.
+Thuê giờ, số người lớn/trẻ em/em bé, FOC và bữa sáng trên booking chưa có nghiệp vụ hoàn chỉnh; điều khiển tương ứng bị tắt. Chưa có 2FA, payment gateway, email xác nhận tự động hoặc hóa đơn thuế/ký số. Thanh toán và hoàn tiền hiện là ghi nhận thủ công vào quỹ.
 
-Giá và tiền trên booking dùng tiền tệ đã chốt; ledger và báo cáo doanh thu có bộ lọc tiền tệ để tránh cộng lẫn các loại tiền. Không triển khai quy đổi ngoại tệ.
+Giá và tiền trên booking dùng tiền tệ/tỷ giá đã chốt. Ledger và báo cáo phân biệt tiền gốc với tiền cơ sở theo snapshot; không cộng lẫn tiền tệ.
 
-Biểu đồ và danh sách minh họa còn lại phía dưới dashboard được đánh dấu xem trước. Báo cáo doanh thu hiện là doanh thu phòng dự kiến theo nightly snapshot, chưa là báo cáo kế toán hợp nhất.
+Dashboard/báo cáo phân biệt doanh thu phòng dự kiến, đêm đã phục vụ, doanh thu hóa đơn đã chốt và thực thu từ ledger. Chưa có Night Audit, XLSX/PDF tự động, hệ thống lưu snapshot báo cáo hay xử lý issue đối soát. CSV xuất các dòng đang hiển thị.
 
 ## Kiểm tra
 
 `npm test`, `npm run lint`, `npm run build`. Các test API kiểm tra cookie/CSRF, lỗi 403, tenant scope, quyền không phụ thuộc gói và chống gửi trùng qua reload. Test model kiểm tra mọi phòng của booking, maintenance và khoảng ngày liền kề. Các test workspace cũ chỉ kiểm tra fixture demo, không được provider runtime sử dụng.
 
-Kiểm tra tích hợp local: tạo hai phòng/hai khách → cọc → check-in → phụ thu → chặn trả phòng khi còn nợ → thanh toán đủ → check-out → phòng bẩn → reload; chuyển tenant để kiểm tra cách ly dữ liệu. Dữ liệu kiểm tra thuộc PostgreSQL local.
+Kiểm thử 9 luồng, thay đổi và giới hạn nghiệm thu: [báo cáo PMS-01–09](../docs/reports/reviews/pms-nine-workflows-2026-10-25.md). Backend integration suite dùng database PostgreSQL `pms_test_<uuid>` được tạo/xóa riêng; không dùng dữ liệu nghiệp vụ. Cây demo cũ không còn được import đã được xóa; fixture workspace còn dùng trong test được giữ lại.

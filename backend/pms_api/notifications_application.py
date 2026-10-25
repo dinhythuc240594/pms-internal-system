@@ -155,7 +155,7 @@ def handle_inbox(tenant_id):
             stamp = datetime.fromisoformat(stamp)
             if stamp.tzinfo is None or not row_id or len(row_id) > 40:
                 raise ValueError
-        except ValueError, TypeError:
+        except (ValueError, TypeError):
             raise ApiError(422, "invalid_query", "Mốc trang thông báo không hợp lệ.") from None
         statement = statement.where(
             or_(

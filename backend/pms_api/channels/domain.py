@@ -49,7 +49,7 @@ def normalize(entity, property_id):
         inserted = (
             inserted.replace(tzinfo=UTC) if inserted.tzinfo is None else inserted.astimezone(UTC)
         )
-    except KeyError, ValueError, TypeError, AttributeError:
+    except (KeyError, ValueError, TypeError, AttributeError):
         invalid("invalid_booking_revision")
     result = {
         "id": identifier(entity.get("id")),

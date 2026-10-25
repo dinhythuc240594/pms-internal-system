@@ -5,7 +5,6 @@ import { useSearchParams } from 'react-router-dom';
 import { usePms } from '../../data/usePms';
 import IntegrationWorkspace from '../../channel-manager/pages/IntegrationWorkspace';
 import { AccessMessage } from '../../../../shared/components/AccessControl';
-import LegacyOverlay from '../../components/LegacyOverlay';
 import { CORE_ROLES as ROLE_ACTIONS } from '../../data/api';
 import { ROLE_NAMES } from '../../data/access';
 import LanguageSwitcher from '../../../../shared/i18n/LanguageSwitcher.jsx';

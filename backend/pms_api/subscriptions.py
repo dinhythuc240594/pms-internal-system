@@ -73,7 +73,7 @@ def timestamp(value, label):
         if parsed is None or parsed.tzinfo is None or parsed.utcoffset() is None:
             raise ValueError
         return parsed
-    except ValueError, TypeError:
+    except (ValueError, TypeError):
         raise ApiError(422, "invalid_dates", f"{label} phải là thời điểm ISO có múi giờ.") from None
 
 

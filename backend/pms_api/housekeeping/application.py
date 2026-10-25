@@ -748,13 +748,19 @@ def cancel_reservation_tasks(reservation, rooms, reason):
         .with_for_update()
     )
     for task in tasks:
+        details = {"reason": reason}
+        if reason == "stay_changed":
+            # Free the obsolete planning key so a later move back to this room
+            # can create a fresh intent, while retaining the cancelled task/log.
+            details["sourceKey"] = task.source_key
+            task.source_key = f"superseded:{task.id}"
         task.status = "cancelled"
         task.revision += 1
         work_log(
             "housekeeping.task_superseded",
             task=task,
             room=room_map.get(task.room_id),
-            details={"reason": reason},
+            details=details,
         )
 
 

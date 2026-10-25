@@ -116,7 +116,7 @@ class ChannexClient:
             else:
                 failure_type = "transport"
             raise ProviderError("provider_unavailable", True, failure_type=failure_type) from None
-        except ValueError, UnicodeDecodeError:
+        except (ValueError, UnicodeDecodeError):
             raise ProviderError("provider_invalid_response") from None
 
     def feed(self, property_id):
@@ -206,7 +206,7 @@ class ChannexClient:
                     and isinstance(related, dict)
                     and related.get("id") == property_id
                 )
-            except KeyError, TypeError, AttributeError:
+            except (KeyError, TypeError, AttributeError):
                 raise ProviderError("provider_invalid_response") from None
 
         found, seen, expected_total = [], set(), None

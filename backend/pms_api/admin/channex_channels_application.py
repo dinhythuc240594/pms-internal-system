@@ -159,7 +159,7 @@ def get_adapter(client, code):
 def groups_json(property_entity):
     try:
         groups = property_entity["relationships"]["groups"]["data"]
-    except KeyError, TypeError:
+    except (KeyError, TypeError):
         return []
     if not isinstance(groups, list) or len(groups) > 100:
         raise ProviderError("provider_invalid_response")
@@ -256,7 +256,7 @@ def revision(client, entity):
     values["id"] = entity["id"]
     try:
         raw = json.dumps(values, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
-    except ValueError, TypeError:
+    except (ValueError, TypeError):
         raise ProviderError("provider_invalid_response") from None
     return hmac.new(client.api_key.encode(), raw, hashlib.sha256).hexdigest()
 

@@ -14,9 +14,11 @@ from pms_api.bookings.application import (
     add_stay,
     commission_snapshot,
     inventory,
+    lock_rooms,
     set_booking_guests,
 )
 from pms_api.catalog.application import lock_inventory
+from pms_api.housekeeping.application import cancel_reservation_tasks
 
 from ..bookings.models import (
     Charge,
@@ -81,6 +83,8 @@ def import_revision(tenant_id, entity, property_id):
                         )
                     )
                 )
+                physical = lock_rooms(tenant_id, sorted(room.room_number for room in rooms))
+                cancel_reservation_tasks(row, physical, "cancelled")
                 inventory(tenant_id, rooms, row.check_in, row.check_out, -1)
                 for room in rooms:
                     room.active = False
@@ -190,7 +194,7 @@ def apply_stay(tenant_id, revision, row):
                 PhysicalRoom.tenant_id == tenant_id,
                 PhysicalRoom.room_type_id.in_(set(kinds) | {r.room_type_id for r in old_rooms}),
             )
-            .order_by(PhysicalRoom.id)
+            .order_by(PhysicalRoom.number)
             .with_for_update()
         )
     )
@@ -219,6 +223,8 @@ def apply_stay(tenant_id, revision, row):
         overlaps = overlaps.where(ReservationRoom.reservation_id != row.id)
     blocked.update(db.session.scalars(overlaps))
     assigned = []
+    previous_room_ids = {room.room_id for room in old_rooms}
+    candidates.sort(key=lambda room: (room.id not in previous_room_ids, room.number))
     for requested in revision["rooms"]:
         chosen = next(
             (
@@ -276,6 +282,12 @@ def apply_stay(tenant_id, revision, row):
     else:
         if (row.pricing_snapshot or {}).get("commission"):
             pricing["commission"] = row.pricing_snapshot["commission"]
+        if (
+            old_start != revision["start"]
+            or old_end != revision["end"]
+            or previous_room_ids != {room.id for room in assigned}
+        ):
+            cancel_reservation_tasks(row, candidates, "stay_changed")
         inventory(tenant_id, old_rooms, old_start, old_end, -1)
         for model in (ReservationNight, ReservationRoom):
             db.session.execute(

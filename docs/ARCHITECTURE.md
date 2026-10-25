@@ -1,6 +1,7 @@
 # Cấu trúc LOHA PMS
 
-Ngày cập nhật: 10/10/2026. Giữ các URL, hợp đồng API, schema và luồng nghiệp vụ hiện tại.
+Ngày cập nhật: 25/10/2026. Đối chiếu nghiệp vụ và kiểm thử 9 luồng tại
+[báo cáo PMS-01–09](reports/reviews/pms-nine-workflows-2026-10-25.md).
 
 ## Frontend
 
@@ -25,7 +26,7 @@ frontend/src/
       layouts/ManagerLayout.css
       components/             # ManagerHeader và ManagerSidebar
       dashboard/, tenants/, billing/, users/, ...
-      mockData.js             # dữ liệu xem trước của backoffice
+      mockData.js             # fixture được bộ test workspace cũ sử dụng
   shared/
     components/               # LohaBrand và AccessControl dùng qua các phân hệ
     config/pricingPlans.js    # hai gói và giá tham khảo dùng chung
@@ -36,7 +37,12 @@ Layout và thành phần riêng của một phân hệ đặt trong `apps/<phân
 
 Login dùng `LohaBrand` và stylesheet chung, không import CSS trang chủ. CSS header/footer marketing thuộc layout; CSS hình minh họa và các section trang chủ thuộc `Home.css`. Font/scrollbar manager được giới hạn trong `.manager-shell`.
 
-Trang bảng giá và billing dùng chung hai gói trong `pricingPlans.js`; dữ liệu này là giá tham khảo, chưa thay thế billing/feature gating ở backend. Các fixture `workspace.js` và tests cũ được giữ để kiểm tra các quy tắc demo; provider runtime không dùng chúng làm fallback lưu dữ liệu.
+Trang bảng giá lấy gói từ API; `pricingPlans.js` chứa hàm trình bày dữ liệu gói.
+Billing, quota và feature gating được kiểm tra tại backend. Các fixture
+`workspace.js` và tests cũ được giữ để kiểm tra các quy tắc demo; provider runtime
+không dùng chúng làm fallback lưu dữ liệu. Cây demo độc lập tại `src/App.jsx`,
+`src/pages`, `src/components`, `src/mockData` đã được xóa sau khi kiểm tra import
+từ entry point và test; entry point thực là `src/main.jsx` → `src/app/App.jsx`.
 
 ## Backend
 
@@ -70,7 +76,10 @@ nhận request. `workspace.py` ghép dữ liệu từ các phân hệ. Nền t�
 database và bảo mật ở root `pms_api` để các package dùng chung. Quy ước viết API
 và ví dụ nằm trong [backend/README.md](../backend/README.md#chuẩn-viết-api-dùng-common).
 
-Không thêm repository, service facade hoặc package trống cho tính năng tương lai. Các import cục bộ từ catalog sang booking models giữ nguyên thời điểm thực thi để tránh vòng phụ thuộc. Chỉ tách nghiệp vụ thành service khi có luồng dùng lại cụ thể.
+Lớp HTTP gọi `application.py`; quy tắc thuần nằm ở `domain.py`; các repository và
+port được inject tại composition root. Xem ranh giới và phần chuyển tiếp tại
+[backend/ARCHITECTURE.md](../backend/ARCHITECTURE.md). Các import cục bộ từ catalog
+sang booking models giữ nguyên thời điểm thực thi để tránh vòng phụ thuộc.
 
 `finance` và booking cùng ghi `LedgerEntry` và khóa quỹ theo tenant/id theo cùng thứ tự; hoàn/đảo phiếu thêm dòng đối ứng thay vì sửa lịch sử. `housekeeping` dùng phiên bản phòng và nhiệm vụ để chặn công việc cũ, phân công theo tài khoản buồng phòng và yêu cầu quản lý xác nhận sạch. Checkout tạo công việc dọn trong cùng transaction. Hợp đồng cụ thể nằm trong [API_CONTRACT.md](../backend/API_CONTRACT.md).
 

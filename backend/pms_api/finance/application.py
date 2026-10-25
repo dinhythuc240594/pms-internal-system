@@ -55,7 +55,7 @@ def local_date(timestamp=None):
 def parse_date(value):
     try:
         return date.fromisoformat(str(value))
-    except ValueError, TypeError:
+    except (ValueError, TypeError):
         raise ApiError(422, "invalid_dates", "Ngày không hợp lệ.") from None
 
 

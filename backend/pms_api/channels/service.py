@@ -174,7 +174,7 @@ def enqueue_audit(entry):
 def _relationship(entity, key):
     try:
         return entity["relationships"][key]["data"]["id"]
-    except KeyError, TypeError:
+    except (KeyError, TypeError):
         raise ProviderError("channel_mapping_invalid") from None
 
 

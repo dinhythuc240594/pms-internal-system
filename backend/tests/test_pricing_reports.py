@@ -96,7 +96,9 @@ class PricingReportsTests(DomainTestCase):
         self.assertEqual(base["summary"]["closing"], "57.5000")
         self.assertEqual(base["snapshot"]["deposits"], "57.5000")
         self.assertEqual(base["snapshot"]["debt"], "162.5000")
-        self.assertIn("không quy đổi lại", base["definitions"]["moneyBasis"])
+        self.assertEqual(
+            base["definitions"]["moneyBasis"], "i18n:reports.definitions.moneyBasisBase"
+        )
         self.assertEqual(self.report("revenue", "&basis=base")["rows"][0]["amount"], "200.0000")
         self.assertEqual(self.report("revenue", "&currency=USD")["rows"][0]["amount"], "4.0000")
         # The requested base currency filters stored baseCurrency, not original USD.

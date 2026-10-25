@@ -677,6 +677,7 @@ def handle_edit_reservation(tenant_id, reservation_id):
                 "refund_required",
                 "Cần hoàn phần tiền dư trước khi giảm giá trị đặt phòng.",
             )
+        cancel_reservation_tasks(row, locked_rooms, "stay_changed")
         inventory(tenant_id, old_rooms, row.check_in, row.check_out, -1)
         db.session.execute(
             delete(ReservationNight).where(
@@ -739,7 +740,7 @@ def handle_change_status(tenant_id, reservation_id):
         "CONFIRMED": {"IN_HOUSE", "CANCELLED", "NO_SHOW"},
         "IN_HOUSE": {"CHECKED_OUT"},
     }
-    if not isinstance(status, str) or status not in transitions.get(row.status, set()):
+    if status not in transitions.get(row.status, set()):
         raise ApiError(
             409, "invalid_transition", "Trạng thái đặt phòng không cho phép thao tác này."
         )
@@ -759,6 +760,28 @@ def handle_change_status(tenant_id, reservation_id):
         if any(room.condition != "clean" or not room.active for room in rooms):
             raise ApiError(
                 409, "room_not_ready", "Tất cả phòng phải sạch và đang hoạt động để nhận phòng."
+            )
+        # Calendar intervals may be adjacent while the previous guest is still
+        # physically in the room. The room locks also serialize that checkout.
+        occupied = db.session.scalar(
+            select(ReservationRoom.id)
+            .join(
+                Reservation,
+                (Reservation.id == ReservationRoom.reservation_id)
+                & (Reservation.tenant_id == ReservationRoom.tenant_id),
+            )
+            .where(
+                ReservationRoom.tenant_id == tenant_id,
+                ReservationRoom.room_id.in_([room.id for room in rooms]),
+                ReservationRoom.active.is_(True),
+                ReservationRoom.reservation_id != row.id,
+                Reservation.status == "IN_HOUSE",
+            )
+            .limit(1)
+        )
+        if occupied:
+            raise ApiError(
+                409, "room_occupied", "Phòng vẫn có khách đang ở; cần trả phòng lượt trước."
             )
         row.checked_in_at = utcnow()
         for room in rooms:
@@ -788,6 +811,7 @@ def handle_change_status(tenant_id, reservation_id):
             cancel_reservation_tasks(row, rooms, "no_show")
         else:
             row.cancelled_at = utcnow()
+            cancel_reservation_tasks(row, rooms, "cancelled")
         lock_inventory(
             tenant_id,
             sorted({room.room_type_id for room in linked}),
@@ -871,7 +895,7 @@ def begin_money(row, data, *, record_model=IdempotencyRecord):
             ensure_ascii=False,
             allow_nan=False,
         ).encode()
-    except TypeError, ValueError:
+    except (TypeError, ValueError):
         raise ApiError(422, "invalid_amount", "Nội dung có giá trị số không hợp lệ.") from None
     fingerprint = hashlib.sha256(encoded).hexdigest()
     db.session.execute(
@@ -934,7 +958,7 @@ def handle_add_charge(tenant_id, reservation_id):
         return replay, 201
     financial_open(row)
     kind = data.get("type", "service")
-    if kind not in {"service", "fee", "tax", "discount"}:
+    if not isinstance(kind, str) or kind not in {"service", "fee", "tax", "discount"}:
         raise ApiError(422, "invalid_charge", "Loại chi phí không hợp lệ.")
     service = master(tenant_id, "services", data["serviceId"]) if data.get("serviceId") else None
     if service and kind != "service":

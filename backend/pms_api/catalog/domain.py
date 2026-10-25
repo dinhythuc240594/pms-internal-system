@@ -34,7 +34,7 @@ def money_value(value):
         if amount != rounded:
             raise ValueError
         return rounded
-    except InvalidOperation, ValueError, TypeError:
+    except (InvalidOperation, ValueError, TypeError):
         raise ApiError(
             422, "VALIDATION_ERROR", "Số tiền phải không âm và tối đa 4 số lẻ."
         ) from None
@@ -47,7 +47,7 @@ def parse_date(value):
         if not isinstance(value, str) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", value):
             raise ValueError
         return date.fromisoformat(value)
-    except ValueError, TypeError:
+    except (ValueError, TypeError):
         raise ApiError(422, "VALIDATION_ERROR", "Ngày phải có định dạng YYYY-MM-DD.") from None
 
 

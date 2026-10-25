@@ -5,6 +5,7 @@ import { usePms } from '../../data/usePms';
 import { nights, statusLabels, money as formatMoney, bookingRooms, today } from '../../data/model';
 import BookingTabs from './BookingTabs';
 import { openBookingDocument } from '../bookingDocument';
+import { checkInBlockReason } from '../bookingLifecycle';
 import LegacyOverlay from '../../components/LegacyOverlay';
 import { AccessMessage } from '../../../../shared/components/AccessControl';
 import { X, Printer, Save, User, Calendar, CreditCard, Clock, Phone, Mail, ChevronDown, LogIn, LogOut, UserX, CircleX } from 'lucide-react';
@@ -36,6 +37,8 @@ export default function BookingDetailPanel({ bookingId, onClose }) {
   }, [confirmCancel, confirmNoShow]);
   if (!booking) return null;
   const money=value=>formatMoney(value,booking.currency);
+  const checkInReason = checkInBlockReason(booking, rooms, bookings, today(settings.timezone));
+  const checkInMessage = ({ outside_stay: 'Chỉ nhận phòng trong khoảng ngày lưu trú.', room_not_ready: 'Tất cả phòng phải sạch và đang hoạt động để nhận phòng.', room_occupied: 'Phòng vẫn có khách đang ở; cần trả phòng lượt trước và dọn phòng.' })[checkInReason] || '';
   const visibility = access('reservations.view', 'RESERVATION_VIEW');
   if (!visibility.allowed) return <LegacyOverlay title={tUi("nav.bookings")} onClose={onClose} style={{ position: 'fixed', inset: 0, zIndex: 1100, background: '#0f172a99', display: 'grid', placeItems: 'center', padding: 20 }}><div className="pms-access-dialog"><AccessMessage result={visibility} /><button onClick={onClose}>{tUi("common.close")}</button></div></LegacyOverlay>;
   const roomType = roomTypes.find(t => t.id === rooms.find(r => r.id === booking.room)?.typeId);
@@ -81,7 +84,8 @@ export default function BookingDetailPanel({ bookingId, onClose }) {
           </div>
           <div className="booking-detail-lifecycle">
             {booking.status === 'CONFIRMED' && access('reservations.write', 'RESERVATION_VIEW').allowed && <>
-              <button type="button" className="booking-detail-button booking-detail-button--success" disabled={busy} onClick={() => act('IN_HOUSE')}><LogIn size={16} aria-hidden="true" />Nhận phòng (Check-in)</button>
+              <button type="button" className="booking-detail-button booking-detail-button--success" disabled={busy || Boolean(checkInReason)} title={labelUi(checkInMessage)} onClick={() => act('IN_HOUSE')}><LogIn size={16} aria-hidden="true" />Nhận phòng (Check-in)</button>
+              {checkInMessage && <p role="status">{labelUi(checkInMessage)}</p>}
               <div className="booking-detail-secondary-actions">
                 <button type="button" className="booking-detail-button booking-detail-button--warning" disabled={busy || booking.checkIn > today(settings.timezone)} title={booking.checkIn > today(settings.timezone) ? 'Chỉ ghi nhận từ ngày nhận phòng theo múi giờ khách sạn' : ''} onClick={() => { setConfirmNoShow(true); setConfirmCancel(false); }}><UserX size={16} aria-hidden="true" />Khách không đến (No-show)</button>
                 <button type="button" className="booking-detail-button booking-detail-button--danger" disabled={busy} onClick={() => { setConfirmCancel(true); setConfirmNoShow(false); }}><CircleX size={16} aria-hidden="true" />Hủy đặt phòng</button>

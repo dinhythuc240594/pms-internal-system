@@ -112,7 +112,7 @@ def validated_settings(data):
                     for label in labels
                 ):
                     raise ValueError
-        except ValueError, UnicodeError:
+        except (ValueError, UnicodeError):
             raise ApiError(
                 422, "VALIDATION_ERROR", f"{key} cần URL hợp lệ, không chứa tài khoản đăng nhập."
             ) from None
@@ -122,7 +122,7 @@ def validated_settings(data):
         try:
             result["timezone"] = text_value(result["timezone"], "Múi giờ", 100)
             ZoneInfo(result["timezone"])
-        except ZoneInfoNotFoundError, ValueError, TypeError:
+        except (ZoneInfoNotFoundError, ValueError, TypeError):
             raise ApiError(422, "VALIDATION_ERROR", "Múi giờ IANA không hợp lệ.") from None
     if "currency" in result and result["currency"] not in ("VND", "USD"):
         raise ApiError(422, "VALIDATION_ERROR", "Tiền tệ cơ sở hỗ trợ VND hoặc USD.")

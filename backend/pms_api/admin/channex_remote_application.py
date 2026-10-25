@@ -160,7 +160,7 @@ def property_values(entity):
     if values["timezone"]:
         try:
             ZoneInfo(values["timezone"])
-        except ZoneInfoNotFoundError, ValueError:
+        except (ZoneInfoNotFoundError, ValueError):
             raise ProviderError("provider_invalid_response") from None
     return values
 
@@ -313,7 +313,7 @@ def property_input():
         if source == "timezone":
             try:
                 ZoneInfo(value)
-            except ZoneInfoNotFoundError, ValueError:
+            except (ZoneInfoNotFoundError, ValueError):
                 raise ApiError(422, "invalid_channex_timezone", "Múi giờ không hợp lệ.") from None
         values[target] = validate_email(value) if source == "email" else value
     return account, values

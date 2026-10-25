@@ -10,5 +10,5 @@ def remote_id(value):
         if not isinstance(value, str) or len(value) != 36:
             raise ValueError
         return str(UUID(value))
-    except ValueError, TypeError, AttributeError:
+    except (ValueError, TypeError, AttributeError):
         raise ProviderError("invalid_remote_id") from None

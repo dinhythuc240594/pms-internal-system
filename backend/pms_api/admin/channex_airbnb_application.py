@@ -131,7 +131,7 @@ def listings(client, channel_id):
         if len({value["id"] for value in values}) != len(values):
             raise ValueError
         return values
-    except KeyError, TypeError, ValueError:
+    except (KeyError, TypeError, ValueError):
         raise ProviderError("provider_invalid_response") from None
 
 

@@ -45,10 +45,10 @@ ngày 14/10, không coi toàn bộ thiết kế hệ thống đã hoàn thành.
 
 ## Chạy trên Windows
 
-Thực hiện các lệnh PowerShell sau từ thư mục `backend`. Cần Python 3.14 và bộ công cụ PostgreSQL 18 (`initdb`, `pg_ctl`, `psql`). Script tạo một PostgreSQL local riêng để phát triển, không sử dụng database trên Coolify.
+Thực hiện các lệnh PowerShell sau từ thư mục `backend`. Hỗ trợ Python 3.13 trở lên; image production dùng Python 3.14. Cần bộ công cụ PostgreSQL (`initdb`, `pg_ctl`, `psql`; đã kiểm tra với 17). Script tạo một PostgreSQL local riêng để phát triển, không sử dụng database trên Coolify.
 
 ```powershell
-py -3.14 -m venv .venv
+python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\python.exe scripts/local_postgres.py start
 .\.venv\Scripts\python.exe manage.py db upgrade

@@ -15,7 +15,7 @@ def cipher():
         if not isinstance(key, str) or not key:
             raise ValueError
         return Fernet(key.encode("ascii"))
-    except ValueError, TypeError, UnicodeError:
+    except (ValueError, TypeError, UnicodeError):
         raise ProviderError("credential_storage_unavailable") from None
 
 
@@ -75,5 +75,5 @@ def load_credentials(connection):
         ):
             raise ValueError
         return {"apiKey": value["apiKey"], "webhookSecret": value["webhookSecret"]}
-    except InvalidToken, ValueError, TypeError, UnicodeError:
+    except (InvalidToken, ValueError, TypeError, UnicodeError):
         raise ProviderError("credentials_unavailable") from None

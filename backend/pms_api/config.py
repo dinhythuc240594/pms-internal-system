@@ -27,7 +27,7 @@ def postgres_url(value, name="DATABASE_URL"):
         if url.port is not None and not 1 <= url.port <= 65535:
             raise ValueError
         return url.set(drivername="postgresql+psycopg")
-    except ArgumentError, ValueError, TypeError:
+    except (ArgumentError, ValueError, TypeError):
         raise ConfigurationError(
             f"{name} must be a valid PostgreSQL URL with username, host and database."
         ) from None
@@ -77,7 +77,7 @@ def webhook_base_url(value):
         ):
             raise ValueError
         return "https://" + parsed.netloc
-    except ValueError, TypeError:
+    except (ValueError, TypeError):
         raise ConfigurationError(
             "CHANNEX_WEBHOOK_BASE_URL must be an exact HTTPS origin."
         ) from None
@@ -103,7 +103,7 @@ def load_config(environ=None, *, env_file=BACKEND_DIR / ".env"):
         port = int(values.get("PORT", "5000"))
         if not 1 <= port <= 65535:
             raise ValueError
-    except ValueError, TypeError:
+    except (ValueError, TypeError):
         raise ConfigurationError("PORT must be between 1 and 65535.") from None
     default_origins = (
         "http://localhost:5173,http://127.0.0.1:5173" if environment != "production" else ""

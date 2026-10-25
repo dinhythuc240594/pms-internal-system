@@ -44,7 +44,7 @@ def decimal(value, low=Decimal(0), high=Decimal("999999999999999.9999"), places=
         ):
             invalid()
         return str(number)
-    except InvalidOperation, ValueError, TypeError:
+    except (InvalidOperation, ValueError, TypeError):
         invalid()
 
 
@@ -55,7 +55,7 @@ def optional_date(value):
         return None
     try:
         return date.fromisoformat(value).isoformat()
-    except ValueError, TypeError:
+    except (ValueError, TypeError):
         invalid("Ngày cần dùng định dạng YYYY-MM-DD.")
 
 

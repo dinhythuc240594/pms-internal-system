@@ -1,4 +1,7 @@
 {
+  "Phòng vẫn có khách đang ở; cần trả phòng lượt trước và dọn phòng.": "The room is still occupied. Check out the previous guest and clean the room first.",
+  "Phòng vẫn có khách đang ở; cần trả phòng lượt trước.": "The room is still occupied. Check out the previous guest first.",
+  "Mã phòng": "Room ID",
   "(Bạn)": "(You)",
   "(Miễn phí)": "(Free)",
   "(không bắt buộc)": "(not required)",

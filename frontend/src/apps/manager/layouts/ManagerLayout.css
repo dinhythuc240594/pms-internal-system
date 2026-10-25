@@ -37,8 +37,9 @@
 .manager-sidebar.is-collapsed .manager-brand-row { justify-content: center; }
 .manager-sidebar.is-collapsed .manager-nav-link { justify-content: center; padding: 12px 0; }
 .manager-workspace { min-width: 0; flex: 1; display: flex; flex-direction: column; }
-.manager-header { flex-shrink: 0; min-height: 108px; display: flex; justify-content: space-between; align-items: center; gap: 24px; padding: 20px 32px; background: var(--manager-surface); border-bottom: 1px solid var(--manager-line); position: relative; z-index: 40; }
+.manager-header { flex-shrink: 0; min-height: 88px; display: flex; justify-content: space-between; align-items: center; gap: 24px; padding: 16px 24px; background: var(--manager-surface); border-bottom: 1px solid var(--manager-line); position: relative; z-index: 40; }
 .manager-header-title { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.manager-header-title > div { min-width: 0; }
 .manager-header-breadcrumb { font-size: 10px; color: var(--manager-muted); display: block; margin-bottom: 8px; }
 .manager-header-breadcrumb span { margin: 0 8px; color: var(--manager-muted); }
 .manager-header h1 { font-size: 21px; font-weight: 650; letter-spacing: -.6px; margin: 0; line-height: 1.35; }
@@ -62,18 +63,21 @@
 .manager-profile-menu a, .manager-profile-menu button { display: flex; width: 100%; align-items: center; gap: 10px; padding: 12px; border: 0; border-radius: 6px; font-size: 12px; color: var(--manager-ink); background: transparent; cursor: pointer; text-align: left; }
 .manager-profile-menu button { color: var(--manager-danger); }
 .manager-profile-menu a:hover, .manager-profile-menu button:hover { background: var(--manager-soft); }
-.manager-main { flex: 1; min-width: 0; overflow-y: auto; overflow-x: hidden; padding: 28px 32px 48px; }
-.manager-content { max-width: 1440px; margin: 0 auto; min-width: 0; }
-.manager-page { min-width: 0; }
-.manager-panel { border: 1px solid var(--manager-line); border-radius: 12px; background: var(--manager-surface); }
-.manager-page-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.manager-main { flex: 1; min-height: 0; min-width: 0; overflow-y: auto; overflow-x: hidden; padding: 24px 24px 40px; scrollbar-gutter: stable; }
+.manager-content { width: 100%; min-width: 0; }
+.manager-page { width: 100%; min-width: 0; }
+.manager-panel { min-width: 0; border: 1px solid var(--manager-line); border-radius: 12px; background: var(--manager-surface); }
+.manager-page-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+.manager-page-heading > div { min-width: 0; }
+.manager-page-heading > .manager-button { flex-shrink: 0; }
 .manager-page-heading h2 { font-size: 24px; font-weight: 600; letter-spacing: -.7px; margin: 0; }
 .manager-page-heading p { color: var(--manager-muted); font-size: 13px; line-height: 1.6; margin: 8px 0 0; }
 .manager-eyebrow { color: var(--manager-accent); font-size: 10px; font-weight: 650; letter-spacing: 1.4px; text-transform: uppercase; }
-.manager-button { display: inline-flex; justify-content: center; align-items: center; gap: 8px; min-height: 40px; padding: 10px 16px; border: 1px solid var(--manager-line); border-radius: 6px; background: var(--manager-surface); color: var(--manager-ink); font-size: 12px; font-weight: 600; cursor: pointer; }
+.manager-button { display: inline-flex; justify-content: center; align-items: center; gap: 8px; min-height: 40px; padding: 10px 16px; border: 1px solid var(--manager-line); border-radius: 8px; background: var(--manager-surface); color: var(--manager-ink); font-size: 12px; font-weight: 600; line-height: 1.4; cursor: pointer; }
+.manager-button svg { flex-shrink: 0; }
 .manager-button-primary { background: #086ab4; border-color: #086ab4; color: #fff; }
 .manager-button:hover { filter: brightness(.97); }
-.manager-table-wrap { overflow-x: auto; }
+.manager-table-wrap { width: 100%; min-width: 0; overflow-x: auto; overscroll-behavior-x: contain; }
 .manager-table { border-collapse: collapse; width: 100%; text-align: left; font-size: 13px; }
 .manager-table th { color: var(--manager-muted); font-size: 10px; font-weight: 600; background: var(--manager-soft); }
 .manager-table th, .manager-table td { padding: 16px 20px; border-bottom: 1px solid var(--manager-line); }
@@ -86,6 +90,26 @@
 .manager-shell ::-webkit-scrollbar-track { background: transparent; }
 
 @media (max-width: 1200px) { .manager-header-search { width: 160px; } .manager-profile-copy { display: none; } .manager-header { gap: 16px; } }
-@media (max-width: 900px) { .manager-desktop-navigation { display: none; } .manager-mobile-toggle { display: grid; } .manager-header { padding: 16px 24px; min-height: 96px; } .manager-main { padding: 24px; } }
-@media (max-width: 600px) { .manager-header { padding: 16px; gap: 12px; flex-wrap: wrap; } .manager-header-title { flex: 1; } .manager-header-title p, .manager-header-breadcrumb { display: none; } .manager-header h1 { font-size: 17px; } .manager-header-actions { gap: 8px; } .manager-header-search { display: none; } .manager-profile-trigger { padding: 0; } .manager-profile-trigger > svg { display: none; } .manager-icon-button, .manager-avatar { width: 36px; height: 36px; } .manager-profile-menu { width: min(260px, calc(100vw - 32px)); } .manager-main { padding: 20px 16px 32px; } .manager-page-heading { flex-wrap: wrap; } .manager-page-heading h2 { font-size: 21px; } }
+@media (max-width: 900px) { .manager-desktop-navigation { display: none; } .manager-mobile-toggle { display: grid; } .manager-header { padding: 16px 24px; min-height: 88px; } .manager-main { padding: 24px; } }
+@media (max-width: 600px) {
+  .manager-header { display: grid; grid-template-columns: minmax(0, 1fr); min-height: 0; padding: 12px 16px; gap: 10px; }
+  .manager-header-title { gap: 12px; }
+  .manager-header-title p, .manager-header-breadcrumb { display: none; }
+  .manager-header h1 { font-size: 18px; overflow-wrap: anywhere; }
+  .manager-header-actions { width: 100%; justify-content: end; gap: 8px; }
+  .manager-header-actions .loha-language-switcher { margin-right: auto; }
+  .manager-header-search { display: none; }
+  .manager-profile-trigger { min-width: 44px; min-height: 44px; justify-content: center; padding: 0; }
+  .manager-profile-trigger > svg { display: none; }
+  .manager-icon-button, .manager-sidebar-icon { width: 44px; height: 44px; }
+  .manager-avatar { width: 36px; height: 36px; }
+  .manager-profile-menu { width: min(280px, calc(100vw - 32px)); top: calc(100% + 8px); }
+  .manager-main { padding: 16px 16px max(24px, env(safe-area-inset-bottom)); scrollbar-gutter: auto; }
+  .manager-page-heading { gap: 12px; }
+  .manager-page-heading h2 { font-size: 21px; }
+  .manager-page-heading > .manager-button { width: 100%; }
+  .manager-button { min-height: 44px; }
+  .manager-mobile-dialog .manager-sidebar { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+  .manager-mobile-dialog .manager-brand-row { margin-bottom: 24px; }
+}
 @media (prefers-reduced-motion: reduce) { .manager-shell *, .manager-shell *::before, .manager-shell *::after { transition: none !important; animation: none !important; } }

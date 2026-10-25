@@ -1,4 +1,4 @@
-"""Two commercial plans, tenant entitlements and transaction-scoped quota checks."""
+"""Commercial plans, tenant entitlements and transaction-scoped quota checks."""
 
 from datetime import datetime
 from decimal import Decimal
@@ -32,6 +32,7 @@ ACTION_FEATURES = {
     "inventory.view": "INVENTORY_WAREHOUSE",
     "inventory.write": "INVENTORY_WAREHOUSE",
     "reports.view": "REPORTS_BASIC",
+    "reports.advanced.view": "REPORTS_ADVANCED",
 }
 CORE_FEATURES = {
     "DASHBOARD",
@@ -56,7 +57,7 @@ ADVANCED_FEATURES = {
 
 
 def plan_code(plan):
-    if plan.code in {"FREE", "PRO"}:
+    if plan.code:
         return plan.code
     name = plan.name.casefold()
     if "free" in name or "miễn phí" in name or "mien phi" in name:
@@ -119,8 +120,9 @@ def plan_json(plan):
         if code == "FREE"
         else None,
         "maxUsers": plan.max_users if plan.max_users is not None else 5 if code == "FREE" else None,
-        "features": dict(plan.features or {}),
+        "features": {key: (plan.features or {}).get(key, True) for key in FEATURE_CATALOG},
         "active": plan.active,
+        "deleted": bool(plan.deleted),
     }
 
 
@@ -234,7 +236,11 @@ def quota_limit(value, resource):
     plan = value["plan"]
     if plan is None:
         return None
-    return plan_json(plan)["maxRooms" if resource == "rooms" else "maxUsers"]
+    cap = plan_json(plan)["maxRooms" if resource == "rooms" else "maxUsers"]
+    if resource == "rooms":
+        registered = value["subscription"].room_count
+        return min(registered, cap) if cap is not None else registered
+    return cap
 
 
 def quota_used(tenant_id, resource):
@@ -246,11 +252,18 @@ def quota_used(tenant_id, resource):
     )
 
 
-def ensure_quota(tenant_id, resource, delta=1):
-    if delta <= 0:
+def ensure_quota(tenant_id, resource, delta=1, *, require_registration=False):
+    if delta <= 0 and not require_registration:
         return
     lock_tenant(tenant_id)
-    limit = quota_limit(entitlement(tenant_id), resource)
+    value = entitlement(tenant_id)
+    if resource == "rooms" and value["subscription"] is None:
+        raise ApiError(
+            409, "subscription_required", "Cần đăng ký gói và số phòng trước khi thêm phòng."
+        )
+    if delta <= 0:
+        return
+    limit = quota_limit(value, resource)
     used = quota_used(tenant_id, resource)
     if limit is not None and used + delta > limit:
         raise ApiError(
@@ -281,6 +294,7 @@ def subscription_json(sub, plan):
         "planId": sub.plan_id,
         "planName": plan.name,
         "planCode": plan_code(plan),
+        "roomCount": sub.room_count,
         "status": sub.status,
         "startDate": sub.start_date.isoformat(),
         "endDate": sub.end_date.isoformat() if sub.end_date else None,

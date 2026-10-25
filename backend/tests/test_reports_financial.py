@@ -286,7 +286,7 @@ class FinancialReportsTests(DomainTestCase):
             self.assertEqual(totals(closed), (Decimal(200), Decimal(200), Decimal(0)))
             self.assertEqual(totals(in_house), (Decimal(260), Decimal(50), Decimal(210)))
             self.assertEqual(totals(future), (Decimal(200), Decimal(30), Decimal(170)))
-        with patch("pms_api.reports.routes.utcnow", return_value=self.now):
+        with patch("pms_api.reports.application.utcnow", return_value=self.now):
             response = self.request("get", "/reports/financial?start=2026-10-03&end=2026-10-05")
         self.assertEqual(response.status_code, 200, response.json)
         result = response.json
@@ -332,7 +332,7 @@ class FinancialReportsTests(DomainTestCase):
             room.condition = "dirty"
             db.session.commit()
         client, headers = self.login("frontdesk@test.local")
-        with patch("pms_api.reports.routes.utcnow", return_value=self.now):
+        with patch("pms_api.reports.application.utcnow", return_value=self.now):
             response = self.request(
                 "get", "/reports/dashboard?date=2026-10-04", client=client, headers=headers
             )
@@ -402,7 +402,7 @@ class FinancialReportsTests(DomainTestCase):
                 )
             )
             db.session.commit()
-        with patch("pms_api.reports.routes.utcnow", return_value=self.now):
+        with patch("pms_api.reports.application.utcnow", return_value=self.now):
             response = self.request("get", "/reports/financial?start=2026-10-03&end=2026-10-04")
         self.assertEqual(response.status_code, 200, response.json)
         self.assertEqual(response.json["summary"]["realizedRevenue"], "0.1234")

@@ -1,45 +1,31 @@
+import { t as tUi, tr as labelUi, useI18n } from '../../../../shared/i18n/useI18n.js';
 import { useEffect, useRef, useState } from 'react';
-import { Calendar, RefreshCw } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { CalendarDays, CheckCircle2, ChevronLeft, ChevronRight, Clock3, List, Plus, RefreshCw, Sparkles, UserRound, Users } from 'lucide-react';
 import { usePms } from '../../data/usePms';
-import { today } from '../../data/model';
+import { addDays, today } from '../../data/model';
+import { calendarWeek, isClosed, shortDate, taskKind, taskStatuses } from '../planCalendar';
+import PlanDialog from '../components/PlanDialog';
+import ManualTaskForm from '../components/ManualTaskForm';
+import TaskDetail from '../components/TaskDetail';
+import AssignmentForm from '../components/AssignmentForm';
+import AutomaticPlanForm from '../components/AutomaticPlanForm';
 import '../../components/DomainForms.css';
+import './HousekeepingPlan.css';
 
-const kinds = { arrival: 'Khách đến', departure: 'Khách rời', stayover: 'Khách lưu trú', dirty: 'Phòng bẩn', checkout: 'Sau trả phòng' };
-const statuses = { pending: 'Chờ dọn', in_progress: 'Đang dọn', inspection: 'Đang kiểm tra', completed: 'Đã hoàn tất', cancelled: 'Đã hủy' };
-const closed = task => ['completed', 'cancelled'].includes(task.status);
+const weekdayLabels = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+const emptyTasks = [];
 
-function TaskCard({ task, staff, shifts, canManage, canWrite, busy, act, assignTask, updateTask }) {
-  const [staffId, setStaffId] = useState(task.staffId || '');
-  const [shiftId, setShiftId] = useState(task.shiftId || '');
-  const [note, setNote] = useState(task.note);
-  const worker = staff.find(row => row.id === task.staffId);
-  const changeStatus = status => act(() => updateTask(task.id, { status, note, revision: task.revision }), `Đã cập nhật phòng ${task.room}: ${statuses[status].toLocaleLowerCase('vi')}.`);
-  const availableShifts = shifts.filter(row => row.active && row.staffId === staffId && row.date === task.date);
-
-  return <article className="domain-panel">
-    <div className="domain-toolbar"><div><h3>Phòng {task.room}</h3><p>{kinds[task.kind]} · {task.date}</p></div><span>{statuses[task.status]}</span></div>
-    <p>Nhân viên: <strong>{worker?.name || 'Chưa phân công'}</strong></p>
-    {task.startedAt && <p>Bắt đầu: {new Date(task.startedAt).toLocaleString('vi-VN')}</p>}
-    {task.completedAt && <p>Hoàn tất: {new Date(task.completedAt).toLocaleString('vi-VN')}</p>}
-    {!closed(task) && canManage && <form onSubmit={event => { event.preventDefault(); act(() => assignTask(task.id, { staffId: staffId || null, shiftId: shiftId || null, revision: task.revision }), `Đã ${staffId ? 'phân công' : 'gỡ phân công'} phòng ${task.room}.`); }}>
-      <fieldset className="domain-fields" disabled={busy}>
-        <label>Phân công phòng {task.room}<select value={staffId} onChange={event => { setStaffId(event.target.value); setShiftId(''); }}><option value="">Chưa phân công</option>{staff.filter(row => row.active).map(row => <option key={row.id} value={row.id}>{row.name}</option>)}</select></label>
-        <label>Ca cho phòng {task.room}<select value={shiftId} onChange={event => setShiftId(event.target.value)} disabled={!staffId}><option value="">Không gắn ca</option>{availableShifts.map(row => <option key={row.id} value={row.id}>{row.startTime} – {row.endTime}</option>)}</select></label>
-        <button type="submit" className="primary">Lưu phân công</button>
-      </fieldset>
-      <p>Đổi phân công sẽ đưa công việc về chờ dọn để người nhận mới bắt đầu lại.</p>
-    </form>}
-    {closed(task) ? task.note && <p>Ghi chú: {task.note}</p> : canWrite && <>
-      <label>Ghi chú phòng {task.room}<textarea maxLength={1000} rows={2} value={note} disabled={busy} onChange={event => setNote(event.target.value)} /></label>
-      <div className="domain-toolbar">
-        {task.status === 'pending' && <button type="button" className="primary" disabled={busy} onClick={() => changeStatus('in_progress')}>Bắt đầu dọn phòng {task.room}</button>}
-        {task.status === 'in_progress' && <button type="button" className="success" disabled={busy} onClick={() => changeStatus('inspection')}>Gửi kiểm tra phòng {task.room}</button>}
-        {task.status === 'inspection' && canManage && <><button type="button" className="success" disabled={busy} onClick={() => changeStatus('completed')}>Xác nhận sạch phòng {task.room}</button><button type="button" disabled={busy} onClick={() => changeStatus('in_progress')}>Yêu cầu dọn lại phòng {task.room}</button></>}
-        {canManage && <button type="button" disabled={busy} onClick={() => changeStatus('cancelled')}>Hủy công việc phòng {task.room}</button>}
-      </div>
-      {task.status === 'inspection' && !canManage && <p>Đã gửi kiểm tra. Lễ tân hoặc quản lý sẽ xác nhận phòng sạch.</p>}
-    </>}
-  </article>;
+function TaskButton({ task, staff, shifts, busy, onOpen, list = false }) {
+  useI18n();
+  const shift = shifts.find(row => row.id === task.shiftId);
+  return <button type="button" className={`hk-calendar-task is-${task.status}`} disabled={busy} aria-label={tUi('hk.taskAria', { room: task.room, status: labelUi(taskStatuses[task.status]), date: shortDate(task.date) })} onClick={() => onOpen(task)}>
+    <span className="hk-calendar-task-top"><strong>{tUi("common.room")}{' '}{task.room}</strong><span className={`hk-task-status is-${task.status}`}>{labelUi(taskStatuses[task.status])}</span></span>
+    <span>{taskKind(task)}</span>
+    {list && <span><UserRound size={12} aria-hidden="true" />{staff.find(row => row.id === task.staffId)?.name || tUi("hk.unassigned")} · {shortDate(task.date)}</span>}
+    {shift && <span><Clock3 size={12} aria-hidden="true" />{shift.startTime} – {shift.endTime}</span>}
+    {task.note && <span className="hk-calendar-note">{task.note}</span>}
+  </button>;
 }
 
 export default function HousekeepingPlan() {
@@ -48,50 +34,81 @@ export default function HousekeepingPlan() {
 }
 
 function PlanWorkspace({ pms }) {
-  const { settings, tenantId, housekeepingStaff = [], housekeepingTasks = [],
-    access, requestTenant, generateHousekeepingPlan, assignHousekeepingTask, updateHousekeepingTask } = pms;
-  const [date, setDate] = useState(today(settings.timezone));
-  const [loaded, setLoaded] = useState({ date: '', tasks: [], shifts: [], source: null, reload: -1, error: '' }), [status, setStatus] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState(''), [notice, setNotice] = useState(''), [reload, setReload] = useState(0);
+  useI18n();
+  const { settings, tenantId, rooms = [], housekeepingStaff = [], housekeepingTasks = emptyTasks, housekeepingShifts = emptyTasks,
+    access, requestTenant, generateHousekeepingPlan, createHousekeepingTask, assignHousekeepingTask, updateHousekeepingTask } = pms;
+  const currentDate = today(settings.timezone);
+  const [date, setDate] = useState(currentDate), [view, setView] = useState('calendar');
+  const [status, setStatus] = useState(''), [staffFilter, setStaffFilter] = useState('');
+  const [loaded, setLoaded] = useState({ start: '', tasks: [], shifts: [], source: null, shiftsSource: null, reload: -1, error: '' });
+  const [busy, setBusy] = useState(false), busyRef = useRef(false);
+  const [error, setError] = useState(''), [notice, setNotice] = useState(''), [reload, setReload] = useState(0), [dialog, setDialog] = useState(null);
   const canManage = access('housekeeping.manage').allowed, canWrite = access('housekeeping.write').allowed;
+  const { start, end, days } = calendarWeek(date);
   const requests = useRef(requestTenant);
   useEffect(() => { requests.current = requestTenant; }, [requestTenant]);
-  // Provider methods change identity on refresh; the workspace task array is the stable refresh signal.
   useEffect(() => {
     let active = true;
-    if (!date) return () => { active = false; };
-    const params = new URLSearchParams({ date });
+    const params = new URLSearchParams({ start, end });
     Promise.all([requests.current('/housekeeping/tasks?' + params), requests.current('/housekeeping/shifts?' + params)])
-      .then(([data, shifts]) => { if (active) setLoaded({ date, tasks: data.tasks, shifts: shifts.shifts, source: housekeepingTasks, reload, error: '' }); })
-      .catch(err => { if (active) setLoaded({ date, tasks: [], shifts: [], source: housekeepingTasks, reload, error: err.message }); });
+      .then(([data, shifts]) => { if (active) setLoaded({ start, tasks: data.tasks, shifts: shifts.shifts, source: housekeepingTasks, shiftsSource: housekeepingShifts, reload, error: '' }); })
+      .catch(err => { if (active) setLoaded({ start, tasks: [], shifts: [], source: housekeepingTasks, shiftsSource: housekeepingShifts, reload, error: err.message }); });
     return () => { active = false; };
-  }, [date, tenantId, housekeepingTasks, reload]);
-  async function act(action, message) {
-    if (busy) return;
-    setBusy(true); setError(''); setNotice('');
-    try { const result = await action(); setNotice(typeof message === 'function' ? message(result) : message); }
-    catch (err) { setError(err.message); }
-    finally { setBusy(false); }
-  }
-  const loading = Boolean(date) && (loaded.date !== date || loaded.source !== housekeepingTasks || loaded.reload !== reload);
-  const tasks = loaded.date === date && !loading ? loaded.tasks : [];
-  const visible = tasks.filter(task => !status || task.status === status);
-  const failure = error || (!loading && loaded.error);
+  }, [start, end, tenantId, housekeepingTasks, housekeepingShifts, reload]);
 
-  return <div className="pms-domain-page">
-    <header className="domain-toolbar"><div><h1>Kế hoạch dọn phòng</h1><p>{canManage ? 'Lập kế hoạch từ lượt khách đến, khách rời, lưu trú và phòng bẩn.' : 'Công việc được giao cho bạn. Dọn xong cần gửi kiểm tra trước khi xác nhận sạch.'}</p></div></header>
-    <section className="domain-panel"><div className="domain-toolbar">
-      <label>Ngày kế hoạch<input type="date" required value={date} disabled={busy} onChange={event => { setDate(event.target.value); setNotice(''); }} /></label>
-      <label>Lọc trạng thái<select value={status} onChange={event => setStatus(event.target.value)}><option value="">Tất cả trạng thái</option>{Object.entries(statuses).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-      <button type="button" disabled={busy || loading || !date} onClick={() => setReload(value => value + 1)}><RefreshCw size={16} aria-hidden="true" /> Tải lại công việc</button>
-      {canManage && <button type="button" className="primary" disabled={busy || loading || !date} onClick={() => act(() => generateHousekeepingPlan({ date }), result => `Đã lập kế hoạch: thêm ${result.created} công việc. Những công việc đã có được giữ nguyên.`)}><Calendar size={16} aria-hidden="true" /> {busy ? 'Đang xử lý…' : 'Tạo kế hoạch tự động'}</button>}
-    </div><p>{tasks.length} công việc · {tasks.filter(task => task.status === 'inspection').length} chờ kiểm tra · {tasks.filter(task => task.status === 'completed').length} hoàn tất</p></section>
-    {failure && <div className="domain-error" role="alert"><p>{failure}</p><button type="button" disabled={busy} onClick={() => { setError(''); setReload(value => value + 1); }}>Tải lại phiên bản công việc</button></div>}
-    {notice && <p role="status">{notice}</p>}
-    {loading ? <p role="status">Đang tải công việc buồng phòng…</p> : <div className="domain-grid">
-      {visible.map(task => <TaskCard key={`${task.id}:${task.revision}`} task={task} staff={housekeepingStaff} shifts={loaded.shifts} canManage={canManage} canWrite={canWrite} busy={busy} act={act} assignTask={assignHousekeepingTask} updateTask={updateHousekeepingTask} />)}
-      {!visible.length && <section className="domain-panel"><h2>Chưa có công việc</h2><p>{status ? 'Không có công việc khớp bộ lọc này.' : canManage ? 'Chọn ngày và tạo kế hoạch tự động để bắt đầu phân công.' : 'Chưa có công việc được giao cho bạn trong ngày này.'}</p></section>}
-    </div>}
+  const loading = loaded.start !== start || loaded.source !== housekeepingTasks || loaded.shiftsSource !== housekeepingShifts || loaded.reload !== reload;
+  const tasks = !loading ? loaded.tasks : emptyTasks;
+  const shifts = !loading ? loaded.shifts : emptyTasks;
+  const unassignedTasks = tasks.filter(task => !task.staffId && !isClosed(task));
+  const visible = tasks.filter(task => (view === 'list' || task.staffId) && (!status || task.status === status) && (!staffFilter || task.staffId === staffFilter));
+  const staffRows = housekeepingStaff.filter(row => row.active || tasks.some(task => task.staffId === row.id));
+  const people = [...staffRows];
+  // Keep historical assignments visible even when their staff record is no longer in the roster.
+  for (const task of tasks) if (task.staffId && !people.some(row => row.id === task.staffId)) people.push({ id: task.staffId, name: 'Nhân viên đã ngừng hoạt động' });
+  const visiblePeople = people.filter(row => !staffFilter || row.id === staffFilter);
+  const failure = error || (!loading && loaded.error);
+  function openDialog(next) { setError(''); setDialog(next); }
+  function closeDialog() { if (!busyRef.current) { setDialog(null); setError(''); } }
+  async function act(action, message) {
+    if (busyRef.current) return;
+    busyRef.current = true; setBusy(true); setError(''); setNotice('');
+    try {
+      const result = await action();
+      setNotice(typeof message === 'function' ? message(result) : message);
+      if (result?.date) setDate(result.date);
+      setDialog(null); setReload(value => value + 1);
+    } catch (err) { setError(err.message); }
+    finally { busyRef.current = false; setBusy(false); }
+  }
+  const openTask = task => openDialog({ mode: 'task', task });
+  const addTask = (day = date, staffId = '') => openDialog({ mode: 'manual', date: day, staffId });
+
+  return <div className="pms-domain-page hk-plan-page">
+    <header className="hk-plan-heading"><div><span className="hk-plan-kicker">{tUi("nav.housekeeping")}</span><h1>{tUi("nav.housekeepingPlan")}</h1><p>{canManage ? tUi("hk.planIntro") : tUi("hk.ownPlanIntro")}</p></div><div className="hk-plan-actions">{canManage && <><Link className="hk-plan-link" to="/id/housekeeping/staff"><Users size={16} aria-hidden="true" />{tUi("hk.staffAndShifts")}</Link><button type="button" disabled={busy || loading || Boolean(loaded.error)} onClick={() => openDialog({ mode: 'assignment' })}><UserRound size={16} aria-hidden="true" />{tUi('hk.assignment')}{!loading && ` (${unassignedTasks.length})`}</button><button type="button" disabled={busy || loading || Boolean(loaded.error)} onClick={() => openDialog({ mode: 'auto', date })}><Sparkles size={16} aria-hidden="true" />{tUi("hk.auto")}</button><button type="button" className="primary" disabled={busy} onClick={() => addTask()}><Plus size={16} aria-hidden="true" />{tUi("hk.manual")}</button></>}</div></header>
+    <section className="hk-plan-stats" aria-label={tUi("hk.weekSummary")}><div><CalendarDays size={18} aria-hidden="true" /><span>{tUi("hk.tasks")}<strong>{loading ? '—' : tasks.length}</strong></span></div><div><Users size={18} aria-hidden="true" /><span>{tUi("hk.unassigned")}<strong>{loading ? '—' : unassignedTasks.length}</strong></span></div><div><Clock3 size={18} aria-hidden="true" /><span>{tUi("hk.inspection")}<strong>{loading ? '—' : tasks.filter(task => task.status === 'inspection').length}</strong></span></div><div><CheckCircle2 size={18} aria-hidden="true" /><span>{tUi("hk.completed")}<strong>{loading ? '—' : tasks.filter(task => task.status === 'completed').length}</strong></span></div></section>
+    <section className="domain-panel hk-plan-board">
+      <div className="hk-plan-controls"><div className="hk-week-nav"><button type="button" className="hk-icon-button" disabled={busy} aria-label={tUi("hk.previousWeek")} onClick={() => setDate(addDays(date, -7))}><ChevronLeft size={17} aria-hidden="true" /></button><button type="button" disabled={busy} onClick={() => setDate(currentDate)}>{tUi("common.today")}</button><button type="button" className="hk-icon-button" disabled={busy} aria-label={tUi("hk.nextWeek")} onClick={() => setDate(addDays(date, 7))}><ChevronRight size={17} aria-hidden="true" /></button><strong>{shortDate(start)} – {shortDate(addDays(end, -1))}/{addDays(end, -1).slice(0, 4)}</strong></div><div className="hk-view-toggle" role="group" aria-label={tUi("hk.planView")}><button type="button" aria-pressed={view === 'calendar'} onClick={() => setView('calendar')}><CalendarDays size={15} aria-hidden="true" />{tUi("hk.calendar")}</button><button type="button" aria-pressed={view === 'list'} onClick={() => setView('list')}><List size={15} aria-hidden="true" />{tUi("common.list")}</button></div></div>
+      <div className="hk-plan-filters"><label>{tUi("hk.weekDate")}<input type="date" required value={date} disabled={busy} onChange={event => { if (event.target.value) { setDate(event.target.value); setNotice(''); } }} /></label><label>{tUi("common.staff")}<select value={staffFilter} disabled={busy} onChange={event => setStaffFilter(event.target.value)}><option value="">{tUi("common.allStaff")}</option>{people.map(row => <option key={row.id} value={row.id}>{row.name}</option>)}</select></label><label>{tUi("common.status")}<select value={status} onChange={event => setStatus(event.target.value)}><option value="">{tUi("common.allStatuses")}</option>{Object.entries(taskStatuses).map(([value, label]) => <option key={value} value={value}>{labelUi(label)}</option>)}</select></label><button type="button" disabled={busy || loading} onClick={() => { setError(''); setReload(value => value + 1); }}><RefreshCw size={15} aria-hidden="true" />{tUi("common.reload")}</button></div>
+      <div className="hk-plan-legend">{Object.entries(taskStatuses).map(([value, label]) => <span key={value}><i className={`is-${value}`} />{labelUi(label)}</span>)}<span>{loading ? tUi("common.loading") : tUi('hk.taskCount', { count: visible.length })}</span></div>
+      {failure && !dialog && <div className="domain-error" role="alert"><p>{failure}</p><button type="button" disabled={busy || loading} onClick={() => { setError(''); setReload(value => value + 1); }}>{tUi("hk.reloadTasks")}</button></div>}
+      {notice && <p className="hk-plan-notice" role="status"><CheckCircle2 size={16} aria-hidden="true" />{notice}</p>}
+      {loading ? <p className="hk-plan-empty" role="status">{tUi("hk.loadingCalendar")}</p> : !loaded.error && <>
+        {view === 'calendar' ? <div className="hk-calendar-scroll" role="region" aria-label={tUi("hk.calendarLabel")} tabIndex={0}><table className="hk-calendar"><thead><tr><th scope="col">{tUi("hk.staffDate")}</th>{days.map((day, index) => <th key={day} scope="col" className={day === currentDate ? 'is-today' : index > 4 ? 'is-weekend' : ''} aria-current={day === currentDate ? 'date' : undefined}><span>{labelUi(weekdayLabels[index])}</span><strong>{shortDate(day)}</strong></th>)}</tr></thead><tbody>{visiblePeople.map(person => {
+          const personTasks = visible.filter(task => task.staffId === person.id);
+          return <tr key={person.id}><th scope="row"><span className="hk-calendar-person"><UserRound size={17} aria-hidden="true" /><strong>{person.name}</strong></span><small>{tUi('hk.personCount', { count: personTasks.length, open: personTasks.filter(task => !isClosed(task)).length })}</small></th>{days.map(day => {
+            const dayTasks = personTasks.filter(task => task.date === day);
+            const dayShifts = shifts.filter(shift => shift.active && shift.staffId === person.id && shift.date === day);
+            return <td key={day} className={day === currentDate ? 'is-today' : ''}>{dayShifts.map(shift => <span key={shift.id} className="hk-calendar-shift"><Clock3 size={11} aria-hidden="true" />{shift.startTime}–{shift.endTime}</span>)}{dayTasks.map(task => <TaskButton key={task.id} task={task} staff={housekeepingStaff} shifts={shifts} busy={busy} onOpen={openTask} />)}{!dayTasks.length && <span className="hk-calendar-free">{dayShifts.length ? tUi("hk.noTasks") : '—'}</span>}{canManage && person.active !== false && <button type="button" className="hk-calendar-add" disabled={busy || !housekeepingStaff.some(row => row.id === person.id && row.active)} aria-label={tUi('hk.addForPerson', { date: shortDate(day), name: person.name })} onClick={() => addTask(day, person.id)}><Plus size={13} aria-hidden="true" />{tUi("hk.addTask")}</button>}</td>;
+          })}</tr>;
+        })}</tbody></table>{!visiblePeople.length && <p className="hk-plan-empty">{tUi("hk.noStaffWeek")}</p>}</div> : <div className="hk-plan-task-list">{visible.map(task => <TaskButton key={task.id} task={task} staff={housekeepingStaff} shifts={shifts} busy={busy} onOpen={openTask} list />)}{!visible.length && <p className="hk-plan-empty">{tUi("hk.noMatchingWeek")}</p>}</div>}
+        <p className="hk-plan-hint hk-board-hint">{canManage ? tUi("hk.calendarHint") : tUi("hk.ownCalendarHint")}{' '}{tUi("hk.shiftHint")}</p>
+      </>}
+    </section>
+    {dialog && <PlanDialog title={dialog.mode === 'task' ? tUi('hk.taskTitle', { room: dialog.task.room }) : dialog.mode === 'manual' ? tUi("hk.manualTitle") : dialog.mode === 'assignment' ? tUi('hk.assignment') : tUi("hk.autoTitle")} busy={busy} error={error} onClose={closeDialog}>
+      {dialog.mode === 'assignment' && <AssignmentForm tasks={unassignedTasks} staff={housekeepingStaff} shifts={shifts} busy={busy} onClose={closeDialog} onSave={(task, input) => act(() => assignHousekeepingTask(task.id, input), tUi('hk.assignedSuccess', { room: task.room }))} />}
+      {dialog.mode === 'manual' && <ManualTaskForm initial={dialog} rooms={rooms} staff={housekeepingStaff} requestTenant={requestTenant} shiftsSource={housekeepingShifts} busy={busy} onClose={closeDialog} onSave={input => act(() => createHousekeepingTask(input), tUi('hk.manualSuccess'))} />}
+      {dialog.mode === 'auto' && <AutomaticPlanForm initial={dialog} staff={housekeepingStaff} rooms={rooms} requestTenant={requestTenant} knownShifts={shifts} knownShiftRange={!loading && !loaded.error ? { start, end } : null} shiftsSource={housekeepingShifts} busy={busy} onClose={closeDialog} onSave={input => act(() => generateHousekeepingPlan(input), result => tUi('hk.autoBatchSuccess', { created: result.created, assigned: result.assigned, days: result.dates.length }))} />}
+      {dialog.mode === 'task' && <TaskDetail task={dialog.task} staff={housekeepingStaff} shifts={shifts} canManage={canManage} canWrite={canWrite} busy={busy} act={act} assignTask={assignHousekeepingTask} updateTask={updateHousekeepingTask} timeZone={settings.timezone} onClose={closeDialog} />}
+    </PlanDialog>}
   </div>;
 }

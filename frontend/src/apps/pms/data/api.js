@@ -1,8 +1,21 @@
+import { getLocale } from '../../../shared/i18n/store.js';
+import { translateApiText, translateApiValue } from '../../../shared/i18n/core.js';
+
+export function localizeApiPayload(value, locale = getLocale()) {
+  if (typeof value === 'string') return value.startsWith('i18n:') ? value : translateApiText(locale, value);
+  if (Array.isArray(value)) return value.map(item => localizeApiPayload(item, locale));
+  if (value && typeof value === 'object') {
+    if (typeof value.$i18n === 'string') return value;
+    return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, localizeApiPayload(item, locale)]));
+  }
+  return value;
+}
+
 export const CORE_ROLES = {
   HOTEL_OWNER: ['*'],
   FRONT_DESK: ['profile.view', 'dashboard.view', 'reservations.view', 'reservations.write', 'rooms.view', 'housekeeping.view', 'housekeeping.write', 'rates.view', 'guests.view', 'guests.write', 'payments.write', 'cashbook.view', 'pos.view', 'pos.write', 'housekeeping.manage', 'channels.view', 'notifications.view'],
   HOUSEKEEPING: ['profile.view', 'rooms.view', 'housekeeping.view', 'housekeeping.write', 'notifications.view'],
-  ACCOUNTANT: ['profile.view', 'dashboard.view', 'reservations.view', 'guests.view', 'cashbook.view', 'reports.view', 'rates.view', 'payments.write', 'cashbook.write', 'pos.view', 'pos.write', 'finance.adjust', 'pos.cancel', 'cashbook.reverse', 'inventory.view', 'inventory.write', 'notifications.view'],
+  ACCOUNTANT: ['profile.view', 'dashboard.view', 'reservations.view', 'guests.view', 'cashbook.view', 'reports.view', 'reports.advanced.view', 'rates.view', 'payments.write', 'cashbook.write', 'pos.view', 'pos.write', 'finance.adjust', 'pos.cancel', 'cashbook.reverse', 'inventory.view', 'inventory.write', 'notifications.view'],
 };
 export const systemUser = user => ['SYSTEM_MANAGER', 'SUPER_ADMIN'].includes(user?.globalRole);
 export function tenantRole(user, id) {
@@ -20,7 +33,7 @@ export const ACTION_FEATURES = {
   'dashboard.view': 'DASHBOARD', 'reservations.view': 'RESERVATION_VIEW', 'reservations.write': 'RESERVATION_CREATE',
   'rooms.view': 'ROOM_DIAGRAM', 'housekeeping.view': 'HOUSEKEEPING', 'housekeeping.write': 'HOUSEKEEPING', 'housekeeping.manage': 'HOUSEKEEPING',
   'cashbook.view': 'CASHBOOK', 'cashbook.write': 'CASHBOOK', 'cashbook.reverse': 'CASHBOOK', 'payments.write': 'CASHBOOK', 'finance.adjust': 'CASHBOOK',
-  'rates.view': 'ARI_MANAGEMENT', 'reports.view': 'REPORTS_BASIC', 'pos.view': 'POS_SALES', 'pos.write': 'POS_SALES', 'pos.cancel': 'POS_SALES',
+  'rates.view': 'ARI_MANAGEMENT', 'reports.view': 'REPORTS_BASIC', 'reports.advanced.view': 'REPORTS_ADVANCED', 'pos.view': 'POS_SALES', 'pos.write': 'POS_SALES', 'pos.cancel': 'POS_SALES',
   'inventory.view': 'INVENTORY_WAREHOUSE', 'inventory.write': 'INVENTORY_WAREHOUSE',
   'channels.view': 'OTA_SYNC', 'channels.write': 'OTA_SYNC',
 };
@@ -55,31 +68,46 @@ export function createIntentJournal(storage) {
   const save = () => { try { storage?.setItem(storageKey, JSON.stringify(pending)); } catch { /* Retain the in-memory intent. */ } };
   return {
     async acquire(path, body, suggested = crypto.randomUUID(), actor = '') {
-      const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode((actor ? actor + '\u0000' : '') + path + JSON.stringify(canonical(body))));
-      const fingerprint = [...new Uint8Array(digest)].map(byte => byte.toString(16).padStart(2, '0')).join('');
+      const payload = path + JSON.stringify(canonical(body));
+      const hash = async value => [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value)))].map(byte => byte.toString(16).padStart(2, '0')).join('');
+      const fingerprint = await hash((actor ? actor + '\u0000' : '') + payload);
+      // Keep unknown pre-upgrade money results on their original key until reconciled.
+      if (actor) {
+        const legacy = await hash(payload);
+        if (pending[legacy]) return { fingerprint: legacy, key: pending[legacy] };
+      }
       if (!pending[fingerprint]) { pending[fingerprint] = suggested; save(); }
       return { fingerprint, key: pending[fingerprint] };
     },
     confirm(intent) { if (pending[intent.fingerprint] === intent.key) { delete pending[intent.fingerprint]; save(); } },
   };
 }
-export function createApiClient(fetcher = globalThis.fetch, baseUrl = import.meta.env?.VITE_API_BASE_URL || '') {
+export function createApiClient(fetcher = globalThis.fetch, baseUrl = import.meta.env?.VITE_API_BASE_URL || '', onPendingChange) {
   let csrfToken = null;
+  const pending = { reads: 0, writes: 0 };
   return {
     setCsrf(token) { csrfToken = token; },
-    async request(url, { method = 'GET', body, signal, intent } = {}) {
-      const headers = { Accept: 'application/json' };
-      if (body !== undefined) headers['Content-Type'] = 'application/json';
-      if (!['GET', 'HEAD'].includes(method) && csrfToken) headers['X-CSRF-Token'] = csrfToken;
-      if (intent) headers['Idempotency-Key'] = intent;
-      const response = await fetcher(baseUrl.replace(/\/$/, '') + url, { method, credentials: 'include', headers, signal, ...(body !== undefined ? { body: JSON.stringify(body) } : {}) });
-      const data = response.status === 204 ? null : await response.json().catch(() => null);
-      if (!response.ok) {
-        const error = new Error(data?.error?.message || `Yêu cầu thất bại (${response.status}).`);
-        Object.assign(error, { status: response.status, code: data?.error?.code, details: data?.error?.details });
-        throw error;
+    async request(url, { method = 'GET', body, signal, intent, quiet = false } = {}) {
+      const kind = method === 'GET' ? 'reads' : 'writes';
+      if (!quiet) pending[kind] += 1;
+      try {
+        if (!quiet) onPendingChange?.({ ...pending });
+        const headers = { Accept: 'application/json', 'Accept-Language': getLocale() };
+        if (body !== undefined) headers['Content-Type'] = 'application/json';
+        if (!['GET', 'HEAD'].includes(method) && csrfToken) headers['X-CSRF-Token'] = csrfToken;
+        if (intent) headers['Idempotency-Key'] = intent;
+        const response = await fetcher(baseUrl.replace(/\/$/, '') + url, { method, credentials: 'include', headers, signal, ...(body !== undefined ? { body: JSON.stringify(body) } : {}) });
+        const payload = response.status === 204 ? null : await response.json().catch(() => null);
+        const data = localizeApiPayload(payload);
+        if (!response.ok) {
+          const error = new Error(translateApiValue(getLocale(), data?.error?.message) || `Yêu cầu thất bại (${response.status}).`);
+          Object.assign(error, { status: response.status, code: data?.error?.code, details: data?.error?.details });
+          throw error;
+        }
+        return data;
+      } finally {
+        if (!quiet) { pending[kind] -= 1; onPendingChange?.({ ...pending }); }
       }
-      return data;
     },
   };
 }

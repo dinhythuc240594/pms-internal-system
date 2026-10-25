@@ -3,7 +3,13 @@ from decimal import Decimal
 
 from sqlalchemy import select
 
-from pms_api.catalog.models import PhysicalRoom, RoomTypeAvailability
+from pms_api.catalog.models import (
+    DEFAULT_UNITS,
+    Master,
+    PhysicalRoom,
+    RoomTypeAvailability,
+    ensure_default_units,
+)
 from pms_api.catalog.routes import adjust_inventory, lock_inventory
 from pms_api.extensions import db
 from pms_api.security import set_context
@@ -11,6 +17,231 @@ from tests.domain_fixture import DomainTestCase
 
 
 class CatalogPostgresTests(DomainTestCase):
+    def test_hotel_profile_settings_round_trip_partial_update_and_clear(self):
+        profile = {
+            "phone": "+84 28 1234 5678",
+            "contactEmail": " Reception@Hotel.Example ",
+            "website": "https://hotel.example",
+            "logoUrl": "https://hotel.example/logo.png",
+            "taxCode": "0312345678",
+            "bankName": "Hotel Bank",
+            "bankAccount": "00123456789",
+            "bankAccountName": "HOTEL COMPANY",
+            "timezone": "Asia/Bangkok",
+            "defaultLanguage": "en",
+        }
+        saved = self.request("patch", "/settings", json={**profile, "policies": "Check-in policy"})
+        self.assertEqual(saved.status_code, 200, saved.json)
+        expected = {**profile, "contactEmail": "reception@hotel.example"}
+        loaded = self.request("get", "/workspace")
+        self.assertEqual(loaded.status_code, 200, loaded.json)
+        for key, value in expected.items():
+            self.assertEqual(saved.json[key], value)
+            self.assertEqual(loaded.json["settings"][key], value)
+        updated = self.request("patch", "/settings", json={"phone": "", "logoUrl": ""})
+        self.assertEqual(updated.status_code, 200, updated.json)
+        self.assertEqual(updated.json["phone"], "")
+        self.assertEqual(updated.json["logoUrl"], "")
+        self.assertEqual(updated.json["bankAccount"], profile["bankAccount"])
+        self.assertEqual(updated.json["policies"], "Check-in policy")
+
+    def test_hotel_profile_settings_enforce_tenant_and_role_permissions(self):
+        saved = self.request("patch", "/settings", json={"phone": "Hotel A"})
+        self.assertEqual(saved.status_code, 200, saved.json)
+        crossed = self.request(
+            "patch", f"/api/tenants/{self.other_tenant_id}/settings", json={"phone": "Crossed"}
+        )
+        self.assertEqual(crossed.status_code, 403, crossed.json)
+        frontdesk, headers = self.login("frontdesk@test.local")
+        denied = self.request(
+            "patch", "/settings", json={"bankAccount": "123"}, client=frontdesk, headers=headers
+        )
+        self.assertEqual(denied.status_code, 403, denied.json)
+        owner_b, headers_b = self.login("owner-b@test.local")
+        loaded = self.request(
+            "get",
+            f"/api/tenants/{self.other_tenant_id}/workspace",
+            client=owner_b,
+            headers=headers_b,
+        )
+        self.assertEqual(loaded.status_code, 200, loaded.json)
+        self.assertEqual(loaded.json["settings"]["phone"], "")
+        self.assertEqual(loaded.json["settings"]["bankAccount"], "")
+        self.assertEqual(loaded.json["settings"]["defaultLanguage"], "vi")
+
+    def test_room_type_codes_keep_business_text_and_internal_room_links(self):
+        created = self.request(
+            "post",
+            "/masters/roomTypes",
+            json={"code": " 2 ", "name": "Couple", "roomNumbers": ["103"]},
+        )
+        self.assertEqual(created.status_code, 201, created.json)
+        room_type_id = created.json["id"]
+        self.assertNotEqual(room_type_id, "2")
+        self.assertEqual(created.json["code"], "2")
+        leading_zero = self.request(
+            "post",
+            "/masters/roomTypes",
+            json={"code": "02", "name": "Deluxe"},
+        )
+        self.assertEqual(leading_zero.status_code, 201, leading_zero.json)
+        self.assertEqual(leading_zero.json["code"], "02")
+        duplicate = self.request(
+            "post",
+            "/masters/roomTypes",
+            json={"code": "2", "name": "Duplicate"},
+        )
+        self.assertEqual(duplicate.status_code, 409, duplicate.json)
+        self.assertEqual(duplicate.json["error"]["code"], "ROOM_TYPE_CODE_EXISTS")
+        updated = self.request(
+            "patch",
+            "/masters/roomTypes",
+            json={"id": room_type_id, "code": "3"},
+        )
+        self.assertEqual(updated.status_code, 200, updated.json)
+        self.assertEqual(updated.json["id"], room_type_id)
+        preserved = self.request(
+            "patch",
+            "/masters/roomTypes",
+            json={"id": room_type_id, "name": "Couple renamed"},
+        )
+        self.assertEqual(preserved.json["code"], "3")
+        snapshot = self.request("get", "/workspace")
+        self.assertEqual(snapshot.status_code, 200, snapshot.json)
+        restored = next(t for t in snapshot.json["masters"]["roomTypes"] if t["id"] == room_type_id)
+        room = next(r for r in snapshot.json["rooms"] if r["id"] == "103")
+        self.assertEqual(restored["code"], "3")
+        self.assertEqual(room["typeId"], room_type_id)
+
+    def test_room_type_code_is_tenant_scoped_and_legacy_ids_do_not_change(self):
+        booking = self.make_booking()
+        legacy = self.request("patch", "/masters/roomTypes", json={"id": "rt-a", "name": "Legacy"})
+        self.assertEqual(legacy.status_code, 200, legacy.json)
+        self.assertIsNone(legacy.json["code"])
+        assigned = self.request("patch", "/masters/roomTypes", json={"id": "rt-a", "code": "2"})
+        self.assertEqual(assigned.status_code, 200, assigned.json)
+        self.assertEqual(assigned.json["id"], "rt-a")
+        for code in ("", " ", "x" * 41, None, 2, True):
+            invalid = self.request("patch", "/masters/roomTypes", json={"id": "rt-a", "code": code})
+            self.assertEqual(invalid.status_code, 422, invalid.json)
+        owner_b, headers_b = self.login("owner-b@test.local")
+        other = self.request(
+            "patch",
+            f"/api/tenants/{self.other_tenant_id}/masters/roomTypes",
+            json={"id": "rt-b", "code": "2"},
+            client=owner_b,
+            headers=headers_b,
+        )
+        self.assertEqual(other.status_code, 200, other.json)
+        crossed = self.request("patch", "/masters/roomTypes", json={"id": "rt-b", "code": "9"})
+        self.assertEqual(crossed.status_code, 404, crossed.json)
+        detail = self.request("get", f"/reservations/{booking['id']}")
+        self.assertEqual(detail.status_code, 200, detail.json)
+        with self.app.app_context():
+            set_context(tenant_id=self.tenant_id, user_id=self.owner_id)
+            room = db.session.get(PhysicalRoom, "room-a-101")
+            self.assertEqual(room.room_type_id, "rt-a")
+            db.session.rollback()
+
+    def test_default_units_are_persisted_idempotently_without_reactivating_disabled_units(self):
+        with self.app.app_context():
+            set_context(tenant_id=self.tenant_id, user_id=self.owner_id)
+            db.session.add_all(
+                [
+                    Master(
+                        id="disabled-unit",
+                        tenant_id=self.tenant_id,
+                        catalog="units",
+                        name=" cái ",
+                        active=False,
+                    ),
+                    Master(
+                        id="custom-unit",
+                        tenant_id=self.tenant_id,
+                        catalog="units",
+                        name="Thùng",
+                        active=True,
+                    ),
+                ]
+            )
+            db.session.flush()
+            ensure_default_units(self.tenant_id)
+            ensure_default_units(self.tenant_id)
+            db.session.commit()
+        snapshot = self.request("get", "/workspace")
+        units = snapshot.json["masters"]["units"]
+        self.assertEqual(len(units), len(DEFAULT_UNITS) + 1)
+        disabled = next(u for u in units if u["id"] == "disabled-unit")
+        self.assertFalse(disabled["active"])
+        self.assertNotIn("Cái", [u["name"] for u in units])
+        self.assertIn("Gói", [u["name"] for u in units])
+        self.assertIn("Thùng", [u["name"] for u in units])
+        service = self.request(
+            "post", "/masters/services", json={"name": "Snack", "unit": "Gói", "price": "1"}
+        )
+        self.assertEqual(service.status_code, 201, service.json)
+        self.assertEqual(service.json["unit"], "Gói")
+        custom = self.request("post", "/masters/units", json={"name": "Cuộn"})
+        self.assertEqual(custom.status_code, 201, custom.json)
+        owner_b, headers_b = self.login("owner-b@test.local")
+        other = self.request(
+            "get",
+            f"/api/tenants/{self.other_tenant_id}/workspace",
+            client=owner_b,
+            headers=headers_b,
+        )
+        self.assertEqual(other.json["masters"]["units"], [])
+
+    def test_catalog_migration_adds_missing_units_and_refuses_losing_room_codes(self):
+        with self.app.app_context():
+            set_context(tenant_id=self.tenant_id, user_id=self.owner_id)
+            db.session.add_all(
+                [
+                    Master(
+                        id="disabled-unit",
+                        tenant_id=self.tenant_id,
+                        catalog="units",
+                        name=" gói ",
+                        active=False,
+                    ),
+                    Master(
+                        id="custom-unit",
+                        tenant_id=self.tenant_id,
+                        catalog="units",
+                        name="Thùng",
+                        active=True,
+                    ),
+                ]
+            )
+            db.session.commit()
+        runner = self.app.test_cli_runner()
+        down = runner.invoke(args=["db", "downgrade", "0015_plan_room_limits"])
+        self.assertEqual(down.exit_code, 0, down.output)
+        upgraded = runner.invoke(args=["db", "upgrade"])
+        self.assertEqual(upgraded.exit_code, 0, upgraded.output)
+        snapshot = self.request("get", "/workspace")
+        self.assertEqual(snapshot.status_code, 200, snapshot.json)
+        units = snapshot.json["masters"]["units"]
+        self.assertEqual(len(units), len(DEFAULT_UNITS) + 1)
+        self.assertFalse(next(u for u in units if u["id"] == "disabled-unit")["active"])
+        self.assertNotIn("Gói", [u["name"] for u in units])
+        self.assertIn("Cái", [u["name"] for u in units])
+        legacy = next(t for t in snapshot.json["masters"]["roomTypes"] if t["id"] == "rt-a")
+        self.assertIsNone(legacy["code"])
+        self.assertEqual(
+            next(r for r in snapshot.json["rooms"] if r["id"] == "101")["typeId"], "rt-a"
+        )
+        again = runner.invoke(args=["db", "upgrade"])
+        self.assertEqual(again.exit_code, 0, again.output)
+        self.assertEqual(
+            len(self.request("get", "/workspace").json["masters"]["units"]), len(units)
+        )
+        assigned = self.request("patch", "/masters/roomTypes", json={"id": "rt-a", "code": "2"})
+        self.assertEqual(assigned.status_code, 200, assigned.json)
+        refused = runner.invoke(args=["db", "downgrade", "0015_plan_room_limits"])
+        self.assertNotEqual(refused.exit_code, 0)
+        self.assertEqual(self.request("get", "/workspace").status_code, 200)
+
     def test_fund_type_is_validated_and_cannot_reclassify_existing_ledger(self):
         cash = self.request("post", "/masters/funds", json={"name": "Default cash"})
         self.assertEqual(cash.status_code, 201, cash.json)

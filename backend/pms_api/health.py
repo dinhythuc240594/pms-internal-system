@@ -1,44 +1,20 @@
-from alembic.runtime.migration import MigrationContext
-from flask import current_app, jsonify
-from sqlalchemy import text
-from sqlalchemy.exc import SQLAlchemyError
+"""HTTP adapters. Business operations live in the application module."""
 
 from common import CommonMethodView
 
-from .extensions import db
-
-
-def database_status():
-    try:
-        with db.engine.connect() as connection:
-            connection.execute(text("SET LOCAL statement_timeout = '3s'"))
-            connection.execute(text("SELECT 1")).scalar_one()
-            if current_app.config["APP_ENV"] == "production":
-                role = connection.execute(
-                    text("SELECT rolsuper, rolbypassrls FROM pg_roles WHERE rolname = current_user")
-                ).one()
-                if role.rolsuper or role.rolbypassrls:
-                    return {"status": "error", "database": "unsafe_role"}
-            heads = set(MigrationContext.configure(connection).get_current_heads())
-            if heads != current_app.extensions["migration_heads"]:
-                return {"status": "error", "database": "ok", "schema": "pending"}
-        return {"status": "ok", "database": "ok", "schema": "ok"}
-    except SQLAlchemyError as error:
-        current_app.logger.warning("database_unavailable (%s)", type(error).__name__)
-        return {"status": "error", "database": "unavailable"}
+from . import health_application as application
 
 
 class LivenessView(CommonMethodView):
     @staticmethod
     def dispatch_request():
-        return jsonify(status="ok", message="Backend is running")
+        return application.handle_liveness()
 
 
 class ReadinessView(CommonMethodView):
     @staticmethod
     def dispatch_request():
-        status = database_status()
-        return jsonify(status), 200 if status["status"] == "ok" else 503
+        return application.handle_readiness()
 
 
 def __getattr__(name):
@@ -50,4 +26,6 @@ def __getattr__(name):
         from importlib import import_module
 
         return getattr(import_module(".health_urls", __package__), name)
+    if hasattr(application, name):
+        return getattr(application, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

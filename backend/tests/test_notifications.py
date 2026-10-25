@@ -68,6 +68,16 @@ class NotificationTests(DomainTestCase):
         self.assertEqual(owner["unreadCount"], 1)
         self.assertEqual(owner["items"][0]["eventCode"], "NEW_BOOKING")
         self.assertEqual(owner["items"][0]["entityId"], booking["id"])
+        self.assertEqual(
+            owner["items"][0]["title"], "i18n:notifications.events.NEW_BOOKING"
+        )
+        self.assertEqual(
+            owner["items"][0]["body"],
+            {
+                "$i18n": "notifications.eventBodies.NEW_BOOKING",
+                "values": {"entityId": booking["id"]},
+            },
+        )
         desk, headers = self.login("frontdesk@test.local")
         self.assertEqual(self.inbox(client=desk, headers=headers)["unreadCount"], 1)
         hk, headers = self.login("hk@test.local")

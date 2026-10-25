@@ -1,3 +1,4 @@
+import { t as tUi, tr as labelUi, useI18n } from '../i18n/useI18n.js';
 import { useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, RefreshCw, ShieldAlert, Unplug, FileQuestion, LogIn, CircleAlert } from 'lucide-react';
@@ -7,6 +8,7 @@ import { errorScreens, readableErrorMessage } from './errorStatus';
 import './LohaErrorPage.css';
 
 export default function LohaErrorPage({ status = 500, message, onRetry, onClose, children, fullPage = false }) {
+  useI18n();
   const { user, isManager, role } = usePms();
   const location = useLocation(), navigate = useNavigate();
   const [busy, setBusy] = useState(false), [retryError, setRetryError] = useState('');
@@ -24,22 +26,22 @@ export default function LohaErrorPage({ status = 500, message, onRetry, onClose,
   }
   const Container = fullPage ? 'main' : 'section';
   const Heading = fullPage ? 'h1' : 'h2';
-  return <Container className={`loha-error-page${fullPage ? ' loha-error-full' : ''}`} aria-label={`Lỗi ${status}`}>
-    <div className="loha-error-brand"><LohaBrand /><span>KHÔNG GIAN HIẾU KHÁCH</span></div>
+  return <Container className={`loha-error-page${fullPage ? ' loha-error-full' : ''}`} aria-label={tUi('errors.status', { status })}>
+    <div className="loha-error-brand"><LohaBrand /><span>{tUi("errors.brand")}</span></div>
     <div className="loha-error-content" role="alert">
       <div className="loha-error-visual" aria-hidden="true"><span>{status}</span><div><Icon size={32} strokeWidth={1.6} /></div></div>
       <p className="loha-error-eyebrow">LOHA PMS · {status}</p>
-      <Heading>{screen.title}</Heading>
-      <p className="loha-error-description">{description}</p>
+      <Heading>{labelUi(screen.title)}</Heading>
+      <p className="loha-error-description">{labelUi(description)}</p>
       {retryError && <p className="loha-error-retry-message">{retryError}</p>}
       <div className="loha-error-actions">
-        {status === 401 ? <Link className="loha-error-button loha-error-primary" to={login} onClick={onClose}>Đăng nhập lại <LogIn size={17} aria-hidden="true" /></Link> : onRetry ? <button type="button" className="loha-error-button loha-error-primary" disabled={busy} onClick={retry}><RefreshCw size={17} aria-hidden="true" />{busy ? 'Đang thử lại…' : 'Thử lại'}</button> : <Link className="loha-error-button loha-error-primary" to={home} onClick={onClose}>{user ? 'Về không gian làm việc' : 'Về trang chủ'}<ArrowRight size={17} aria-hidden="true" /></Link>}
-        {onRetry && <Link className="loha-error-button" to={home} onClick={onClose}>Về trang chính <ArrowRight size={17} aria-hidden="true" /></Link>}
-        {onClose ? <button type="button" className="loha-error-button" disabled={busy} onClick={onClose}>Đóng thông báo</button> : <button type="button" className="loha-error-button" onClick={() => window.history.state?.idx > 0 ? navigate(-1) : navigate(home, { replace: true })}><ArrowLeft size={17} aria-hidden="true" />Quay lại</button>}
-        {status === 403 && <Link className="loha-error-text-link" to="/id/login" onClick={onClose}>Đổi tài khoản</Link>}
+        {status === 401 ? <Link className="loha-error-button loha-error-primary" to={login} onClick={onClose}>{tUi("errors.signIn")}{' '}<LogIn size={17} aria-hidden="true" /></Link> : onRetry ? <button type="button" className="loha-error-button loha-error-primary" disabled={busy} onClick={retry}><RefreshCw size={17} aria-hidden="true" />{busy ? tUi("errors.retrying") : tUi("common.retry")}</button> : <Link className="loha-error-button loha-error-primary" to={home} onClick={onClose}>{user ? tUi("errors.workspace") : tUi("auth.home")}<ArrowRight size={17} aria-hidden="true" /></Link>}
+        {onRetry && <Link className="loha-error-button" to={home} onClick={onClose}>{tUi("errors.home")}{' '}<ArrowRight size={17} aria-hidden="true" /></Link>}
+        {onClose ? <button type="button" className="loha-error-button" disabled={busy} onClick={onClose}>{tUi("errors.close")}</button> : <button type="button" className="loha-error-button" onClick={() => window.history.state?.idx > 0 ? navigate(-1) : navigate(home, { replace: true })}><ArrowLeft size={17} aria-hidden="true" />{tUi("errors.back")}</button>}
+        {status === 403 && <Link className="loha-error-text-link" to="/id/login" onClick={onClose}>{tUi("errors.switchAccount")}</Link>}
       </div>
       {children && <div className="loha-error-extra">{children}</div>}
     </div>
-    <p className="loha-error-footer">Vận hành gọn. Đón khách trọn vẹn.</p>
+    <p className="loha-error-footer">{tUi("errors.tagline")}</p>
   </Container>;
 }

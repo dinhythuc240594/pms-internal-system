@@ -58,6 +58,31 @@ def cors_origins(value):
     return origins
 
 
+def webhook_base_url(value):
+    if value is None or value == "":
+        return None
+    try:
+        if not isinstance(value, str) or any(ord(char) <= 32 or ord(char) > 126 for char in value):
+            raise ValueError
+        parsed = urlsplit(value)
+        if (
+            parsed.scheme != "https"
+            or not parsed.hostname
+            or parsed.username is not None
+            or parsed.password is not None
+            or parsed.path not in {"", "/"}
+            or "?" in value
+            or "#" in value
+            or (parsed.port is not None and not 1 <= parsed.port <= 65535)
+        ):
+            raise ValueError
+        return "https://" + parsed.netloc
+    except ValueError, TypeError:
+        raise ConfigurationError(
+            "CHANNEX_WEBHOOK_BASE_URL must be an exact HTTPS origin."
+        ) from None
+
+
 def load_config(environ=None, *, env_file=BACKEND_DIR / ".env"):
     runtime = dict(os.environ if environ is None else environ)
     values = {}
@@ -88,6 +113,10 @@ def load_config(environ=None, *, env_file=BACKEND_DIR / ".env"):
         "DEBUG": False,
         "TESTING": environment == "testing",
         "PORT": port,
+        "CHANNEX_ENCRYPTION_KEY": values.get("CHANNEX_ENCRYPTION_KEY"),
+        "CHANNEX_MANAGER_API_KEY_STAGING": values.get("CHANNEX_MANAGER_API_KEY_STAGING"),
+        "CHANNEX_MANAGER_API_KEY_PRODUCTION": values.get("CHANNEX_MANAGER_API_KEY_PRODUCTION"),
+        "CHANNEX_WEBHOOK_BASE_URL": webhook_base_url(values.get("CHANNEX_WEBHOOK_BASE_URL")),
         "CORS_ORIGINS": cors_origins(values.get("CORS_ORIGINS", default_origins)),
         "SQLALCHEMY_DATABASE_URI": database_url,
         "DATABASE_MIGRATION_URL": migration_url,

@@ -1,7 +1,7 @@
 """Hotel configuration and date-based sellable room inventory."""
 
-from sqlalchemy import CheckConstraint, ForeignKeyConstraint, UniqueConstraint
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import CheckConstraint, ForeignKeyConstraint, UniqueConstraint, select
+from sqlalchemy.dialects.postgresql import JSONB, insert
 
 from ..core_models import uid
 from ..extensions import db
@@ -11,6 +11,7 @@ class RoomType(db.Model):
     __tablename__ = "room_types"
     id = db.Column(db.String(40), primary_key=True, default=uid)
     tenant_id = db.Column(db.String(40), db.ForeignKey("tenants.id"), nullable=False, index=True)
+    code = db.Column(db.String(40))
     name = db.Column(db.String(120), nullable=False)
     base_price = db.Column(db.Numeric(19, 4), nullable=False, default=0)
     capacity = db.Column(db.Integer, nullable=False, default=2)
@@ -18,6 +19,10 @@ class RoomType(db.Model):
     __table_args__ = (
         UniqueConstraint("tenant_id", "id", name="uq_room_types_tenant_id_id"),
         UniqueConstraint("tenant_id", "name", name="uq_room_types_tenant_name"),
+        UniqueConstraint("tenant_id", "code", name="uq_room_types_tenant_code"),
+        CheckConstraint(
+            "code IS NULL OR (code = btrim(code) AND length(code) > 0)", name="valid_code"
+        ),
         CheckConstraint("base_price >= 0", name="nonnegative_price"),
         CheckConstraint("capacity BETWEEN 1 AND 50", name="valid_capacity"),
     )
@@ -57,6 +62,36 @@ class Master(db.Model):
         UniqueConstraint("tenant_id", "id", name="uq_masters_tenant_id_id"),
         UniqueConstraint("tenant_id", "catalog", "name", name="uq_masters_tenant_catalog_name"),
     )
+
+
+DEFAULT_UNITS = ("Cái", "Gói", "Chai", "Lon", "Hộp", "Bộ", "Kg", "Lít", "Lần", "Đêm")
+
+
+def ensure_default_units(tenant_id):
+    existing = {
+        name.strip().casefold()
+        for name in db.session.scalars(
+            select(Master.name).where(Master.tenant_id == tenant_id, Master.catalog == "units")
+        )
+    }
+    values = [
+        {
+            "id": uid(),
+            "tenant_id": tenant_id,
+            "catalog": "units",
+            "name": name,
+            "data": {},
+            "active": True,
+        }
+        for name in DEFAULT_UNITS
+        if name.casefold() not in existing
+    ]
+    if values:
+        db.session.execute(
+            insert(Master)
+            .values(values)
+            .on_conflict_do_nothing(constraint="uq_masters_tenant_catalog_name")
+        )
 
 
 class DailyRate(db.Model):

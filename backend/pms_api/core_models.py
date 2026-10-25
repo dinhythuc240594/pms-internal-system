@@ -107,6 +107,7 @@ class Plan(db.Model):
     max_users = db.Column(db.Integer)
     features = db.Column(JSONB, nullable=False, default=dict)
     active = db.Column(db.Boolean, nullable=False, default=True)
+    deleted = db.Column(db.Boolean, nullable=False, default=False)
     created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utcnow)
 
 
@@ -118,9 +119,11 @@ class Subscription(db.Model):
     status = db.Column(db.String(20), nullable=False, default="active")
     start_date = db.Column(db.DateTime(timezone=True), nullable=False, default=utcnow)
     end_date = db.Column(db.DateTime(timezone=True))
+    room_count = db.Column(db.Integer, nullable=False)
     created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utcnow)
     __table_args__ = (
         db.CheckConstraint("status IN ('active','expired','cancelled')", name="status"),
+        db.CheckConstraint("room_count > 0", name="positive_room_count"),
     )
 
 
@@ -135,9 +138,13 @@ class SubscriptionHistory(db.Model):
     previous_plan_id = db.Column(db.String(40), db.ForeignKey("plans.id"))
     cycle = db.Column(db.String(12))
     status = db.Column(db.String(20))
+    room_count = db.Column(db.Integer)
     amount = db.Column(db.Numeric(19, 4))
     currency = db.Column(db.String(3))
     effective_date = db.Column(db.DateTime(timezone=True), nullable=False, default=utcnow)
     end_date = db.Column(db.DateTime(timezone=True))
     user_id = db.Column(db.String(40), db.ForeignKey("users.id"))
     created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utcnow)
+    __table_args__ = (
+        db.CheckConstraint("room_count IS NULL OR room_count > 0", name="positive_room_count"),
+    )

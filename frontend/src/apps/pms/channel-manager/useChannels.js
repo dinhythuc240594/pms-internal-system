@@ -1,16 +1,27 @@
-import { useEffect, useState } from 'react';
-import { usePms } from '../data/usePms';
+import { useCallback, useEffect, useState } from 'react';
 
-export function useChannels() {
-  const { requestTenant, tenantId } = usePms();
+export function useChannels(requestTenant, tenantId, path = '/channels', enabled = true) {
   const [result, setResult] = useState(null);
   const [revision, setRevision] = useState(0);
   useEffect(() => {
+    if (!enabled) return;
     let current = true;
-    requestTenant('/channels').then(data => { if (current) setResult({ requestTenant, tenantId, revision, data, error: '' }); })
-      .catch(err => { if (current) setResult({ requestTenant, tenantId, revision, data: null, error: err.message }); });
+    let pending = false, latestData = null;
+    async function fetchSnapshot() {
+      if (pending) return;
+      pending = true;
+      try {
+        const data = await requestTenant(path);
+        latestData = data;
+        if (current) setResult({ requestTenant, tenantId, path, revision, data, error: '' });
+      } catch (err) {
+        if (current) setResult({ requestTenant, tenantId, path, revision, data: latestData, error: err.message });
+      } finally { pending = false; }
+    }
+    fetchSnapshot();
     return () => { current = false; };
-  }, [requestTenant, tenantId, revision]);
-  const loaded = result?.requestTenant === requestTenant && result?.tenantId === tenantId && result?.revision === revision;
-  return { data: loaded ? result.data : null, error: loaded ? result.error : '', loading: !loaded, refresh: () => setRevision(value => value + 1) };
+  }, [requestTenant, tenantId, path, revision, enabled]);
+  const loaded = enabled && result?.requestTenant === requestTenant && result?.tenantId === tenantId && result?.path === path && result?.revision === revision;
+  const refresh = useCallback(() => setRevision(value => value + 1), []);
+  return { data: loaded ? result.data : null, error: loaded ? result.error : '', loading: enabled && !loaded, refresh };
 }

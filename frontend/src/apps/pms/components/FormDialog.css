@@ -1,0 +1,10 @@
+.pms-form-dialog { position: fixed; inset: 0; margin: auto; width: min(620px, calc(100vw - 24px)); max-width: none; max-height: calc(100dvh - 32px); padding: 0; box-sizing: border-box; border: 1px solid var(--border-color); border-radius: 12px; background: var(--bg-surface); color: var(--text-primary); box-shadow: 0 24px 80px #102c4b40; overflow: auto; font: inherit; }
+.pms-form-dialog::backdrop { background: #102c4b88; }
+.pms-form-dialog-surface { padding: 24px; }
+.pms-form-dialog-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+.pms-form-dialog-heading h2 { margin: 0; font-size: 18px; line-height: 1.4; }
+.pms-form-dialog-heading > button { display: grid; place-items: center; flex-shrink: 0; width: 36px; min-height: 36px; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-surface); color: var(--text-secondary); cursor: pointer; }
+.pms-form-dialog .pms-form-dialog-error { margin: 0 0 16px; padding: 12px; border-radius: 8px; background: #fef2f2; color: #b91c1c; font-size: 13px; }
+.pms-form-dialog :focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
+.pms-form-dialog button:disabled { cursor: not-allowed; opacity: .6; }
+@media (max-width: 540px) { .pms-form-dialog-surface { padding: 16px; } }

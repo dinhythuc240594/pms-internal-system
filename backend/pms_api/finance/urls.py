@@ -19,6 +19,9 @@ class URL(CommonURL):
     CREATE_DOCUMENT = "/api/tenants/<tenant_id>/cash-documents"
     REVERSE_DOCUMENT = "/api/tenants/<tenant_id>/cash-documents/<document_id>/reverse"
     CASHBOOK = "/api/tenants/<tenant_id>/cashbook"
+    COMMISSIONS = "/api/tenants/<tenant_id>/commissions"
+    SETTLE_COMMISSION = "/api/tenants/<tenant_id>/commissions/settle"
+    PAY_COMMISSION = "/api/tenants/<tenant_id>/commissions/<commission_id>/payments"
 
 
 finance = Blueprint("finance", __name__)
@@ -109,4 +112,26 @@ URL.register(
     "pms_api.finance.routes:CashbookView",
     endpoint="cashbook",
     methods=["GET"],
+)
+
+URL.register(
+    finance,
+    URL.COMMISSIONS,
+    "pms_api.finance.commissions:ListCommissionsView",
+    endpoint="commissions",
+    methods=["GET"],
+)
+URL.register(
+    finance,
+    URL.SETTLE_COMMISSION,
+    "pms_api.finance.commissions:SettleCommissionView",
+    endpoint="settle_commission",
+    methods=["POST"],
+)
+URL.register(
+    finance,
+    URL.PAY_COMMISSION,
+    "pms_api.finance.commissions:PayCommissionView",
+    endpoint="pay_commission",
+    methods=["POST"],
 )

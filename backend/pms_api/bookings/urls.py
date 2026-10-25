@@ -6,9 +6,6 @@ from common import CommonURL
 
 
 class URL(CommonURL):
-    LIST_GUESTS = "/api/tenants/<tenant_id>/guests"
-    CREATE_GUEST = "/api/tenants/<tenant_id>/guests"
-    UPDATE_GUEST = "/api/tenants/<tenant_id>/guests/<guest_id>"
     LIST_RESERVATIONS = "/api/tenants/<tenant_id>/reservations"
     RESERVATION_DETAIL = "/api/tenants/<tenant_id>/reservations/<reservation_id>"
     CREATE_RESERVATION = "/api/tenants/<tenant_id>/reservations"
@@ -25,30 +22,6 @@ class URL(CommonURL):
 
 
 booking = Blueprint("booking", __name__)
-
-URL.register(
-    booking,
-    URL.LIST_GUESTS,
-    "pms_api.bookings.routes:ListGuestsView",
-    endpoint="list_guests",
-    methods=["GET"],
-)
-
-URL.register(
-    booking,
-    URL.CREATE_GUEST,
-    "pms_api.bookings.routes:CreateGuestView",
-    endpoint="create_guest",
-    methods=["POST"],
-)
-
-URL.register(
-    booking,
-    URL.UPDATE_GUEST,
-    "pms_api.bookings.routes:UpdateGuestView",
-    endpoint="update_guest",
-    methods=["PATCH"],
-)
 
 URL.register(
     booking,

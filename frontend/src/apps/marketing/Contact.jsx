@@ -1,9 +1,11 @@
+import { t as tUi, useI18n } from '../../shared/i18n/useI18n.js';
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, ArrowUpRight, Check, Copy, MessageSquare, ShieldCheck } from 'lucide-react';
 import './Contact.css';
 
 export default function Contact() {
+  useI18n();
   const [preparedMessage, setPreparedMessage] = useState('');
   const [copyStatus, setCopyStatus] = useState('');
   const [copying, setCopying] = useState(false);
@@ -73,13 +75,13 @@ export default function Contact() {
             <p>Bạn có thể bắt đầu bằng quy mô cơ sở lưu trú, công việc cần quản lý và điều bạn mong muốn cải thiện.</p>
             <div className="loha-contact-route">
               <h3>Đang tìm gói phù hợp?</h3>
-              <p>Xem hai gói dịch vụ và đối chiếu với nhu cầu của đội ngũ.</p>
+              <p>Xem các gói dịch vụ hiện có và đối chiếu với nhu cầu của đội ngũ.</p>
               <Link className="loha-text-link" to="/pricing">Xem bảng giá <ArrowRight size={17} aria-hidden="true" /></Link>
             </div>
             <div className="loha-contact-route">
               <h3>Đã có tài khoản LOHA?</h3>
               <p>Mở không gian làm việc để tiếp tục quản lý khách sạn của bạn.</p>
-              <Link className="loha-text-link" to="/id/login">Đăng nhập LOHA <ArrowUpRight size={17} aria-hidden="true" /></Link>
+              <Link className="loha-text-link" to="/id/login">{tUi("auth.title")}{' '}<ArrowUpRight size={17} aria-hidden="true" /></Link>
             </div>
             <div className="loha-contact-privacy"><ShieldCheck size={20} aria-hidden="true" /><p>Không cần đưa mật khẩu, mã truy cập hay thông tin riêng của khách lưu trú vào lời nhắn.</p></div>
           </aside>
@@ -91,7 +93,7 @@ export default function Contact() {
             <form onSubmit={prepareMessage} aria-describedby="loha-contact-form-help" onChange={() => { setPreparedMessage(''); setCopyStatus(''); }}>
               <div className="loha-contact-field-row">
                 <div className="loha-contact-field">
-                  <label htmlFor="loha-contact-name">Họ và tên <span aria-hidden="true">*</span></label>
+                  <label htmlFor="loha-contact-name">{tUi("common.fullName")}{' '}<span aria-hidden="true">*</span></label>
                   <input id="loha-contact-name" name="name" type="text" autoComplete="name" required maxLength={120} pattern=".*\S.*" placeholder="Tên của bạn" />
                 </div>
                 <div className="loha-contact-field">

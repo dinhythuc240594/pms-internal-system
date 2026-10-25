@@ -5,6 +5,8 @@
 .loha-desktop-nav { display: flex; gap: 32px; font-size: 13px; font-weight: 500; }
 .loha-desktop-nav a, .loha-footer nav a { transition: color .15s; }
 .loha-desktop-nav a:hover, .loha-footer nav a:hover { color: var(--loha-blue); }
+.loha-header-actions { display: flex; align-items: center; gap: 10px; }
+.loha-header .loha-language-switcher { --border-color: var(--loha-line); --text-primary: var(--loha-ink); --text-muted: var(--loha-muted); --accent-primary: var(--loha-blue); --bg-main: #f2f7fa; --bg-surface: #fff; }
 .loha-header-login { display: flex; align-items: center; gap: 16px; font-weight: 600; font-size: 13px; border: 1px solid var(--loha-line); padding: 11px 16px; border-radius: 6px; }
 .loha-header-login:hover { border-color: var(--loha-blue); color: var(--loha-blue); }
 .loha-menu-button { display: none; align-items: center; justify-content: center; width: 44px; height: 44px; background: transparent; border: 1px solid var(--loha-line); border-radius: 6px; color: var(--loha-ink); cursor: pointer; }
@@ -30,15 +32,17 @@
 @media (max-width: 900px) {
   .loha-header-inner { height: 76px; }
   .loha-desktop-nav { display: none; }
-  .loha-header-login { margin-left: auto; }
+  .loha-header-actions { margin-left: auto; }
   .loha-menu-button { display: flex; }
   .loha-footer-top { flex-wrap: wrap; gap: 24px; }
   .loha-footer-top > a { margin-left: auto; }
 }
 @media (max-width: 600px) {
-  .loha-header-inner { height: 72px; gap: 12px; }
+  .loha-header-inner { display: grid; grid-template-columns: minmax(0, 1fr) auto 44px; height: 72px; gap: 12px; }
+  .loha-header-actions { margin-left: 0; }
   .loha-header-login { display: none; }
-  .loha-menu-button { margin-left: auto; }
+  .loha-menu-button { margin-left: 0; }
+  .loha-header .loha-language-menu { right: -56px; width: min(224px, calc(100vw - 32px)); }
   .loha-start { padding: 44px 0; }
   .loha-start-inner { display: block; }
   .loha-start h2 { font-size: 42px; margin-bottom: 24px; }

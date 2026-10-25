@@ -44,3 +44,57 @@ class CatalogValidationTests(unittest.TestCase):
         ]:
             with self.subTest(value=value), self.assertRaises(ApiError):
                 validated_settings(value)
+
+    def test_hotel_profile_normalizes_optional_contact_and_bank_fields(self):
+        profile = {
+            "phone": " +84 28 1234 5678 ",
+            "contactEmail": " Reception@Hotel.Example ",
+            "website": " https://hotel.example/contact ",
+            "logoUrl": " https://hotel.example/logo.png ",
+            "taxCode": " 0312345678 ",
+            "bankName": " Hotel Bank ",
+            "bankAccount": " 00123456789 ",
+            "bankAccountName": " HOTEL COMPANY ",
+            "defaultLanguage": "en",
+        }
+        result = validated_settings(profile)
+        self.assertEqual(result["phone"], "+84 28 1234 5678")
+        self.assertEqual(result["contactEmail"], "reception@hotel.example")
+        self.assertEqual(result["bankAccount"], "00123456789")
+        self.assertEqual(result["logoUrl"], "https://hotel.example/logo.png")
+        self.assertEqual(
+            validated_settings({"website": "http://hotel.example"})["website"],
+            "http://hotel.example",
+        )
+        cleared = {key: "" for key in profile if key != "defaultLanguage"}
+        self.assertEqual(validated_settings(cleared), cleared)
+
+    def test_hotel_profile_rejects_invalid_contact_urls_and_types(self):
+        for value in [
+            {"phone": "x" * 41},
+            {"contactEmail": "invalid"},
+            {"contactEmail": "user name@hotel.example"},
+            {"contactEmail": "x" * 255},
+            {"taxCode": "x" * 81},
+            {"bankName": "x" * 161},
+            {"bankAccount": 123456},
+            {"bankAccountName": None},
+            {"defaultLanguage": "xx"},
+            {"defaultLanguage": True},
+            {"website": "javascript:alert(1)"},
+            {"website": "//hotel.example"},
+            {"website": "https://"},
+            {"website": "https://hotel.example:99999"},
+            {"website": "https://bad host.example"},
+            {"website": "https://bad<host.example"},
+            {"website": "https://hotel.example/path\nnext"},
+            {"website": "https://hotel.example\\@other.example"},
+            {"website": "https://user:secret@hotel.example"},
+            {"website": "https://hotel.example/" + "x" * 2048},
+            {"logoUrl": "http://hotel.example/logo.png"},
+            {"logoUrl": "data:image/png;base64,anything"},
+            {"logoUrl": "https://user@hotel.example/logo.png"},
+            {"logoUrl": None},
+        ]:
+            with self.subTest(value=value), self.assertRaises(ApiError):
+                validated_settings(value)

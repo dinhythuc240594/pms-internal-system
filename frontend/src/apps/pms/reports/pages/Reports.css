@@ -13,8 +13,8 @@
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 16px;
-  margin-bottom: 24px;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
 .pms-reports-header h1 {
@@ -46,9 +46,9 @@
 
 .pms-reports-tabs {
   display: flex;
-  gap: 24px;
+  gap: 16px;
   overflow-x: auto;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
   border-bottom: 1px solid var(--border-color);
 }
 
@@ -86,9 +86,9 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 16px 24px;
-  padding: 16px;
-  margin-bottom: 24px;
+  gap: 12px 16px;
+  padding: 12px;
+  margin-bottom: 16px;
 }
 
 .pms-reports-filter-title {
@@ -102,7 +102,7 @@
 .pms-reports-date-fields {
   display: flex;
   flex-wrap: wrap;
-  gap: 16px;
+  gap: 12px;
 }
 
 .pms-reports-date-fields label {
@@ -139,8 +139,8 @@
 }
 
 .pms-reports-error {
-  margin: -8px 0 24px;
-  padding: 12px 16px;
+  margin: -8px 0 16px;
+  padding: 12px 12px;
   border: 1px solid #f5c2c7;
   border-radius: 6px;
   background: #fff5f5;
@@ -150,13 +150,13 @@
 .pms-reports-summary {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
-  margin-bottom: 24px;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
 .pms-reports-summary-card {
   min-width: 0;
-  padding: 20px;
+  padding: 16px;
 }
 
 .pms-reports-summary-top {
@@ -204,7 +204,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 16px;
+  padding: 12px;
   border-bottom: 1px solid var(--border-color);
 }
 
@@ -213,6 +213,22 @@
   font-size: 16px;
   font-weight: 600;
 }
+
+.pms-reports-export {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--text-primary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.pms-reports-export:disabled { opacity: .55; cursor: default; }
+.pms-reports-export:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 3px; }
 
 .pms-reports-table-scroll {
   overflow-x: auto;
@@ -227,7 +243,7 @@
 
 .pms-reports th,
 .pms-reports td {
-  padding: 16px;
+  padding: 12px;
   text-align: left;
   vertical-align: middle;
 }
@@ -279,7 +295,7 @@
 }
 
 .pms-reports .pms-reports-empty {
-  padding: 32px 16px;
+  padding: 24px 12px;
   text-align: center;
   color: var(--text-muted);
 }
@@ -289,7 +305,7 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 16px;
+  margin-top: 12px;
   color: var(--text-muted);
   font-size: 13px;
 }
@@ -310,7 +326,7 @@
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  margin: 16px 0 0;
+  margin: 12px 0 0;
   color: var(--text-muted);
   font-size: 12px;
   line-height: 1.6;
@@ -355,6 +371,6 @@
   }
 
   .pms-reports-tabs {
-    gap: 20px;
+    gap: 16px;
   }
 }

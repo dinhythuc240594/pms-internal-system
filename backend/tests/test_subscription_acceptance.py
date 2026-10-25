@@ -56,6 +56,7 @@ class SubscriptionAcceptanceTests(DomainTestCase):
                         status=status if suffix == "a" else "active",
                         end_date=end_date if suffix == "a" else None,
                         start_date=utcnow() - timedelta(days=30),
+                        room_count=max_rooms if max_rooms is not None else 30,
                     )
                 )
                 db.session.add(
@@ -131,14 +132,15 @@ class SubscriptionAcceptanceTests(DomainTestCase):
         self.assertEqual(self.create_pos().status_code, 403)
         self.assertEqual(self.request("GET", "/workspace").status_code, 200)
 
-    def test_exactly_two_active_plans_rejects_a_third_plan(self):
+    def test_custom_third_plan_is_supported(self):
         self.seed_subscriptions()
         admin, headers = self.login("admin@test.local")
         response = self.request(
             "POST",
             "/api/plans",
             {
-                "name": "Unsupported third plan",
+                "name": "Third plan",
+                "code": "THIRD",
                 "price": "1",
                 "currency": "VND",
                 "active": True,
@@ -146,7 +148,8 @@ class SubscriptionAcceptanceTests(DomainTestCase):
             client=admin,
             headers=headers,
         )
-        self.assertIn(response.status_code, (409, 422), response.json)
+        self.assertEqual(response.status_code, 201, response.json)
+        self.assertEqual(response.json["code"], "THIRD")
 
     def test_plan_financial_and_quota_inputs_are_validated(self):
         admin, headers = self.login("admin@test.local")

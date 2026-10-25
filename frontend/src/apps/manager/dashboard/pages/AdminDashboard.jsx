@@ -1,9 +1,12 @@
+import { getIntlLocale } from '../../../../shared/i18n/store.js';
+import { t as tUi, tr as labelUi, useI18n } from '../../../../shared/i18n/useI18n.js';
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, ArrowUpRight, Building2, CheckCircle2, Layers3, PauseCircle, RefreshCw, ScrollText, Users } from 'lucide-react';
 import { usePms } from '../../../pms/data/usePms';
 import { money } from '../../../pms/data/model';
 import { currentMonthRange, dateFilterRange } from '../../billing/pages/saasBillingForm';
+import { planDistribution } from '../../../../shared/config/pricingPlans';
 import './AdminDashboard.css';
 
 const eventLabels = {
@@ -18,7 +21,7 @@ const eventLabels = {
   'saas.payment_recorded': 'Thu tiền dịch vụ', 'saas.invoice_voided': 'Hủy hóa đơn dịch vụ',
 };
 const displayDate = value => Number.isFinite(Date.parse(value))
-  ? new Date(value).toLocaleString('vi-VN', { timeZone: 'UTC', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' UTC'
+  ? new Date(value).toLocaleString(getIntlLocale(), { timeZone: 'UTC', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' UTC'
   : 'Chưa có thời gian';
 
 export default function AdminDashboard() {
@@ -27,19 +30,20 @@ export default function AdminDashboard() {
 }
 
 function DashboardOverview() {
-  const { tenants, workspace, user, getManagerOverview } = usePms();
+  useI18n();
+  const { tenants, workspace, user, getManagerOverview, listPlans } = usePms();
   const [rangeDraft, setRangeDraft] = useState(currentMonthRange);
   const [range, setRange] = useState(() => dateFilterRange(rangeDraft.start, rangeDraft.through));
   const [revision, setRevision] = useState(0), [filterError, setFilterError] = useState('');
-  const [data, setData] = useState({ range: null, revision: -1, overview: null, error: '' });
+  const [data, setData] = useState({ range: null, revision: -1, overview: null, plans: [], error: '' });
 
   useEffect(() => {
     let cancelled = false;
-    getManagerOverview(range.start, range.end)
-      .then(overview => { if (!cancelled) setData({ range, revision, overview, error: '' }); })
-      .catch(error => { if (!cancelled) setData({ range, revision, overview: null, error: error.message }); });
+    Promise.all([getManagerOverview(range.start, range.end), listPlans()])
+      .then(([overview, catalog]) => { if (!cancelled) setData({ range, revision, overview, plans: catalog.plans || [], error: '' }); })
+      .catch(error => { if (!cancelled) setData({ range, revision, overview: null, plans: [], error: error.message }); });
     return () => { cancelled = true; };
-  }, [range, revision, getManagerOverview]);
+  }, [range, revision, getManagerOverview, listPlans]);
   const current = data.range === range && data.revision === revision;
   const loading = !current;
   const overview = current ? data.overview : null;
@@ -59,40 +63,40 @@ function DashboardOverview() {
 
   return <div className="manager-page dashboard-page">
     <div className="manager-page-heading dashboard-heading">
-      <div><p className="manager-eyebrow">Không gian điều hành</p><h2>Tổng quan hệ thống</h2><p>Theo dõi khách sạn, gói dịch vụ và thanh toán phần mềm.</p></div>
+      <div><p className="manager-eyebrow">Không gian điều hành</p><h2>{tUi("manager.overview")}</h2><p>Theo dõi khách sạn, gói dịch vụ và thanh toán phần mềm.</p></div>
       <Link to="/manager/billing" className="manager-button manager-button-primary">Quản lý thanh toán <ArrowUpRight size={16} aria-hidden="true" /></Link>
     </div>
 
     <form className="manager-panel dashboard-date-filters" onSubmit={applyRange}>
-      <div><strong>Kỳ báo cáo thanh toán</strong><p>Theo ngày tạo hóa đơn và ngày ghi nhận khoản thu, múi giờ UTC.</p></div>
-      <label>Từ ngày (UTC)<input type="date" required value={rangeDraft.start} onInput={event => setRangeDraft(previous => ({ ...previous, start: event.target.value }))} onChange={event => setRangeDraft(previous => ({ ...previous, start: event.target.value }))} /></label>
-      <label>Đến hết ngày (UTC)<input type="date" required min={rangeDraft.start || undefined} value={rangeDraft.through} onInput={event => setRangeDraft(previous => ({ ...previous, through: event.target.value }))} onChange={event => setRangeDraft(previous => ({ ...previous, through: event.target.value }))} /></label>
-      <button type="submit" className="manager-button">Xem báo cáo</button>
-      <button type="button" className="manager-button" disabled={loading} aria-label="Tải lại tổng quan" onClick={() => setRevision(value => value + 1)}><RefreshCw size={16} aria-hidden="true" /></button>
+      <div className="dashboard-filter-copy"><strong>Kỳ báo cáo thanh toán</strong><p>Theo ngày tạo hóa đơn và ngày ghi nhận khoản thu, múi giờ UTC.</p></div>
+      <div className="dashboard-filter-controls">
+        <label>Từ ngày (UTC)<input type="date" required value={rangeDraft.start} onInput={event => setRangeDraft(previous => ({ ...previous, start: event.target.value }))} onChange={event => setRangeDraft(previous => ({ ...previous, start: event.target.value }))} /></label>
+        <label>Đến hết ngày (UTC)<input type="date" required min={rangeDraft.start || undefined} value={rangeDraft.through} onInput={event => setRangeDraft(previous => ({ ...previous, through: event.target.value }))} onChange={event => setRangeDraft(previous => ({ ...previous, through: event.target.value }))} /></label>
+        <div className="dashboard-filter-actions"><button type="submit" className="manager-button">Xem báo cáo</button><button type="button" className="manager-button" disabled={loading} aria-label="Tải lại tổng quan" onClick={() => setRevision(value => value + 1)}><RefreshCw size={16} aria-hidden="true" /></button></div>
+      </div>
       {filterError && <p className="dashboard-filter-error" role="alert">{filterError}</p>}
     </form>
 
-    {loading ? <div className="manager-panel dashboard-empty" role="status" aria-busy="true">Đang tải tổng quan…</div> : data.error ? <div className="manager-panel dashboard-overview-error"><p role="alert">Không tải được tổng quan: {data.error}</p><button type="button" className="manager-button" onClick={() => setRevision(value => value + 1)}>Thử lại</button></div> : overview && <>
-      <dl className="dashboard-stats">{stats.map(({ label, count, detail, Icon, className = '' }) => <div key={label} className={`manager-panel dashboard-stat ${className}`}><dt className="dashboard-stat-top"><span>{label}</span><Icon size={19} aria-hidden="true" /></dt><dd className="dashboard-stat-value">{count.toLocaleString('vi-VN')}</dd><dd className="dashboard-stat-detail">{detail}</dd></div>)}</dl>
+    {loading ? <div className="manager-panel dashboard-empty" role="status" aria-busy="true">Đang tải tổng quan…</div> : data.error ? <div className="manager-panel dashboard-overview-error"><p role="alert">Không tải được tổng quan: {data.error}</p><button type="button" className="manager-button" onClick={() => setRevision(value => value + 1)}>{tUi("common.retry")}</button></div> : overview && <>
+      <dl className="manager-panel dashboard-stats">{stats.map(({ label, count, detail, Icon, className = '' }) => <div key={label} className={`dashboard-stat ${className}`}><dt className="dashboard-stat-top"><span>{labelUi(label)}</span><Icon size={19} aria-hidden="true" /></dt><dd className="dashboard-stat-value">{count.toLocaleString(getIntlLocale())}</dd><dd className="dashboard-stat-detail">{labelUi(detail)}</dd></div>)}</dl>
 
       <section className="manager-panel dashboard-finance" aria-labelledby="dashboard-finance-title">
         <div className="dashboard-panel-heading"><div><h3 id="dashboard-finance-title">Thanh toán dịch vụ theo tiền tệ</h3><p>Hóa đơn và khoản thu theo kỳ đã chọn. Công nợ hiện tại bao gồm tất cả các kỳ.</p></div><Link to="/manager/billing" className="dashboard-text-link">Xem hóa đơn <ArrowUpRight size={15} aria-hidden="true" /></Link></div>
-        <div className="manager-table-wrap" role="region" aria-label="Tổng hợp tiền dịch vụ" tabIndex={0}><table className="dashboard-finance-table"><thead><tr>{['Tiền tệ', 'Đã lập hóa đơn trong kỳ', 'Đã thu trong kỳ', 'Công nợ hiện tại', 'Quá hạn hiện tại'].map(label => <th key={label} scope="col">{label}</th>)}</tr></thead><tbody>{overview.currencies.map(row => <tr key={row.currency}><th scope="row">{row.currency}</th><td>{money(row.invoiced, row.currency)}</td><td>{money(row.received, row.currency)}</td><td>{money(row.outstanding, row.currency)}</td><td>{money(row.overdue, row.currency)}</td></tr>)}{!overview.currencies.length && <tr><td colSpan={5}>Chưa có hóa đơn hoặc khoản thu.</td></tr>}</tbody></table></div>
+        <div className="manager-table-wrap" role="region" aria-label="Tổng hợp tiền dịch vụ" tabIndex={0}><table className="dashboard-finance-table"><thead><tr>{['Tiền tệ', 'Đã lập hóa đơn trong kỳ', 'Đã thu trong kỳ', 'Công nợ hiện tại', 'Quá hạn hiện tại'].map(label => <th key={label} scope="col">{labelUi(label)}</th>)}</tr></thead><tbody>{overview.currencies.map(row => <tr key={row.currency}><th scope="row">{row.currency}</th><td>{money(row.invoiced, row.currency)}</td><td>{money(row.received, row.currency)}</td><td>{money(row.outstanding, row.currency)}</td><td>{money(row.overdue, row.currency)}</td></tr>)}{!overview.currencies.length && <tr><td colSpan={5}>Chưa có hóa đơn hoặc khoản thu.</td></tr>}</tbody></table></div>
       </section>
 
       <div className="dashboard-overview-grid">
         <section className="manager-panel dashboard-tenants" aria-labelledby="dashboard-tenants-title">
           <div className="dashboard-panel-heading"><div><h3 id="dashboard-tenants-title">Khách sạn mới nhất</h3><p>{overview.tenants.total} khách sạn trong hệ thống</p></div><Building2 size={19} aria-hidden="true" /></div>
-          {!recentTenants.length ? <p className="dashboard-empty" role="status">Chưa có khách sạn. Mở Quản lý khách sạn để bắt đầu.</p> : <ul className="dashboard-tenant-list">{recentTenants.map(tenant => <li key={tenant.id}><span className="dashboard-tenant-avatar" aria-hidden="true">{tenant.name?.trim().charAt(0).toUpperCase() || 'K'}</span><div className="dashboard-tenant-name"><strong>{tenant.name}</strong><span>{tenant.id}</span></div><span className={`dashboard-status ${tenant.status === 'active' ? 'dashboard-status-active' : ''}`}>{tenant.status === 'active' ? 'Hoạt động' : tenant.status === 'suspended' ? 'Tạm ngưng' : tenant.status || 'Chưa xác định'}</span><Link to={`/manager/billing?tenant=${encodeURIComponent(tenant.id)}`} className="dashboard-text-link" aria-label={`Gói dịch vụ của ${tenant.name}`}>Gói dịch vụ <ArrowUpRight size={14} aria-hidden="true" /></Link></li>)}</ul>}
+          {!recentTenants.length ? <p className="dashboard-empty" role="status">Chưa có khách sạn. Mở Quản lý khách sạn để bắt đầu.</p> : <ul className="dashboard-tenant-list">{recentTenants.map(tenant => <li key={tenant.id}><span className="dashboard-tenant-avatar" aria-hidden="true">{tenant.name?.trim().charAt(0).toUpperCase() || 'K'}</span><div className="dashboard-tenant-name"><strong>{tenant.name}</strong><span>{tenant.id}</span></div><span className={`dashboard-status ${tenant.status === 'active' ? 'dashboard-status-active' : ''}`}>{tenant.status === 'active' ? 'Hoạt động' : tenant.status === 'suspended' ? 'Tạm ngưng' : tenant.status || 'Chưa xác định'}</span><Link to={`/manager/billing?tenant=${encodeURIComponent(tenant.id)}`} className="dashboard-text-link" aria-label={`Gói dịch vụ của ${tenant.name}`}>{tUi("header.plan")}{' '}<ArrowUpRight size={14} aria-hidden="true" /></Link></li>)}</ul>}
           <Link to="/manager/tenants" className="dashboard-panel-footer">Xem tất cả khách sạn <ArrowRight size={16} aria-hidden="true" /></Link>
         </section>
 
         <section className="manager-panel dashboard-plans" aria-labelledby="dashboard-plans-title">
           <div className="dashboard-panel-heading"><div><h3 id="dashboard-plans-title">Phân phối gói</h3><p>Gói đang hiệu lực của khách sạn</p></div><Layers3 size={19} aria-hidden="true" /></div>
-          <div className="dashboard-plan-content">{['FREE', 'PRO'].map(code => {
-            const count = overview.plans[code];
-            return <div className={`dashboard-plan-row dashboard-plan-${code.toLowerCase()}`} key={code}><div><span><strong>{code}</strong><small>{code === 'FREE' ? 'Miễn phí' : 'Chuyên nghiệp'}</small></span><b>{count.toLocaleString('vi-VN')} <small>khách sạn</small></b></div><meter min="0" max={overview.tenants.total || 1} value={count} aria-label={`${code}: ${count} trên ${overview.tenants.total} khách sạn`}>{count}/{overview.tenants.total}</meter></div>;
-          })}<div className="dashboard-unassigned"><span>Chưa có gói hiệu lực</span><strong>{overview.plans.unassigned.toLocaleString('vi-VN')}</strong></div><p className="dashboard-plan-note">Loại trừ thuê bao chưa bắt đầu, hết hạn, đã hủy hoặc gói ngừng cung cấp.</p></div>
+          <div className="dashboard-plan-content">{planDistribution(overview.plans, data.plans).map(({ code, count, name }) => {
+            return <div className={`dashboard-plan-row dashboard-plan-${code.toLowerCase()}`} key={code}><div><span><strong>{code}</strong><small>{name}</small></span><b>{count.toLocaleString(getIntlLocale())} <small>{tUi("common.hotelLower")}</small></b></div><meter min="0" max={overview.tenants.total || 1} value={count} aria-label={`${name}: ${count} trên ${overview.tenants.total} khách sạn`}>{count}/{overview.tenants.total}</meter></div>;
+          })}<div className="dashboard-unassigned"><span>Chưa có gói hiệu lực</span><strong>{overview.plans.unassigned.toLocaleString(getIntlLocale())}</strong></div><p className="dashboard-plan-note">Loại trừ thuê bao chưa bắt đầu, hết hạn, đã hủy hoặc gói ngừng cung cấp.</p></div>
           <Link to="/manager/billing" className="dashboard-panel-footer">Quản lý gói dịch vụ <ArrowRight size={16} aria-hidden="true" /></Link>
         </section>
       </div>

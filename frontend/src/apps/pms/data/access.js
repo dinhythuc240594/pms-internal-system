@@ -22,7 +22,7 @@ export const ROLE_ACTIONS = {
   HOTEL_OWNER: ['*'],
   FRONT_DESK: ['profile.view', 'dashboard.view', 'rooms.view', 'reservations.view', 'reservations.write', 'housekeeping.view', 'housekeeping.write', 'pos.view', 'cashbook.view', 'rates.view', 'ota.view'],
   HOUSEKEEPING: ['profile.view', 'housekeeping.view', 'housekeeping.write', 'rooms.view'],
-  ACCOUNTANT: ['profile.view', 'dashboard.view', 'reservations.view', 'cashbook.view', 'pos.view', 'reports.view', 'inventory.view', 'inventory.write'],
+  ACCOUNTANT: ['profile.view', 'dashboard.view', 'reservations.view', 'cashbook.view', 'pos.view', 'reports.view', 'reports.advanced.view', 'inventory.view', 'inventory.write'],
 };
 export const isGlobalUser = user => ['SUPER_ADMIN', 'SYSTEM_MANAGER'].includes(user?.globalRole);
 export function sessionUser(session, now = Date.now(), users = DEMO_USERS) {
@@ -63,11 +63,13 @@ export function bookingQuota(tenant, data) {
 }
 export function routePolicy(path) {
   if (path.startsWith('/manager')) return { manager: true, superOnly: /^\/manager\/(logs|users)/.test(path) };
-  const p = path.replace(/^\/id\/?/, '');
+  const [pathname, query = ''] = path.split('?');
+  const p = pathname.replace(/^\/id\/?/, '');
   if (/^profile/.test(p)) return { action: 'profile.view' };
+  if (/^settings\/?$/.test(p) && new URLSearchParams(query).get('section') === 'channels') return { action: 'channels.view', feature: 'OTA_SYNC' };
   if (/^settings/.test(p)) return { action: 'settings.write' };
   if (/^users/.test(p)) return { action: 'users.write' };
-  if (/^reservations|^guests/.test(p)) return { action: 'reservations.view', feature: 'RESERVATION_VIEW' };
+  if (/^reservations/.test(p)) return { action: 'reservations.view', feature: 'RESERVATION_VIEW' };
   if (/^room-diagram|^rooms/.test(p)) return { action: 'rooms.view', feature: 'ROOM_DIAGRAM' };
   if (/^ari/.test(p)) return { action: 'reservations.view', feature: 'TAPE_CHART' };
   if (/^gia\/(vouchers|promotions)/.test(p)) return { action: 'rates.view', feature: 'VOUCHER_PROMO' };
@@ -77,7 +79,8 @@ export function routePolicy(path) {
   if (/^housekeeping/.test(p)) return { action: 'housekeeping.view', feature: 'HOUSEKEEPING' };
   if (/^inventory/.test(p)) return { action: 'inventory.view', feature: 'INVENTORY_WAREHOUSE' };
   if (/^sales/.test(p)) return { action: 'pos.view', feature: 'POS_SALES' };
-  if (/^cashflow/.test(p)) return { action: 'cashbook.view', feature: 'CASHBOOK' };
+  if (/^cashflow|^commissions/.test(p)) return { action: 'cashbook.view', feature: 'CASHBOOK' };
+  if (/^reports\/(source|room|roomType|cancellations|nationality|discounts)(\/|$)/.test(p)) return { action: 'reports.advanced.view', feature: 'REPORTS_ADVANCED' };
   if (/^reports/.test(p)) return { action: 'reports.view', feature: 'REPORTS_BASIC' };
   if (/^ota/.test(p)) return { action: 'channels.view', feature: 'OTA_SYNC' };
   return { action: 'dashboard.view', feature: 'DASHBOARD' };

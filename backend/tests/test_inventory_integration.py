@@ -1,8 +1,9 @@
 """Real PostgreSQL proofs for immutable stock, stale counts and atomic POS posting."""
 
 from concurrent.futures import ThreadPoolExecutor
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from decimal import Decimal
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import select, text
 from sqlalchemy.exc import DBAPIError
@@ -150,7 +151,9 @@ class InventoryIntegrationTests(DomainTestCase):
         self.assertEqual(invalid.status_code, 422, invalid.json)
 
     def test_opening_multistore_once_snapshots_and_period_equation(self):
-        yesterday = date.today() - timedelta(days=1)
+        tenant_timezone = ZoneInfo("Asia/Ho_Chi_Minh")
+        today = datetime.now(tenant_timezone).date()
+        yesterday = today - timedelta(days=1)
         opening = self.posted(
             "opening",
             date=str(yesterday),
@@ -170,16 +173,15 @@ class InventoryIntegrationTests(DomainTestCase):
         self.posted(
             "receipt",
             "5",
+            date=str(today),
             supplierId=self.supplier["id"],
             lines=[
                 {"itemId": self.item["id"], "quantity": "5", "unitCost": "6"},
             ],
         )
-        issued = self.posted("issue", "3")
+        issued = self.posted("issue", "3", date=str(today))
         self.assertEqual(issued["lines"][0]["costValue"], "-12.00000000")
-        report = self.request(
-            "get", f"/inventory/stock?start={date.today()}&end={date.today()}"
-        ).json
+        report = self.request("get", f"/inventory/stock?start={today}&end={today}").json
         row = next(r for r in report["rows"] if r["warehouseId"] == self.warehouse["id"])
         self.assertEqual(
             (row["openingQuantity"], row["received"], row["issued"], row["closingQuantity"]),
@@ -200,7 +202,11 @@ class InventoryIntegrationTests(DomainTestCase):
         detail = self.request("get", "/inventory/documents/" + issued["id"]).json
         self.assertEqual(detail["lines"][0]["item"], "Coffee")
         self.assertEqual(detail["lines"][0]["sku"], "COFFEE")
-        self.assertNotEqual(opening["createdAt"][:10], opening["date"])
+        created_day = (
+            datetime.fromisoformat(opening["createdAt"]).astimezone(tenant_timezone).date()
+        )
+        self.assertEqual(opening["date"], yesterday.isoformat())
+        self.assertNotEqual(created_day.isoformat(), opening["date"])
 
     def test_first_operation_locks_opening_and_failed_write_rolls_back_lock(self):
         self.assertEqual(self.document("issue", "1").status_code, 409)

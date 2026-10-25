@@ -1,4 +1,8 @@
 .manager-billing {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 24px;
   color: var(--manager-ink);
 }
 
@@ -14,18 +18,59 @@
 }
 
 .manager-billing-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.manager-billing-section-heading > div:first-child {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+.manager-billing-section-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .manager-billing-cycle {
+  display: flex;
+  align-items: center;
   flex-shrink: 0;
-  border-radius: 10px !important;
+  padding: 4px;
+  gap: 4px;
+  border: 1px solid var(--manager-line);
+  border-radius: 8px;
+  background: var(--manager-soft);
 }
 
 .manager-billing-cycle button {
-  border-radius: 7px !important;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 5px;
   min-height: 36px;
+  background: transparent;
+  color: var(--manager-muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.manager-billing-cycle button[aria-pressed="true"] {
+  background: var(--manager-surface);
+  color: var(--manager-accent);
+  box-shadow: 0 1px 3px #09182814;
+}
+
+.manager-billing-plans {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: 16px;
 }
 
 .manager-billing-plans,
@@ -36,6 +81,7 @@
 }
 
 .manager-billing-plan {
+  padding: 20px;
   border-color: var(--manager-line) !important;
 }
 
@@ -47,18 +93,77 @@
   overflow-wrap: anywhere;
 }
 
+.manager-billing-plan-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.manager-billing-plan-price {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.manager-billing-features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 10px 16px;
+  margin-bottom: 20px;
+}
+
+.manager-billing-features > div:first-child {
+  grid-column: 1 / -1;
+}
+
+.manager-billing-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0;
+  overflow: hidden;
+}
+
 .manager-billing-stats > div {
-  padding: 18px 20px !important;
-  border-radius: 12px !important;
-  box-shadow: none !important;
+  padding: 20px;
+  border-right: 1px solid var(--manager-line);
+}
+
+.manager-billing-stats > div:last-child {
+  border-right: 0;
+}
+
+.manager-billing-stats dt {
+  color: var(--manager-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.manager-billing-stats dd {
+  margin: 8px 0 0;
+  color: var(--manager-ink);
+  font-size: 28px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
 }
 
 .manager-billing-filters {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(160px, auto);
+  flex: 1 1 420px;
+  gap: 12px;
   min-width: 0;
 }
 
 .manager-billing-filters label {
   min-width: 0;
+}
+
+.manager-billing-filters label svg {
+  flex-shrink: 0;
 }
 
 .manager-subscription-status {
@@ -98,9 +203,10 @@
 .manager-invoice-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 20px; border-bottom: 1px solid var(--manager-line); }
 .manager-invoice-heading h2 { margin: 0; color: var(--manager-ink); font-size: 16px; font-weight: 700; }
 .manager-invoice-heading p { margin: 6px 0 0; color: var(--manager-muted); font-size: 12px; line-height: 1.6; }
-.manager-invoice-filters { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; padding: 20px; }
+.manager-invoice-filters { display: grid; grid-template-columns: minmax(160px, 1.4fr) repeat(3, minmax(140px, 1fr)) auto; align-items: end; gap: 12px; padding: 20px; }
 .manager-invoice-filters label, .manager-invoice-form label { display: grid; gap: 6px; min-width: 0; color: var(--manager-ink); font-size: 12px; }
-.manager-invoice-filters label:first-child { flex: 1 1 180px; }
+.manager-invoice-filter-actions { display: flex; gap: 8px; }
+.manager-invoice-filter-actions button { white-space: nowrap; }
 .manager-invoices :where(input, select, textarea) { box-sizing: border-box; width: 100%; min-width: 0; min-height: 40px; padding: 9px 12px; border: 1px solid var(--manager-line); border-radius: 8px; background: var(--manager-surface); color: var(--manager-ink); font: inherit; }
 .manager-invoices textarea { resize: vertical; }
 .manager-invoice-state { padding: 20px; margin: 0; font-size: 13px; color: var(--manager-muted); overflow-wrap: anywhere; }
@@ -111,6 +217,9 @@
 .manager-invoice-table :where(th, td) { padding: 14px 16px; border-bottom: 1px solid var(--manager-line); vertical-align: middle; }
 .manager-invoice-table th { color: var(--manager-muted); font-size: 11px; font-weight: 600; background: var(--manager-soft); }
 .manager-invoice-table td { color: var(--manager-ink); font-variant-numeric: tabular-nums; }
+.manager-invoice-table :where(th, td):nth-child(n + 3):nth-child(-n + 5) { text-align: right; white-space: nowrap; }
+.manager-invoice-table td:first-child { overflow-wrap: anywhere; }
+.manager-billing-subscriptions .manager-table :where(th, td):nth-child(3) { text-align: right; font-variant-numeric: tabular-nums; }
 .manager-invoice-secondary { display: block; margin-top: 5px; color: var(--manager-muted); font-size: 12px; }
 .manager-invoice-description { min-width: 160px; max-width: 280px; overflow-wrap: anywhere; line-height: 1.6; }
 .manager-invoice-status { display: inline-flex; padding: 5px 8px; border-radius: 6px; background: var(--manager-soft); color: var(--manager-muted); font-size: 11px; white-space: nowrap; }
@@ -140,8 +249,7 @@
 .manager-invoice-form-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 
 @media (max-width: 640px) {
-  .manager-invoice-filters { padding: 16px; }
-  .manager-invoice-filters label { flex: 1 1 100%; }
+  .manager-invoice-filters { padding: 16px; grid-template-columns: minmax(0, 1fr); }
   .manager-invoice-filters button[type="submit"] { flex: 1; }
   .manager-invoice-heading > button { width: 100%; }
   .manager-invoice-summary, .manager-invoice-form-row { grid-template-columns: minmax(0, 1fr); }
@@ -185,15 +293,15 @@
   align-items: center;
 }
 
-.manager-billing-dialog fieldset {
+.manager-plan-feature-fields {
   padding: 12px;
 }
 
-.manager-billing-dialog fieldset > div {
+.manager-plan-feature-fields > div {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)) !important;
 }
 
-.manager-billing-dialog fieldset label {
+.manager-plan-feature-fields label {
   display: flex;
   align-items: flex-start;
   gap: 7px;
@@ -201,7 +309,7 @@
   line-height: 1.5;
 }
 
-.manager-billing-dialog fieldset input {
+.manager-plan-feature-fields input {
   margin-top: 3px;
   flex-shrink: 0;
   accent-color: var(--manager-accent);
@@ -211,19 +319,18 @@
   min-width: 640px;
 }
 
-@media (min-width: 1100px) {
-  .manager-billing-features {
-    display: grid !important;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    column-gap: 16px !important;
-  }
-
-  .manager-billing-features > div:first-child {
-    grid-column: 1 / -1;
-  }
+@media (min-width: 641px) and (max-width: 1200px) {
+  .manager-invoice-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .manager-invoice-filter-actions { grid-column: 1 / -1; justify-content: flex-end; }
 }
 
 @media (max-width: 640px) {
+  .manager-billing { gap: 20px; }
+  .manager-billing-section-actions { width: 100%; }
+  .manager-billing-section-actions > .manager-button { flex: 1; }
+  .manager-billing-stats { grid-template-columns: minmax(0, 1fr); }
+  .manager-billing-stats > div { padding: 16px; border-right: 0; }
+  .manager-billing-stats > div:not(:last-child) { border-bottom: 1px solid var(--manager-line); }
   .manager-billing-page-badge {
     align-self: flex-start;
   }
@@ -246,6 +353,8 @@
     width: 100%;
   }
 
+  .manager-billing-filters { grid-template-columns: minmax(0, 1fr); }
+
   .manager-billing-filters input {
     width: 100% !important;
   }
@@ -266,4 +375,20 @@
   .manager-billing-dialog form > div:last-child {
     flex-wrap: wrap;
   }
+
+  .manager-billing button { min-height: 44px; }
+  .manager-billing :where(input:not([type="checkbox"]), select, textarea) { min-height: 44px; font-size: 16px !important; }
+  .manager-billing-section-actions { align-items: stretch; }
+  .manager-billing-cycle { width: 100%; }
+  .manager-billing-cycle button { flex: 1; }
+  .manager-plan-actions > span { width: 100%; }
+  .manager-plan-actions > button { flex: 1; justify-content: center; }
+  .manager-billing-dialog { overflow-wrap: anywhere; }
+  .manager-billing-dialog button[aria-label] { min-width: 44px; }
+  .manager-billing-dialog form > div:last-child > button { flex: 1 1 100%; justify-content: center; }
+  .manager-plan-feature-fields label { min-height: 44px; align-items: center; }
+  .manager-billing-dialog form > label:has(input[type="checkbox"]) { min-height: 44px; }
+  .manager-billing-dialog form > label input[type="checkbox"] { flex-shrink: 0; }
+  .manager-invoice-pagination > div { width: 100%; }
+  .manager-invoice-pagination button { flex: 1; }
 }

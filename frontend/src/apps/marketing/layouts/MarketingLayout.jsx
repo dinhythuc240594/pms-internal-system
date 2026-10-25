@@ -1,7 +1,9 @@
+import { t as tUi, useI18n } from '../../../shared/i18n/useI18n.js';
 import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { ArrowUpRight, Menu, X } from 'lucide-react';
 import LohaBrand from '../../../shared/components/LohaBrand';
+import LanguageSwitcher from '../../../shared/i18n/LanguageSwitcher.jsx';
 import './MarketingLayout.css';
 import '../Marketing.css';
 
@@ -13,6 +15,7 @@ const navigation = [
 ];
 
 export default function MarketingLayout() {
+  useI18n();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuButtonRef = useRef(null);
@@ -43,21 +46,24 @@ export default function MarketingLayout() {
 
   return (
     <div className="loha-home">
-      <a className="loha-skip-link" href="#loha-main">Đến nội dung chính</a>
+      <a className="loha-skip-link" href="#loha-main">{tUi("nav.skip")}</a>
       <header className="loha-header" onKeyDown={handleHeaderKey}>
         <div className="loha-container loha-header-inner">
           <LohaBrand />
           <nav className="loha-desktop-nav" aria-label="Điều hướng chính">
             {navigation.map(([to, name]) => <NavLink key={to} to={to} end onClick={closeMenu}>{name}</NavLink>)}
           </nav>
-          <Link className="loha-header-login" to="/id/login">Đăng nhập <ArrowUpRight size={16} aria-hidden="true" /></Link>
-          <button ref={menuButtonRef} className="loha-menu-button" type="button" aria-label={menuOpen ? 'Đóng menu' : 'Mở menu'} aria-expanded={menuOpen} aria-controls="loha-mobile-nav" onClick={() => setMenuOpen(!menuOpen)}>
+          <div className="loha-header-actions">
+            <LanguageSwitcher compact />
+            <Link className="loha-header-login" to="/id/login">{tUi("auth.signIn")}{' '}<ArrowUpRight size={16} aria-hidden="true" /></Link>
+          </div>
+          <button ref={menuButtonRef} className="loha-menu-button" type="button" aria-label={menuOpen ? tUi("nav.closeMenu") : 'Mở menu'} aria-expanded={menuOpen} aria-controls="loha-mobile-nav" onClick={() => setMenuOpen(!menuOpen)}>
             {menuOpen ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
           </button>
         </div>
         <nav id="loha-mobile-nav" className="loha-mobile-nav" aria-label="Điều hướng trên điện thoại" hidden={!menuOpen} onClick={closeMobileMenu}>
           {navigation.map(([to, name]) => <NavLink key={to} to={to} end>{name}</NavLink>)}
-          <Link to="/id/login">Đăng nhập LOHA <ArrowUpRight size={16} aria-hidden="true" /></Link>
+          <Link to="/id/login">{tUi("auth.title")}{' '}<ArrowUpRight size={16} aria-hidden="true" /></Link>
         </nav>
       </header>
 
@@ -75,7 +81,7 @@ export default function MarketingLayout() {
       <footer className="loha-footer">
         <div className="loha-container">
           <div className="loha-footer-top">
-            <div><LohaBrand /><p>Vận hành gọn. Đón khách trọn vẹn.</p></div>
+            <div><LohaBrand /><p>{tUi("errors.tagline")}</p></div>
             <nav aria-label="Liên kết cuối trang">
               {navigation.map(([to, name]) => <Link key={to} to={to}>{name}</Link>)}
             </nav>

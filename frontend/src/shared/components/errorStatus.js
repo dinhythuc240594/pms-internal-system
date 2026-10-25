@@ -11,6 +11,7 @@ export function readableErrorMessage(message, fallback) {
 }
 
 export function errorStatus(error, fallback = 500) {
+  if (error?.status === 403 && error.code === 'csrf_failed') return null;
   const status = typeof error === 'number' ? error : error?.status;
   if (errorScreens[status]) return Number(status);
   if (status === 502 || status === 504) return 503;

@@ -43,6 +43,7 @@ class BookingIntegrationTests(DomainTestCase):
                 "/reservations",
                 {
                     "guest": "Currency race",
+                    "currency": "USD",
                     "room": "101",
                     "sourceId": "direct-a",
                     "checkIn": start.isoformat(),
@@ -74,6 +75,8 @@ class BookingIntegrationTests(DomainTestCase):
             event.remove(engine, "after_cursor_execute", pause_initial_tenant_read)
         self.assertEqual(response.status_code, 201, response.json)
         self.assertEqual(response.json["currency"], "USD")
+        self.assertEqual(response.json["baseCurrency"], "USD")
+        self.assertEqual(Decimal(response.json["exchangeRate"]), Decimal("1"))
 
     def make_booking(self, **changes):
         start = date.today()
@@ -384,21 +387,27 @@ class BookingIntegrationTests(DomainTestCase):
 
     def test_guest_reference_cannot_cross_tenant(self):
         other_client, other_headers = self.login("owner-b@test.local")
+        start = date.today()
         other = self.request(
             "POST",
-            f"/api/tenants/{self.other_tenant_id}/guests",
-            {"name": "Other hotel"},
+            f"/api/tenants/{self.other_tenant_id}/reservations",
+            {
+                "guest": "Other hotel",
+                "room": "101",
+                "sourceId": "direct-b",
+                "checkIn": start.isoformat(),
+                "checkOut": (start + timedelta(days=1)).isoformat(),
+            },
             client=other_client,
             headers=other_headers,
         )
         self.assertEqual(other.status_code, 201, other.json)
-        start = date.today()
         result = self.request(
             "POST",
             "/reservations",
             {
                 "rooms": ["101"],
-                "guests": [{"id": other.json["id"]}],
+                "guests": [{"id": other.json["guests"][0]["id"]}],
                 "sourceId": "direct-a",
                 "checkIn": start.isoformat(),
                 "checkOut": (start + timedelta(days=1)).isoformat(),
@@ -424,7 +433,7 @@ class BookingIntegrationTests(DomainTestCase):
         self.assertEqual(saved.json["phone"], "0911111111")
         self.assertEqual(saved.json["guests"][0]["id"], guest_id)
         self.assertEqual(saved.json["guests"][0]["identityNumber"], "ABC123")
-        profile = self.request("GET", "/guests").json["guests"]
+        profile = self.request("GET", "/workspace").json["guests"]
         self.assertEqual(len(profile), 1)
         self.assertEqual(profile[0]["email"], "guest@test.local")
 
@@ -438,7 +447,7 @@ class BookingIntegrationTests(DomainTestCase):
             {"guests": [changed, {"name": "Extra1"}, {"name": "Extra2"}]},
         )
         self.assertEqual(over_capacity.status_code, 422, over_capacity.json)
-        guests = self.request("GET", "/guests").json["guests"]
+        guests = self.request("GET", "/workspace").json["guests"]
         self.assertEqual(len(guests), 1)
         self.assertEqual(guests[0]["name"], "Guest A")
         self.make_booking(room="102")
@@ -448,7 +457,7 @@ class BookingIntegrationTests(DomainTestCase):
         self.assertEqual(overlap.status_code, 409, overlap.json)
         guest = next(
             value
-            for value in self.request("GET", "/guests").json["guests"]
+            for value in self.request("GET", "/workspace").json["guests"]
             if value["id"] == guest_id
         )
         self.assertEqual(guest["name"], "Guest A")

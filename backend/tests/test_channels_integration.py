@@ -3,8 +3,10 @@
 import os
 from copy import deepcopy
 from datetime import timedelta
+from decimal import Decimal
 from unittest.mock import Mock, patch
 from uuid import UUID
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import create_engine, delete, func, select, text
 from sqlalchemy.exc import SQLAlchemyError
@@ -69,7 +71,7 @@ def revision(
     }
 
 
-class ChannelIntegrationTests(DomainTestCase):
+class ChannelTestCase(DomainTestCase):
     def setUp(self):
         super().setUp()
         credential, webhook = expected_refs(self.tenant_id)
@@ -106,7 +108,7 @@ class ChannelIntegrationTests(DomainTestCase):
         self.provider.feed.return_value = []
         self.provider.catalog.side_effect = self.catalog
         self.patch_provider = patch(
-            "pms_api.channels.service.ChannexClient", return_value=self.provider
+            "pms_api.channels.factory.ChannexClient", return_value=self.provider
         )
         self.patch_provider.start()
         self.addCleanup(self.patch_provider.stop)
@@ -191,6 +193,68 @@ class ChannelIntegrationTests(DomainTestCase):
 
     def jobs(self):
         return self.request("get", "/channels").json["jobs"]
+
+
+class ChannelIntegrationTests(ChannelTestCase):
+    def test_import_snapshots_exact_active_ota_rate_and_keeps_it_on_revision(self):
+        source = self.request("post", "/masters/bookingSources", {"name": "BookingCom", "type": "OTA", "commission": "15"})
+        self.assertEqual(source.status_code, 201, source.json)
+        row = self.import_booking()[0]
+        frozen = {"sourceId": source.json["id"], "sourceName": "BookingCom", "percent": "15.0000"}
+        self.assertEqual(row["snapshot"]["commission"], frozen)
+        changed = self.request("patch", "/masters/bookingSources", {"id": source.json["id"], "commission": "45", "name": "Changed source"})
+        self.assertEqual(changed.status_code, 200, changed.json)
+        updated = self.import_booking(revision(11, "modified"))[0]
+        self.assertEqual(updated["snapshot"]["commission"], frozen)
+
+    def test_unmapped_ota_rate_ignores_near_names_and_wrong_type(self):
+        for name, kind in [("BookingCom", "Travel Agency"), ("Booking.com", "OTA")]:
+            source = self.request("post", "/masters/bookingSources", {"name": name, "type": kind, "commission": "15"})
+            self.assertEqual(source.status_code, 201, source.json)
+        row = self.import_booking()[0]
+        self.assertNotIn("commission", row["snapshot"])
+        self.assertNotIn("commission", self.import_booking(revision(11, "modified"))[0]["snapshot"])
+
+    def test_inactive_ota_requires_legacy_rate_and_later_activation_does_not_backfill(self):
+        source = self.request("post", "/masters/bookingSources", {"name": "BookingCom", "type": "OTA", "commission": "15"})
+        self.assertEqual(source.status_code, 201, source.json)
+        path = f"/masters/bookingSources/{source.json['id']}/toggle"
+        self.assertEqual(self.request("post", path, {}).status_code, 200)
+        self.assertNotIn("commission", self.import_booking()[0]["snapshot"])
+        self.assertEqual(self.request("post", path, {}).status_code, 200)
+        self.assertNotIn("commission", self.import_booking(revision(11, "modified"))[0]["snapshot"])
+
+    def test_no_show_queues_ari_and_provider_revisions_cannot_reopen_or_cancel_it(self):
+        start = utcnow().astimezone(ZoneInfo("Asia/Ho_Chi_Minh")).date()
+        entity = revision(start=str(start), end=str(start + timedelta(days=2)))
+        entity["attributes"]["rooms"][0]["days"] = {
+            str(start): "100",
+            str(start + timedelta(days=1)): "100",
+        }
+        imported = self.import_booking(entity)
+        self.assertEqual(len(imported), 1)
+        self.run_jobs(5)
+        self.clear_push_jobs()
+        booking_id = imported[0]["id"]
+        result = self.request(
+            "post", f"/reservations/{booking_id}/status", json={"status": "NO_SHOW"}
+        )
+        self.assertEqual(result.status_code, 200, result.json)
+        self.assertTrue(
+            any(job["kind"] == "push_ari" and job["status"] == "queued" for job in self.jobs())
+        )
+        self.clear_push_jobs()
+        self.provider.ack.reset_mock()
+        for number, status in ((11, "modified"), (12, "cancelled")):
+            changed = deepcopy(entity)
+            changed["id"] = str(UUID(int=number))
+            changed["attributes"].update(
+                status=status, inserted_at=f"2026-10-07T00:00:{number:02d}Z"
+            )
+            self.import_booking(changed)
+            self.assertEqual(self.local_bookings()[0]["status"], "NO_SHOW")
+        self.assertTrue(any(job["errorCode"] == "booking_requires_review" for job in self.jobs()))
+        self.provider.ack.assert_not_called()
 
     def test_configuration_does_not_expose_credentials_and_ref_is_tenant_bound(self):
         response = self.request("get", "/channels")
@@ -354,6 +418,22 @@ class ChannelIntegrationTests(DomainTestCase):
         )
         self.assertEqual(replacement.status_code, 201, replacement.json)
 
+    def test_ota_currency_and_amount_are_preserved_instead_of_using_guest_nationality(self):
+        rate = self.request(
+            "put", "/pricing/exchange-rates", json={"currency": "USD", "rate": "25000"}
+        )
+        self.assertEqual(rate.status_code, 200, rate.json)
+        entity = revision()
+        entity["attributes"]["currency"] = "USD"
+        entity["attributes"]["customer"]["country"] = "VN"
+        self.import_booking(entity)
+        self.run_jobs()
+        row = self.request("GET", "/reservations/" + self.local_bookings()[0]["id"]).json
+        self.assertEqual(row["currency"], "USD")
+        self.assertEqual(Decimal(row["total"]), Decimal("200"))
+        self.assertEqual(Decimal(row["baseAmount"]), Decimal("5000000"))
+        self.provider.ack.assert_called_once_with(entity["id"])
+
     def test_stale_revision_acknowledged_without_reverting_booking(self):
         self.import_booking(revision(11))
         self.run_jobs()
@@ -509,7 +589,8 @@ class ChannelIntegrationTests(DomainTestCase):
         self.assertEqual(
             self.request("post", f"/channels/jobs/{failed_id}/retry", json={}).status_code, 202
         )
-        self.run_jobs()
+        with patch("pms_api.channels.service.utcnow", return_value=utcnow() + timedelta(seconds=7)):
+            self.run_jobs()
         self.assertEqual(self.jobs()[0]["errorCode"], "provider_rejected")
         self.provider.push_availability.assert_called_once()
 
@@ -563,7 +644,7 @@ class ChannelIntegrationTests(DomainTestCase):
         self.assertEqual(self.client.post(path, json=body, headers=headers).status_code, 202)
         self.assertEqual(len(self.jobs()), 2, "A later no-data event must start a fresh feed poll")
 
-    def test_used_mapping_cannot_silently_leave_old_ota_inventory_open(self):
+    def test_empty_booking_poll_does_not_lock_unused_mapping(self):
         self.request("post", "/channels/jobs", json={"kind": "pull_bookings"})
         mapping = {
             "roomTypeId": "rt-a",
@@ -571,7 +652,9 @@ class ChannelIntegrationTests(DomainTestCase):
             "channexRatePlanId": REMOTE_RATE,
             "active": False,
         }
-        self.assertEqual(self.request("put", "/channels/mappings", json=mapping).status_code, 409)
+        result = self.request("put", "/channels/mappings", json=mapping)
+        self.assertEqual(result.status_code, 200, result.json)
+        self.assertFalse(result.json["active"])
 
     def test_scheduler_coalesces_bucket_and_recovers_missed_webhook(self):
         from pms_api.channels.service import schedule_jobs
@@ -623,3 +706,201 @@ class ChannelIntegrationTests(DomainTestCase):
         self.assertEqual(self.local_bookings(), [])
         self.assertEqual(self.jobs()[0]["errorCode"], "channel_database_conflict")
         self.provider.ack.assert_not_called()
+
+
+class ChannelRecoveryTests(ChannelTestCase):
+    def test_manual_poll_recovers_failed_revision_after_provider_data_is_corrected(self):
+        self.import_booking(revision(amount="250"))
+        failed_id = self.jobs()[0]["id"]
+        self.assertEqual(self.jobs()[0]["errorCode"], "booking_amount_mismatch")
+        self.provider.feed.return_value = [revision()]
+        self.provider.revision.return_value = revision()
+
+        response = self.request("post", "/channels/jobs", json={"kind": "pull_bookings"})
+        self.assertEqual(response.status_code, 202, response.json)
+        with self.app.app_context():
+            set_context(self.owner_id, self.tenant_id)
+            self.assertEqual(
+                db.session.get(ChannelJob, response.json["id"]).payload, {"retryFailed": True}
+            )
+        self.run_jobs(10)
+
+        self.assertEqual(len(self.local_bookings()), 1)
+        recovered = next(j for j in self.jobs() if j["id"] == failed_id)
+        self.assertEqual((recovered["status"], recovered["attempts"]), ("succeeded", 1))
+        self.provider.ack.assert_called_once_with(revision()["id"])
+        with self.app.app_context():
+            set_context(self.owner_id, self.tenant_id)
+            self.assertEqual(db.session.scalar(select(func.count()).select_from(ChannelRevision)), 1)
+
+    def test_scheduled_poll_and_webhook_do_not_restart_terminal_revision_failure(self):
+        from pms_api.channels.service import schedule_jobs
+
+        self.import_booking(revision(amount="250"))
+        failed_id = self.jobs()[0]["id"]
+        self.provider.feed.return_value = [revision()]
+        self.provider.revision.return_value = revision()
+        with self.app.app_context():
+            self.assertGreater(schedule_jobs(self.tenant_id), 0)
+        self.run_jobs()
+        self.enqueue_revision(revision())
+
+        failed = next(j for j in self.jobs() if j["id"] == failed_id)
+        self.assertEqual((failed["status"], failed["attempts"]), ("failed", 1))
+        self.assertEqual(self.local_bookings(), [])
+        self.provider.ack.assert_not_called()
+        self.assertEqual(self.provider.revision.call_count, 1)
+        with self.app.app_context():
+            set_context(self.owner_id, self.tenant_id)
+            polls = db.session.scalars(select(ChannelJob).where(
+                ChannelJob.kind == "pull_bookings", ChannelJob.dedupe_key.like("poll:%")
+            )).all()
+            self.assertEqual(len(polls), 1)
+            self.assertEqual(polls[0].payload, {})
+
+    def test_manual_poll_recovers_failed_ack_without_fetching_or_importing_again(self):
+        self.import_booking()
+        self.provider.ack.side_effect = ProviderError("provider_rejected")
+        self.run_jobs()
+        failed = next(j for j in self.jobs() if j["kind"] == "ack_revision")
+        self.assertEqual(failed["status"], "failed")
+        self.provider.ack.side_effect = None
+        self.provider.feed.return_value = [revision()]
+
+        response = self.request("post", "/channels/jobs", json={"kind": "pull_bookings"})
+        self.assertEqual(response.status_code, 202, response.json)
+        self.run_jobs(5)
+
+        recovered = next(j for j in self.jobs() if j["id"] == failed["id"])
+        self.assertEqual((recovered["status"], recovered["attempts"]), ("succeeded", 1))
+        self.assertEqual(len(self.local_bookings()), 1)
+        self.assertEqual(self.provider.revision.call_count, 1)
+        self.assertEqual(self.provider.ack.call_count, 2)
+
+    def test_manual_recovery_does_not_bypass_currency_change_review(self):
+        response = self.request("put", "/pricing/exchange-rates", json={"currency": "USD", "rate": "25000"})
+        self.assertEqual(response.status_code, 200, response.json)
+        original = revision()
+        original["attributes"]["currency"] = "USD"
+        self.import_booking(original)
+        self.run_jobs()
+        self.provider.ack.reset_mock()
+        changed = revision(11, "modified")
+        self.import_booking(changed)
+        failed = next(j for j in self.jobs() if j["errorCode"] == "booking_requires_review")
+        self.provider.feed.return_value = [changed]
+
+        response = self.request("post", "/channels/jobs", json={"kind": "pull_bookings"})
+        self.assertEqual(response.status_code, 202, response.json)
+        self.run_jobs(5)
+
+        repeated = next(j for j in self.jobs() if j["id"] == failed["id"])
+        self.assertEqual((repeated["status"], repeated["errorCode"]), ("failed", "booking_requires_review"))
+        self.provider.ack.assert_not_called()
+        self.assertEqual(self.provider.revision.call_count, 3)
+        with self.app.app_context():
+            set_context(self.owner_id, self.tenant_id)
+            self.assertEqual(db.session.scalar(select(Reservation.currency)), "USD")
+            self.assertIsNone(db.session.scalar(select(ChannelRevision.id).where(
+                ChannelRevision.revision_id == changed["id"]
+            )))
+
+    def test_failed_dedupe_retry_is_explicit_bounded_and_uses_current_actor(self):
+        from flask import g
+
+        from pms_api.channels.service import queue_job
+        from pms_api.core_models import User
+        from pms_api.security import ApiError
+
+        self.import_booking(revision(amount="250"))
+        failed_id = self.jobs()[0]["id"]
+        with self.app.app_context():
+            set_context(self.owner_id, self.tenant_id)
+            failed = db.session.get(ChannelJob, failed_id)
+            failed.actor_id = "frontdesk"
+            for number in range(500):
+                db.session.add(ChannelJob(
+                    id=f"recovery-pending-{number}", tenant_id=self.tenant_id,
+                    actor_id=self.owner_id, kind="pull_bookings", payload={},
+                ))
+            db.session.commit()
+            set_context(self.owner_id, self.tenant_id)
+            g.tenant = db.session.get(Tenant, self.tenant_id)
+            g.user = db.session.get(User, self.owner_id)
+            details, key = {"revisionId": revision()["id"]}, "revision:" + revision()["id"]
+            existing = queue_job(self.tenant_id, self.owner_id, "pull_bookings", details, key)
+            self.assertEqual((existing.id, existing.status, existing.actor_id), (failed_id, "failed", "frontdesk"))
+            with self.assertRaises(ApiError) as raised:
+                queue_job(self.tenant_id, self.owner_id, "pull_bookings", details, key, retry_failed=True)
+            self.assertEqual(raised.exception.code, "channel_queue_full")
+            self.assertEqual(failed.status, "failed")
+
+            db.session.delete(db.session.get(ChannelJob, "recovery-pending-0"))
+            db.session.flush()
+            recovered = queue_job(self.tenant_id, self.owner_id, "pull_bookings", details, key, retry_failed=True)
+            self.assertEqual((recovered.id, recovered.status, recovered.attempts, recovered.actor_id),
+                             (failed_id, "queued", 0, self.owner_id))
+            self.assertIsNone(recovered.error_code)
+            self.assertIsNone(recovered.completed_at)
+            self.assertLessEqual(recovered.available_at, utcnow())
+            self.assertEqual(db.session.scalar(select(func.count()).select_from(ChannelJob).where(
+                ChannelJob.status.in_(["queued", "processing"])
+            )), 500)
+
+            recovered.attempts, recovered.actor_id = 2, "frontdesk"
+            recovered.available_at = utcnow() + timedelta(minutes=5)
+            queued_at = recovered.available_at
+            for status in ("queued", "processing", "succeeded"):
+                with self.subTest(status=status):
+                    recovered.status = status
+                    again = queue_job(self.tenant_id, self.owner_id, "pull_bookings", details, key, retry_failed=True)
+                    self.assertEqual((again.status, again.attempts, again.actor_id, again.available_at),
+                                     (status, 2, "frontdesk", queued_at))
+
+    def test_manual_polls_coalesce_without_sharing_or_downgrading_scheduled_poll(self):
+        from pms_api.channels.service import schedule_jobs
+
+        first = self.request("post", "/channels/jobs", json={"kind": "pull_bookings"})
+        second = self.request("post", "/channels/jobs", json={"kind": "pull_bookings"})
+        self.assertEqual((first.status_code, second.status_code), (202, 202))
+        self.assertEqual(first.json["id"], second.json["id"])
+        with self.app.app_context():
+            schedule_jobs(self.tenant_id)
+            set_context(self.owner_id, self.tenant_id)
+            polls = db.session.scalars(select(ChannelJob).where(
+                ChannelJob.kind == "pull_bookings"
+            )).all()
+            self.assertEqual(len(polls), 2)
+            self.assertEqual(db.session.get(ChannelJob, first.json["id"]).payload, {"retryFailed": True})
+            self.assertEqual(next(j for j in polls if j.id != first.json["id"]).payload, {})
+        third = self.request("post", "/channels/jobs", json={"kind": "pull_bookings"})
+        self.assertEqual(third.status_code, 202, third.json)
+        self.assertEqual(third.json["id"], first.json["id"])
+
+    def test_worker_cli_logs_job_results_and_revision_without_credentials_or_payload(self):
+        import io
+        import logging
+
+        self.assertFalse(self.app.debug)
+        self.enqueue_revision(revision(amount="250"))
+        stream = io.StringIO()
+        handler = logging.StreamHandler(stream)
+        logger, previous_level = self.app.logger, self.app.logger.level
+        logger.setLevel(logging.WARNING)
+        logger.addHandler(handler)
+        try:
+            result = self.app.test_cli_runner().invoke(args=[
+                "process-channel-jobs", "--tenant", self.tenant_id, "--limit", "2"
+            ])
+            self.assertEqual(result.exit_code, 0, result.output)
+            self.assertEqual(logger.level, logging.INFO)
+            output = stream.getvalue()
+            for expected in ("kind=pull_bookings", "revision=" + revision()["id"],
+                             "status=failed", "error=booking_amount_mismatch", "status=succeeded"):
+                self.assertIn(expected, output)
+            for secret in ("fixture-sensitive-card", "fixture-api-key",
+                           "fixture-webhook-secret-32-characters", "guest@test.local"):
+                self.assertNotIn(secret, output)
+        finally:
+            logger.removeHandler(handler)
+            logger.setLevel(previous_level)

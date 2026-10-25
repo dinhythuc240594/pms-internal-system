@@ -1,3 +1,4 @@
+import { t as tUi, tr as labelUi, useI18n } from '../../../../shared/i18n/useI18n.js';
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { 
@@ -17,8 +18,10 @@ import {
 import { usePms } from '../../../pms/data/usePms';
 import { getThemeTokens } from '../../theme';
 import { displayDate, featureOverridePayload, overrideExpiry } from './featureOverride';
+import './AdminFeatures.css';
 
 export default function AdminFeatures() {
+  const { apiText } = useI18n();
   const { searchQuery: globalSearch, isDarkMode, theme } = useOutletContext() || {};
   const t = theme || getThemeTokens(isDarkMode);
 
@@ -31,7 +34,12 @@ export default function AdminFeatures() {
   const drawerRef = useRef(null);
   const modalRef = useRef(null);
   const [catalog, setCatalog] = useState({ userKey: null, features: [], tenantFeatureOverrides: {} });
-  const features = catalog.userKey === userKey ? catalog.features : [];
+  const features = catalog.userKey === userKey ? catalog.features.map(feature => ({
+    ...feature,
+    name: apiText(feature.name),
+    description: apiText(feature.description),
+    category: apiText(feature.category),
+  })) : [];
   const tenantFeatureOverrides = catalog.userKey === userKey ? catalog.tenantFeatureOverrides : {};
   const canManageOverrides = ['SUPER_ADMIN', 'SYSTEM_MANAGER'].includes(user?.globalRole);
   const canToggleGlobal = user?.globalRole === 'SUPER_ADMIN';
@@ -49,7 +57,7 @@ export default function AdminFeatures() {
     const tenant = tenants.find(t => t.id === tenantId);
     if (!tenant) continue;
     for (const [code, entry] of Object.entries(entries)) {
-      (tenantOverrides[code] ||= []).push({ ...entry, ...overrideExpiry(entry.expiresAt), id: `${tenantId}-${code}`, tenantId, tenantName: tenant.name, subdomain: tenant.subdomain || '—', basePlan: ['FREE', 'PRO'].includes(tenant.plan) ? tenant.plan : '—', overrideType: entry.isTrial ? 'TRIAL' : entry.enabled ? 'FORCE_ENABLE' : 'FORCE_DISABLE', overrideLabel: entry.isTrial ? 'Dùng thử tính năng' : entry.enabled ? 'Đã bật riêng' : 'Đã tắt riêng', notes: entry.notes || '', grantedBy: entry.grantedBy || '—', grantedAt: displayDate(entry.grantedAt) });
+      (tenantOverrides[code] ||= []).push({ ...entry, ...overrideExpiry(entry.expiresAt), id: `${tenantId}-${code}`, tenantId, tenantName: tenant.name, subdomain: tenant.subdomain || '—', basePlan: tenant.plan || '—', overrideType: entry.isTrial ? 'TRIAL' : entry.enabled ? 'FORCE_ENABLE' : 'FORCE_DISABLE', overrideLabel: entry.isTrial ? 'Dùng thử tính năng' : entry.enabled ? 'Đã bật riêng' : 'Đã tắt riêng', notes: entry.notes || '', grantedBy: entry.grantedBy || '—', grantedAt: displayDate(entry.grantedAt) });
     }
   }
   const [activeDrawerCode, setActiveDrawerCode] = useState(null);
@@ -222,16 +230,16 @@ export default function AdminFeatures() {
     <div role={error ? 'alert' : 'status'} style={{ padding: '14px 18px', border: `1px solid ${t.border}`, borderRadius: '14px', backgroundColor: t.bgInput, color: error ? '#EF4444' : t.textSecondary, display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px' }}>
       {error && <AlertCircle size={17} />}
       <span style={{ flex: 1 }}>{error || (busy ? 'Đang lưu cấu hình tính năng…' : 'Đang tải cấu hình tính năng…')}</span>
-      {error && canManageOverrides && <button type="button" disabled={loading || busy} onClick={refreshFeatures} style={{ border: `1px solid ${t.border}`, borderRadius: '10px', padding: '6px 12px', backgroundColor: t.bgSurface, color: t.primary, cursor: 'pointer' }}>Thử lại</button>}
+      {error && canManageOverrides && <button type="button" disabled={loading || busy} onClick={refreshFeatures} style={{ border: `1px solid ${t.border}`, borderRadius: '10px', padding: '6px 12px', backgroundColor: t.bgSurface, color: t.primary, cursor: 'pointer' }}>{tUi("common.retry")}</button>}
     </div>
   ) : null;
 
   return (
-    <div style={{ width: '100%', maxWidth: '1440px', margin: '0 auto', minWidth: 0, display: 'flex', flexDirection: 'column', gap: '24px', fontFamily: t.fontFamily || "'Inter', 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
+    <div className="manager-page admin-features-page">
       
       {/* Toast Alert */}
       {toastMessage && (
-        <div 
+        <div className="admin-features-toast"
           role="status"
           style={{
             position: 'fixed',
@@ -259,169 +267,26 @@ export default function AdminFeatures() {
       {statusBanner}
       {canManageOverrides && !canToggleGlobal && <div style={{ fontSize: '12px', color: t.textSecondary }}>System Manager có thể quản lý ngoại lệ theo khách sạn. Chỉ Super Admin được thay đổi cờ Global.</div>}
 
-      {/* -------------------------------------------------------------
-          TOP BAR: Summary Metrics
-          ------------------------------------------------------------- */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
-        <div 
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-4px)';
-            e.currentTarget.style.borderColor = t.primary;
-            e.currentTarget.style.boxShadow = t.cardHoverShadow;
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.borderColor = t.border;
-            e.currentTarget.style.boxShadow = t.cardShadow;
-          }}
-          style={{ backgroundColor: t.bgSurface, padding: '20px 24px', borderRadius: '24px', border: `1px solid ${t.border}`, boxShadow: t.cardShadow, transition: 'all 0.22s cubic-bezier(0.4, 0, 0.2, 1)', cursor: 'default' }}
-        >
-          <span style={{ fontSize: '12px', color: t.textSecondary, fontWeight: '700' }}>Tổng số tính năng Core</span>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
-            <span style={{ fontSize: '26px', fontWeight: '900', color: t.textPrimary }}>{loading ? '—' : features.length} Modules</span>
-            <span style={{ fontSize: '11px', backgroundColor: t.aquaBg, color: t.aquaText, padding: '3px 8px', borderRadius: '10px', fontWeight: '800', border: `1px solid ${t.aquaBorder}` }}>Standardized</span>
-          </div>
+      <section className="admin-features-summary" aria-label="Tổng quan tính năng">
+        <div className="manager-panel admin-features-metric">
+          <span>Tổng số tính năng</span><strong>{loading ? '—' : features.length}</strong><small>Danh mục toàn hệ thống</small>
         </div>
-
-        <div 
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-4px)';
-            e.currentTarget.style.borderColor = t.primary;
-            e.currentTarget.style.boxShadow = t.cardHoverShadow;
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.borderColor = t.border;
-            e.currentTarget.style.boxShadow = t.cardShadow;
-          }}
-          style={{ backgroundColor: t.bgSurface, padding: '20px 24px', borderRadius: '24px', border: `1px solid ${t.border}`, boxShadow: t.cardShadow, transition: 'all 0.22s cubic-bezier(0.4, 0, 0.2, 1)', cursor: 'default' }}
-        >
-          <span style={{ fontSize: '12px', color: t.textSecondary, fontWeight: '700' }}>Kích hoạt toàn hệ thống (Global)</span>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
-            <span style={{ fontSize: '26px', fontWeight: '900', color: t.aquaText }}>{loading ? '—' : `${totalActiveGlobal} / ${features.length}`}</span>
-            <span style={{ fontSize: '11px', backgroundColor: t.aquaBg, color: t.aquaText, padding: '3px 8px', borderRadius: '10px', fontWeight: '800', border: `1px solid ${t.aquaBorder}` }}>Enabled</span>
-          </div>
+        <div className="manager-panel admin-features-metric">
+          <span>Đang bật toàn hệ thống</span><strong>{loading ? '—' : totalActiveGlobal}<small> / {features.length}</small></strong><small>Áp dụng theo gói của khách sạn</small>
         </div>
-
-        <div 
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-4px)';
-            e.currentTarget.style.borderColor = '#0284C7';
-            e.currentTarget.style.boxShadow = '0 12px 28px rgba(2, 132, 199, 0.2)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.borderColor = t.border;
-            e.currentTarget.style.boxShadow = t.cardShadow;
-          }}
-          style={{ backgroundColor: t.bgSurface, padding: '20px 24px', borderRadius: '24px', border: `1px solid ${t.border}`, boxShadow: t.cardShadow, transition: 'all 0.22s cubic-bezier(0.4, 0, 0.2, 1)', cursor: 'default' }}
-        >
-          <span style={{ fontSize: '12px', color: t.textSecondary, fontWeight: '700' }}>Tổng lượt áp dụng ngoại lệ (Overrides)</span>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
-            <span style={{ fontSize: '26px', fontWeight: '900', color: '#0284C7' }}>{loading ? '—' : totalAllOverrides} cơ sở</span>
-            <span style={{ fontSize: '11px', backgroundColor: '#F0F9FF', color: '#0284C7', padding: '3px 8px', borderRadius: '10px', fontWeight: '800', border: '1px solid #BAE6FD' }}>Overrides</span>
-          </div>
+        <div className="manager-panel admin-features-metric">
+          <span>Ngoại lệ theo khách sạn</span><strong>{loading ? '—' : totalAllOverrides}</strong><small>Tổng lượt cấp quyền riêng</small>
         </div>
-      </div>
-
-      {/* -------------------------------------------------------------
-          FILTER & SEARCH BAR (Single Horizontal Scrollable Line)
-          ------------------------------------------------------------- */}
-      <div 
-        style={{
-          backgroundColor: t.bgSurface,
-          borderRadius: '22px',
-          padding: '12px 18px',
-          border: `1px solid ${t.border}`,
-          display: 'flex',
-          alignItems: 'center',
-          gap: '14px',
-          boxShadow: t.cardShadow,
-          width: '100%',
-          minWidth: 0,
-          overflow: 'hidden'
-        }}
-      >
-        <div 
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            backgroundColor: t.bgInput,
-            borderRadius: '16px',
-            padding: '8px 14px',
-            width: '260px',
-            minWidth: '200px',
-            flexShrink: 0,
-            border: `1px solid ${t.border}`
-          }}
-        >
-          <Search size={16} color={t.textSecondary} />
-          <input 
-            type="text"
-            aria-label="Tìm tính năng"
-            placeholder="Tìm tính năng, mã code..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{
-              border: 'none',
-              outline: 'none',
-              backgroundColor: 'transparent',
-              paddingLeft: '8px',
-              fontSize: '13px',
-              color: t.textPrimary,
-              width: '100%',
-              fontWeight: '500'
-            }}
-          />
-        </div>
-
-        {/* 1 Single Horizontal Row with Smooth Scroll & Zero Wrap */}
-        <div 
-          style={{ 
-            display: 'flex', 
-            gap: '8px', 
-            flexWrap: 'nowrap', 
-            overflowX: 'auto', 
-            alignItems: 'center',
-            flex: 1,
-            minWidth: 0,
-            padding: '4px 2px',
-            WebkitOverflowScrolling: 'touch',
-            scrollbarWidth: 'none',
-            msOverflowStyle: 'none'
-          }}
-        >
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setCategoryFilter(cat)}
-              onMouseEnter={(e) => {
-                if (categoryFilter !== cat) {
-                  e.currentTarget.style.borderColor = t.primary;
-                  e.currentTarget.style.color = t.primary;
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (categoryFilter !== cat) {
-                  e.currentTarget.style.borderColor = t.border;
-                  e.currentTarget.style.color = t.textSecondary;
-                }
-              }}
-              style={{
-                padding: '7px 14px',
-                borderRadius: '12px',
-                border: categoryFilter === cat ? 'none' : `1px solid ${t.border}`,
-                backgroundColor: categoryFilter === cat ? t.primary : t.bgInput,
-                color: categoryFilter === cat ? '#FFFFFF' : t.textSecondary,
-                fontSize: '12px',
-                fontWeight: '800',
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-                flexShrink: 0,
-                transition: 'all 0.18s ease'
-              }}
-            >
-              {cat === 'ALL' ? 'Tất cả nhóm' : cat}
+      </section>
+      <div className="manager-panel admin-features-filters">
+        <label className="admin-features-search">
+          <Search size={16} aria-hidden="true" />
+          <input type="search" aria-label="Tìm tính năng" placeholder="Tìm tên hoặc mã tính năng..." value={search} onChange={event => setSearch(event.target.value)} />
+        </label>
+        <div className="admin-features-categories" role="group" aria-label="Lọc theo nhóm tính năng">
+          {categories.map(category => (
+            <button key={category} type="button" aria-pressed={categoryFilter === category} onClick={() => setCategoryFilter(category)}>
+              {category === 'ALL' ? 'Tất cả nhóm' : category}
             </button>
           ))}
         </div>
@@ -430,43 +295,17 @@ export default function AdminFeatures() {
       {/* -------------------------------------------------------------
           FEATURES CARDS LIST WITH TOGGLES
           ------------------------------------------------------------- */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '18px' }}>
+      <div className="admin-features-grid">
         {!loading && !error && filteredFeatures.length === 0 && <div role="status" style={{ padding: '24px', color: t.textSecondary }}>Không có tính năng phù hợp.</div>}
         {filteredFeatures.map((f) => {
           const overrideCount = (tenantOverrides[f.code] || []).length;
 
           return (
-            <div
-              key={f.id}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-4px)';
-                e.currentTarget.style.borderColor = t.primary;
-                e.currentTarget.style.boxShadow = t.cardHoverShadow;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.borderColor = t.border;
-                e.currentTarget.style.boxShadow = t.cardShadow;
-              }}
-              style={{
-                backgroundColor: t.bgSurface,
-                borderRadius: '24px',
-                padding: '24px',
-                border: `1px solid ${t.border}`,
-                boxShadow: t.cardShadow,
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                gap: '16px',
-                position: 'relative',
-                transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-                cursor: 'default'
-              }}
-            >
+            <div key={f.id} className="manager-panel admin-features-card">
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
                   <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '4px' }}>
                       <span 
                         style={{
                           fontSize: '11px',
@@ -533,11 +372,11 @@ export default function AdminFeatures() {
                 </p>
               </div>
 
-              <div style={{ borderTop: `1px solid ${t.borderSubtle}`, paddingTop: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ display: 'flex', gap: '16px', fontSize: '12px' }}>
+              <div className="admin-features-card-footer">
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 16px', fontSize: '12px' }}>
                   <span style={{ color: t.textSecondary }}>Gói: <strong>{f.minPlan}</strong></span>
                   <span style={{ color: t.textSecondary }}>
-                    Ngoại lệ: <strong style={{ color: overrideCount > 0 ? t.primary : t.textSecondary }}>{overrideCount} khách sạn</strong>
+                    Ngoại lệ: <strong style={{ color: overrideCount > 0 ? t.primary : t.textSecondary }}>{overrideCount}{' '}{tUi("common.hotelLower")}</strong>
                   </span>
                 </div>
 
@@ -604,6 +443,7 @@ export default function AdminFeatures() {
 
           {/* Drawer Content Panel */}
           <div 
+            className="admin-features-drawer"
             ref={drawerRef}
             role="dialog"
             aria-modal={!isAddOverrideModalOpen}
@@ -615,6 +455,7 @@ export default function AdminFeatures() {
               position: 'relative',
               width: '100%',
               maxWidth: '820px',
+              minWidth: 0,
               height: '100%',
               backgroundColor: t.bgSurface,
               boxShadow: '-10px 0 40px rgba(0,0,0,0.35)',
@@ -626,7 +467,7 @@ export default function AdminFeatures() {
             }}
           >
             {/* Drawer Header */}
-            <div 
+            <div className="admin-features-drawer-heading"
               style={{
                 padding: '24px 28px',
                 borderBottom: `1px solid ${t.borderSubtle}`,
@@ -700,7 +541,7 @@ export default function AdminFeatures() {
             </div>
 
             {/* Feature Description & Global Status Bar */}
-            <div 
+            <div className="admin-features-drawer-status"
               style={{
                 padding: '14px 28px',
                 backgroundColor: t.isDark ? '#14181F' : '#F1F5F9',
@@ -711,7 +552,7 @@ export default function AdminFeatures() {
                 gap: '16px'
               }}
             >
-              <div style={{ fontSize: '12.5px', color: t.textSecondary, lineHeight: '1.4', flex: 1 }}>
+              <div style={{ fontSize: '12.5px', color: t.textSecondary, lineHeight: '1.4', flex: '1 1 280px' }}>
                 {activeDrawerFeature.description}
                 {!activeDrawerFeature.enabledGlobal && <div style={{ marginTop: '6px', fontWeight: '700' }}>Cờ Global đang tắt: mọi khách sạn đều bị chặn, kể cả khách sạn có ngoại lệ bật.</div>}
               </div>
@@ -733,7 +574,7 @@ export default function AdminFeatures() {
             </div>
 
             {/* Action Bar (Add Tenant Override & Search) */}
-            <div 
+            <div className="admin-features-drawer-toolbar"
               style={{
                 padding: '18px 28px',
                 display: 'flex',
@@ -744,13 +585,15 @@ export default function AdminFeatures() {
               }}
             >
               <div 
+                className="admin-features-drawer-search"
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   backgroundColor: t.bgInput,
                   borderRadius: '14px',
                   padding: '8px 14px',
-                  width: '320px',
+                  flex: '1 1 240px',
+                  minWidth: 0,
                   border: `1px solid ${t.border}`
                 }}
               >
@@ -807,7 +650,7 @@ export default function AdminFeatures() {
             </div>
 
             {/* Overrides Table / List Area */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: '20px 28px' }}>
+            <div className="admin-features-drawer-body" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '20px 28px' }}>
               {statusBanner}
               {currentDrawerOverrides.length === 0 ? (
                 /* Empty State */
@@ -872,22 +715,23 @@ export default function AdminFeatures() {
                     backgroundColor: t.bgSurface,
                     borderRadius: '18px',
                     border: `1px solid ${t.border}`,
-                    overflow: 'hidden',
+                    overflowX: 'auto',
+                    minWidth: 0,
                     boxShadow: t.cardShadow
                   }}
                 >
-                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                    <thead>
-                      <tr style={{ backgroundColor: t.isDark ? '#191D24' : '#F8FAFC', borderBottom: `1px solid ${t.border}` }}>
+                  <table className="admin-features-overrides" role="table" style={{ width: '100%', minWidth: '680px', borderCollapse: 'collapse', textAlign: 'left' }}>
+                    <thead role="rowgroup">
+                      <tr role="row" style={{ backgroundColor: t.isDark ? '#191D24' : '#F8FAFC', borderBottom: `1px solid ${t.border}` }}>
                         <th style={{ padding: '12px 16px', fontSize: '11px', fontWeight: '800', color: t.textSecondary, textTransform: 'uppercase' }}>Khách sạn áp dụng</th>
                         <th style={{ padding: '12px 16px', fontSize: '11px', fontWeight: '800', color: t.textSecondary, textTransform: 'uppercase' }}>Hình thức ngoại lệ</th>
                         <th style={{ padding: '12px 16px', fontSize: '11px', fontWeight: '800', color: t.textSecondary, textTransform: 'uppercase' }}>Lý do / Ghi chú</th>
-                        <th style={{ padding: '12px 16px', fontSize: '11px', fontWeight: '800', color: t.textSecondary, textTransform: 'uppercase', textAlign: 'right' }}>Thao tác</th>
+                        <th style={{ padding: '12px 16px', fontSize: '11px', fontWeight: '800', color: t.textSecondary, textTransform: 'uppercase', textAlign: 'right' }}>{tUi("common.actions")}</th>
                       </tr>
                     </thead>
-                    <tbody>
+                    <tbody role="rowgroup">
                       {currentDrawerOverrides.map((item, idx) => (
-                        <tr 
+                        <tr role="row"
                           key={item.id}
                           style={{
                             borderBottom: idx < currentDrawerOverrides.length - 1 ? `1px solid ${t.borderSubtle}` : 'none',
@@ -897,7 +741,7 @@ export default function AdminFeatures() {
                           onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                         >
                           {/* Khách sạn */}
-                          <td style={{ padding: '14px 16px', verticalAlign: 'middle' }}>
+                          <td role="cell" style={{ padding: '14px 16px', verticalAlign: 'middle' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                               <div style={{ width: '32px', height: '32px', borderRadius: '10px', backgroundColor: t.bgInput, display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.primary, flexShrink: 0 }}>
                                 <Building2 size={16} />
@@ -916,7 +760,7 @@ export default function AdminFeatures() {
                           </td>
 
                           {/* Hình thức ngoại lệ */}
-                          <td style={{ padding: '14px 16px', verticalAlign: 'middle' }}>
+                          <td role="cell" data-label={labelUi('Hình thức ngoại lệ')} style={{ padding: '14px 16px', verticalAlign: 'middle' }}>
                             <div>
                               <span 
                                 style={{
@@ -952,7 +796,7 @@ export default function AdminFeatures() {
                           </td>
 
                           {/* Ghi chú & Ngày cấp */}
-                          <td style={{ padding: '14px 16px', verticalAlign: 'middle' }}>
+                          <td role="cell" data-label={labelUi('Lý do / Ghi chú')} style={{ padding: '14px 16px', verticalAlign: 'middle' }}>
                             <div style={{ fontSize: '12px', color: t.textPrimary, fontWeight: '600', maxWidth: '240px', lineHeight: '1.4' }}>
                               {item.notes}
                             </div>
@@ -962,7 +806,7 @@ export default function AdminFeatures() {
                           </td>
 
                           {/* Thao tác */}
-                          <td style={{ padding: '14px 16px', verticalAlign: 'middle', textAlign: 'right' }}>
+                          <td role="cell" style={{ padding: '14px 16px', verticalAlign: 'middle', textAlign: 'right' }}>
                             <button
                               disabled={actionsDisabled || !canManageOverrides}
                               onClick={() => handleRemoveOverride(item.tenantId, item.tenantName)}
@@ -1003,7 +847,7 @@ export default function AdminFeatures() {
             </div>
 
             {/* Drawer Footer */}
-            <div 
+            <div className="admin-features-drawer-footer"
               style={{
                 padding: '16px 28px',
                 borderTop: `1px solid ${t.borderSubtle}`,
@@ -1030,9 +874,7 @@ export default function AdminFeatures() {
                   fontWeight: '800',
                   cursor: 'pointer'
                 }}
-              >
-                Đóng
-              </button>
+              >{tUi("common.close")}</button>
             </div>
           </div>
         </div>
@@ -1057,6 +899,7 @@ export default function AdminFeatures() {
           }}
         >
           <div 
+            className="admin-features-modal"
             ref={modalRef}
             role="dialog"
             aria-modal="true"
@@ -1064,7 +907,7 @@ export default function AdminFeatures() {
             tabIndex={-1}
             style={{
               backgroundColor: t.bgSurface,
-              borderRadius: '24px',
+              borderRadius: '12px',
               width: '100%',
               maxWidth: '540px',
               padding: '28px',
@@ -1121,7 +964,7 @@ export default function AdminFeatures() {
                     const isAlreadyOverridden = (tenantOverrides[activeDrawerFeature.code] || []).some(o => o.tenantId === item.id);
                     return (
                       <option key={item.id} value={item.id}>
-                        {item.name} ({item.subdomain || '—'}) - {['FREE', 'PRO'].includes(item.plan) ? item.plan : '—'} {isAlreadyOverridden ? '[Đang có ngoại lệ]' : ''}
+                        {item.name} ({item.subdomain || '—'}) - {item.plan || '—'} {isAlreadyOverridden ? '[Đang có ngoại lệ]' : ''}
                       </option>
                     );
                   })}
@@ -1133,7 +976,7 @@ export default function AdminFeatures() {
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: t.textPrimary, marginBottom: '6px' }}>
                   Hình thức áp dụng ngoại lệ
                 </label>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 140px), 1fr))', gap: '8px' }}>
                   {[
                     { type: 'FORCE_ENABLE', label: 'Vượt cấp VIP', desc: 'Mở vĩnh viễn' },
                     { type: 'TRIAL', label: 'Dùng thử 30 ngày', desc: 'Hết hạn về gói' },
@@ -1191,7 +1034,7 @@ export default function AdminFeatures() {
                 />
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
                 <button 
                   type="button" 
                   disabled={busy}
@@ -1206,9 +1049,7 @@ export default function AdminFeatures() {
                     fontWeight: '700',
                     fontSize: '12.5px'
                   }}
-                >
-                  Hủy
-                </button>
+                >{tUi("common.cancel")}</button>
                 <button 
                   type="submit"
                   disabled={actionsDisabled || !newOverride.tenantId || !canManageOverrides}
@@ -1224,7 +1065,7 @@ export default function AdminFeatures() {
                     boxShadow: '0 4px 14px rgba(79, 70, 229, 0.25)'
                   }}
                 >
-                  {busy ? 'Đang lưu…' : 'Lưu & Áp dụng ngoại lệ'}
+                  {busy ? tUi("common.saving") : 'Lưu & Áp dụng ngoại lệ'}
                 </button>
               </div>
             </form>

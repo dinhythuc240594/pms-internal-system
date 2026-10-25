@@ -2,6 +2,11 @@
 
 Theo [plan.md](plan.md). Tất cả mục chưa đánh dấu là công việc còn lại. Mỗi nhóm BE được tách thành lát nhỏ; trước khi viết code, giới hạn phần thay đổi và chọn focused tests tương ứng, chia tiếp nếu lát đòi hỏi sửa nhiều phân hệ độc lập.
 
+Cập nhật 14/10/2026: đã bổ sung no-show, hồ sơ khách sạn, danh mục thu chi,
+hoa hồng, sáu báo cáo chuyên sâu, hồ sơ/phiên đăng nhập Client, CSV/phiếu booking,
+cập nhật dữ liệu nền và worker buồng phòng. Phạm vi đã kiểm thử, migration/worker
+cần vận hành và các chức năng còn mở tại [báo cáo hiện tại](../docs/reports/reviews/remaining-functions-2026-10-14.md).
+
 ## BE-01 — P0: Xác thực, người dùng và khách sạn
 
 - [x] **01.1 Đăng nhập/session/logout thật.** Schema users/session, cấp tài khoản quản trị bằng công cụ nội bộ, API xác thực và nối Login hiện có. Hoàn thành: sai mật khẩu không tạo session; hết hạn/logout thu hồi truy cập; mật khẩu chỉ lưu hash. Kiểm chứng: API tests và login/logout trong browser. Phụ thuộc: backend nền tảng. Phạm vi dự kiến: models/migrations, auth API, auth tests, Login và API client.
@@ -47,7 +52,7 @@ Theo [plan.md](plan.md). Tất cả mục chưa đánh dấu là công việc c�
 
 - [x] **07.1 Nhân viên, phân ca/giao việc và kế hoạch dọn.** Hoàn thành: nhiệm vụ theo check-in/check-out/stay-over, trạng thái đang kiểm tra/hỏng và lịch sử; chỉ nhân viên đúng quyền cập nhật. Kiểm chứng: assignment/role tests và Housekeeping. Phụ thuộc: 05.3. Phạm vi: housekeeping models/API và các trang liên quan.
 
-Kiểm chứng BE-06/07 ngày 04/10/2026: 102 tests backend PostgreSQL và 29 tests frontend đạt; kiểm thử browser bằng database riêng. Chi tiết chức năng, migration và giới hạn: [BE06_07_IMPLEMENTATION_REPORT.md](../BE06_07_IMPLEMENTATION_REPORT.md).
+Kiểm chứng BE-06/07 ngày 04/10/2026: 102 tests backend PostgreSQL và 29 tests frontend đạt; kiểm thử browser bằng database riêng. Chi tiết chức năng, migration và giới hạn: [BE06_07_IMPLEMENTATION_REPORT.md](../docs/reports/backend/BE06_07_IMPLEMENTATION_REPORT.md).
 
 ## BE-08 — P1: Dashboard và báo cáo
 
@@ -57,9 +62,9 @@ Kiểm chứng BE-06/07 ngày 04/10/2026: 102 tests backend PostgreSQL và 29 te
 
 - [ ] POS, booking, sổ quỹ, buồng phòng và báo cáo có số liệu khớp; không còn bảng giao dịch mẫu trong các luồng đã nối API.
 
-## BE-09 — P1: Quản trị SaaS và hai gói
+## BE-09 — P1: Quản trị SaaS và gói dịch vụ
 
-- [x] **09.1 Hai gói, feature access và giới hạn.** Hoàn thành: chốt tên/quyền đúng hai gói, Admin bật/tắt tính năng/khóa tenant tác động tới API; không vượt quota bằng URL hay nhiều request đồng thời. Kiểm chứng: subscription/permission/quota tests và Admin→Client. Phụ thuộc: 01.3, 04.2; cần chốt chính sách gói trước code. Phạm vi: plans/entitlements models/API và Billing/Features/access adapters.
+- [x] **09.1 Gói, feature access và giới hạn.** FREE/PRO là mặc định; Super Admin tạo thêm gói và marketing đọc cùng giá/tính năng qua API. Mỗi thuê bao có số phòng đăng ký hữu hạn; Admin bật/tắt tính năng/khóa tenant tác động tới API. Kiểm chứng: subscription/permission/quota tests và Admin→Client. Phụ thuộc: 01.3, 04.2. Phạm vi: plans/entitlements models/API và Billing/Features/access adapters.
 - [x] **09.2 Gia hạn và lịch sử SaaS.** Hoàn thành: lưu thay đổi gói/gia hạn, hiển thị hạn và trạng thái; tích hợp thu tiền tự động chỉ khi nhà cung cấp được chọn. Kiểm chứng: expiry/renewal tests và Billing. Phụ thuộc: 09.1. Phạm vi: subscription API và quản trị Billing.
 
 ## BE-10 — P1: Kho
@@ -75,7 +80,7 @@ Code BE-10/11 và các màn hình API đã triển khai. Kiểm chứng ngày 07
 đạt. Browser đã thử kho/mặt hàng, tồn đầu kỳ/báo cáo và giá cuối tuần→booking;
 hai mục tổng thể còn mở cho nghiệm thu đầy đủ; không coi deploy
 hoặc checkpoint vận hành đã hoàn tất. Xem [checklist từng lát](be10-be11.md)
-và [báo cáo BE-10/11](../BE10_11_IMPLEMENTATION_REPORT.md).
+và [báo cáo BE-10/11](../docs/reports/backend/BE10_11_IMPLEMENTATION_REPORT.md).
 
 ## BE-12 — P2: Tích hợp và mở rộng
 
@@ -86,7 +91,7 @@ revisions, webhook/ACK, thông báo trong ứng dụng và các màn hình API t
 Kiểm thử provider giả lập/PostgreSQL đạt; browser đã thử cấu hình staging tắt,
 mapping giả và thông báo. Mục 12.1 còn mở cho Channex sandbox thật, Email/mobile,
 API đối tác và phạm vi báo cáo mở rộng. Xem [checklist BE-12](be12.md) và
-[báo cáo BE-12](../BE12_IMPLEMENTATION_REPORT.md); chưa deploy hoặc gọi OTA thật
+[báo cáo BE-12](../docs/reports/backend/BE12_IMPLEMENTATION_REPORT.md); chưa deploy hoặc gọi OTA thật
 trong nghiệm thu này.
 
 ## Checkpoint trước sử dụng thật

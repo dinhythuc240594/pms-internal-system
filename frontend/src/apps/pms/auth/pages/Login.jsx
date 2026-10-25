@@ -1,3 +1,4 @@
+import { t as tUi, useI18n } from '../../../../shared/i18n/useI18n.js';
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { usePms } from '../../data/usePms';
@@ -9,6 +10,7 @@ import { ArrowRight, CircleAlert, Eye, EyeOff, LoaderCircle } from 'lucide-react
  * Giao diện đồng bộ LOHA; giữ luồng đăng nhập và chuyển trang theo vai trò.
  */
 export default function Login() {
+  useI18n();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const { login, loading, loadError } = usePms();
@@ -37,35 +39,35 @@ export default function Login() {
   return (
     <>
       <div className="loha-auth-heading">
-        <span className="loha-auth-kicker">KHÔNG GIAN LÀM VIỆC CỦA BẠN</span>
-        <h1>Đăng nhập LOHA</h1>
-        <p>Chào mừng bạn trở lại. Đăng nhập bằng tài khoản được cấp để tiếp tục vận hành khách sạn.</p>
+        <span className="loha-auth-kicker">{tUi("auth.workspace")}</span>
+        <h1>{tUi("auth.title")}</h1>
+        <p>{tUi("auth.intro")}</p>
       </div>
 
       <form className="loha-auth-form" onSubmit={handleLogin} aria-busy={busy || loading}>
         {(error || loadError) && <div id="loha-login-error" className="loha-auth-error" role="alert"><CircleAlert size={18} aria-hidden="true" /><span>{error || loadError}</span></div>}
         <div className="loha-auth-field">
-          <label htmlFor="loha-login-email">Email đăng nhập</label>
+          <label htmlFor="loha-login-email">{tUi("auth.email")}</label>
           <input id="loha-login-email" name="email" type="email" autoComplete="username" autoCapitalize="none" spellCheck={false} required value={email} onChange={e => setEmail(e.target.value)} placeholder="ban@khachsan.vn" aria-describedby={error || loadError ? 'loha-login-error' : undefined} />
         </div>
         <div className="loha-auth-field">
-          <label htmlFor="loha-login-password">Mật khẩu</label>
+          <label htmlFor="loha-login-password">{tUi("auth.password")}</label>
           <div className="loha-auth-password">
-            <input id="loha-login-password" name="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" required value={password} onChange={e => setPassword(e.target.value)} placeholder="Nhập mật khẩu của bạn" aria-describedby={error || loadError ? 'loha-login-error' : undefined} />
-            <button className="loha-auth-password-toggle" type="button" aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'} aria-pressed={showPassword} aria-controls="loha-login-password" onClick={() => setShowPassword(!showPassword)}>
+            <input id="loha-login-password" name="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" required value={password} onChange={e => setPassword(e.target.value)} placeholder={tUi("auth.passwordPlaceholder")} aria-describedby={error || loadError ? 'loha-login-error' : undefined} />
+            <button className="loha-auth-password-toggle" type="button" aria-label={showPassword ? tUi("auth.hidePassword") : tUi("auth.showPassword")} aria-pressed={showPassword} aria-controls="loha-login-password" onClick={() => setShowPassword(!showPassword)}>
               {showPassword ? <EyeOff size={19} aria-hidden="true" /> : <Eye size={19} aria-hidden="true" />}
             </button>
           </div>
         </div>
         <label className="loha-auth-remember">
           <input type="checkbox" checked={remember} onChange={e => setRemember(e.target.checked)} />
-          <span>Ghi nhớ đăng nhập</span>
+          <span>{tUi("auth.remember")}</span>
         </label>
         <button className="loha-button loha-button-primary loha-auth-submit" type="submit" disabled={busy || loading}>
-          {busy ? 'Đang đăng nhập…' : loading ? 'Đang kiểm tra phiên…' : 'Đăng nhập'}
+          {busy ? tUi("auth.signingIn") : loading ? tUi("auth.checking") : tUi("auth.signIn")}
           {busy || loading ? <LoaderCircle className="loha-auth-spinner" size={18} aria-hidden="true" /> : <ArrowRight size={18} aria-hidden="true" />}
         </button>
-        <p className="loha-auth-forgot"><strong>Quên mật khẩu?</strong>Liên hệ quản trị viên khách sạn để được hỗ trợ.</p>
+        <p className="loha-auth-forgot"><strong>{tUi("auth.forgot")}</strong>{tUi("auth.help")}</p>
       </form>
     </>
   );

@@ -99,7 +99,7 @@ class ManagerUserTests(DomainTestCase):
                 raise RuntimeError("Test did not release the password check")
             return valid
 
-        with patch("pms_api.auth.routes.check_password_hash", side_effect=paused_password_check):
+        with patch("pms_api.auth.application.check_password_hash", side_effect=paused_password_check):
             with ThreadPoolExecutor(max_workers=2) as workers:
                 login = workers.submit(
                     client.post,

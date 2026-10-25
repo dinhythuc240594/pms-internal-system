@@ -14,6 +14,7 @@ class URL(CommonURL):
     UPDATE_SHIFT = "/shifts/<shift_id>"
     LIST_TASKS = "/tasks"
     GENERATE_PLAN = "/tasks"
+    CREATE_MANUAL_TASK = "/tasks/manual"
     ASSIGN_TASK = "/tasks/<task_id>/assign"
     CHANGE_TASK_STATUS = "/tasks/<task_id>/status"
 
@@ -91,6 +92,14 @@ URL.register(
     URL.ASSIGN_TASK,
     "pms_api.housekeeping.routes:AssignTaskView",
     endpoint="assign_task",
+    methods=["POST"],
+)
+
+URL.register(
+    housekeeping,
+    URL.CREATE_MANUAL_TASK,
+    "pms_api.housekeeping.routes:CreateManualTaskView",
+    endpoint="create_manual_task",
     methods=["POST"],
 )
 

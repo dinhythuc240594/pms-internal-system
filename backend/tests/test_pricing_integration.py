@@ -8,13 +8,37 @@ from threading import Barrier
 from sqlalchemy import select
 
 from pms_api.bookings.models import LedgerEntry
-from pms_api.core_models import Plan
+from pms_api.core_models import Plan, Tenant
 from pms_api.extensions import db
 from pms_api.security import set_context
 from tests.domain_fixture import DomainTestCase
 
 
 class PricingIntegrationTests(DomainTestCase):
+    def test_direct_booking_defaults_to_vnd_even_for_foreign_guest_and_usd_base(self):
+        with self.app.app_context():
+            set_context(self.owner_id, self.tenant_id)
+            tenant = db.session.get(Tenant, self.tenant_id)
+            tenant.settings = {**(tenant.settings or {}), "currency": "USD"}
+            db.session.commit()
+        saved = self.request(
+            "PUT", "/pricing/exchange-rates", {"currency": "VND", "rate": "0.00004"}
+        )
+        self.assertEqual(saved.status_code, 200, saved.json)
+        stay = self.stay(guests=[{"name": "Foreign walk-in", "nationality": "US"}])
+        quoted = self.request("POST", "/quote", stay)
+        self.assertEqual(quoted.status_code, 200, quoted.json)
+        self.assertEqual(quoted.json["currency"], "VND")
+        self.assertEqual(Decimal(quoted.json["total"]), Decimal("7500000"))
+        created = self.request("POST", "/reservations", stay)
+        self.assertEqual(created.status_code, 201, created.json)
+        self.assertEqual(created.json["currency"], "VND")
+        self.assertEqual(created.json["baseCurrency"], "USD")
+        self.assertEqual(Decimal(created.json["total"]), Decimal("7500000"))
+        self.assertEqual(Decimal(created.json["baseAmount"]), Decimal("300"))
+        reloaded = self.request("GET", f"/reservations/{created.json['id']}")
+        self.assertEqual(reloaded.json["currency"], "VND")
+
     def stay(self, **changes):
         start = date.today() + timedelta(days=15)
         return {

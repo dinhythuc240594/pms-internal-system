@@ -1,3 +1,4 @@
+import { tr as labelUi, useI18n } from '../../shared/i18n/useI18n.js';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, CalendarDays, ClipboardCheck, KeyRound, Wallet } from 'lucide-react';
@@ -56,6 +57,7 @@ const articles = [
 ];
 
 export default function Blog() {
+  useI18n();
   const [topic, setTopic] = useState('Tất cả');
   const visibleArticles = articles.filter(article => topic === 'Tất cả' || article.topic === topic);
 
@@ -92,7 +94,7 @@ export default function Blog() {
             {visibleArticles.map(({ id, topic: articleTopic, icon: Icon, title, excerpt, intro, steps, takeaway }) => (
               <article className="loha-blog-article" key={id}>
                 <div className="loha-blog-article-meta"><Icon size={19} aria-hidden="true" /><span>{articleTopic}</span></div>
-                <h2 id={`loha-blog-title-${id}`}>{title}</h2>
+                <h2 id={`loha-blog-title-${id}`}>{labelUi(title)}</h2>
                 <p className="loha-blog-excerpt">{excerpt}</p>
                 <details className="loha-blog-details">
                   <summary aria-describedby={`loha-blog-title-${id}`}>

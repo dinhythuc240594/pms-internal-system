@@ -3,10 +3,14 @@
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 from decimal import Decimal
+from pathlib import Path
 from threading import Barrier
 
+from alembic.migration import MigrationContext
+from alembic.operations import Operations
+from alembic.script import ScriptDirectory
 from domain_fixture import DomainTestCase
-from sqlalchemy import func, select, text
+from sqlalchemy import create_engine, func, select, text
 from sqlalchemy.exc import DBAPIError
 
 from pms_api.core_models import AuditLog, Plan, Subscription, Tenant, User, uid, utcnow
@@ -527,13 +531,24 @@ class ManagerBillingTests(DomainTestCase):
         invoice = self.invoice()
         self.pay(invoice)
         before = self.system("GET").json
-        runner = self.app.test_cli_runner()
-        refused = runner.invoke(args=["db", "downgrade", "0012_manager_features"])
-        self.assertNotEqual(refused.exit_code, 0)
-        self.assertIn("downgrade refused", str(refused.exception).lower())
-        restored = runner.invoke(args=["db", "upgrade"])
-        self.assertEqual(restored.exit_code, 0, restored.output)
+        migration = (
+            ScriptDirectory(str(Path(__file__).resolve().parents[1] / "migrations"))
+            .get_revision("0013_manager_billing")
+            .module
+        )
+        engine = create_engine(self.app.config["DATABASE_MIGRATION_URL"], hide_parameters=True)
+        try:
+            with self.assertRaises(DBAPIError) as refused:
+                with engine.begin() as connection:
+                    with Operations.context(MigrationContext.configure(connection)):
+                        migration.downgrade()
+            self.assertIn(
+                "saas billing records exist; downgrade refused", str(refused.exception).lower()
+            )
+        finally:
+            engine.dispose()
         self.assertEqual(self.system("GET").json, before)
+        self.assertEqual(self.client.get("/api/ready").status_code, 200)
         with self.app.app_context():
             self.assertEqual(
                 set(db.session.execute(text("SELECT version_num FROM alembic_version")).scalars()),

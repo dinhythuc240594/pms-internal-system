@@ -3,9 +3,11 @@
 from datetime import datetime, timedelta
 from pathlib import Path
 
+from alembic.migration import MigrationContext
+from alembic.operations import Operations
 from alembic.script import ScriptDirectory
 from domain_fixture import DomainTestCase
-from sqlalchemy import func, select, text
+from sqlalchemy import create_engine, func, select, text
 from sqlalchemy.exc import DBAPIError
 
 from pms_api.core_models import AuditLog, Plan, Subscription, Tenant, utcnow
@@ -374,56 +376,71 @@ class ManagerFeatureTests(DomainTestCase):
                     "revision": db.session.scalar(text("SELECT version_num FROM alembic_version")),
                 }
 
-        runner = self.app.test_cli_runner()
         before = hotel_snapshot()
-        head = ScriptDirectory(
-            str(Path(__file__).resolve().parents[1] / "migrations")
-        ).get_current_head()
-        self.assertEqual(before["revision"], head)
+        scripts = ScriptDirectory(str(Path(__file__).resolve().parents[1] / "migrations"))
+        self.assertEqual(before["revision"], scripts.get_current_head())
+        migration = scripts.get_revision("0012_manager_features").module
+        engine = create_engine(self.app.config["DATABASE_MIGRATION_URL"], hide_parameters=True)
         try:
-            downgraded = runner.invoke(args=["db", "downgrade", "0011_notifications"])
-            self.assertEqual(downgraded.exit_code, 0, downgraded.output)
-            self.assertEqual(hotel_snapshot(), {**before, "revision": "0011_notifications"})
-        finally:
-            upgraded = runner.invoke(args=["db", "upgrade"])
-            self.assertEqual(upgraded.exit_code, 0, upgraded.output)
-        self.assertEqual(hotel_snapshot(), before)
-
-        for kind in ("global", "override"):
-            with self.subTest(kind=kind):
-                saved = (
-                    self.global_feature({"enabledGlobal": False})
-                    if kind == "global"
-                    else self.override({"enabled": False})
+            # Exercise this migration without crossing newer migrations' data-loss guards.
+            with engine.begin() as connection:
+                context = MigrationContext.configure(
+                    connection, opts={"target_metadata": db.metadata}
                 )
-                self.assertEqual(saved.status_code, 200, saved.json)
-                catalog = self.request(
-                    "GET", "/api/features", client=self.admin, headers=self.admin_headers
-                ).json
-                try:
-                    refused = runner.invoke(args=["db", "downgrade", "0011_notifications"])
-                    self.assertNotEqual(refused.exit_code, 0)
-                    self.assertIn("downgrade refused", str(refused.exception))
-                    self.assertEqual(hotel_snapshot(), before)
-                    self.assertEqual(
-                        self.request(
-                            "GET", "/api/features", client=self.admin, headers=self.admin_headers
-                        ).json,
-                        catalog,
+                with Operations.context(context):
+                    migration.downgrade()
+                    for table in ("feature_controls", "tenant_feature_overrides"):
+                        self.assertIsNone(
+                            connection.scalar(text("SELECT to_regclass(:table)"), {"table": table})
+                        )
+                    migration.upgrade()
+            self.assertEqual(hotel_snapshot(), before)
+
+            for kind in ("global", "override"):
+                with self.subTest(kind=kind):
+                    saved = (
+                        self.global_feature({"enabledGlobal": False})
+                        if kind == "global"
+                        else self.override({"enabled": False})
                     )
-                    ready = self.client.get("/api/ready")
-                    self.assertEqual(ready.status_code, 200, ready.json)
-                    self.assertEqual(ready.json["schema"], "ok")
-                finally:
-                    upgraded = runner.invoke(args=["db", "upgrade"])
-                    self.assertEqual(upgraded.exit_code, 0, upgraded.output)
-                    if kind == "global":
-                        with self.app.app_context():
-                            set_context("admin", is_system=True)
-                            db.session.delete(db.session.get(FeatureControl, "POS_SALES"))
-                            db.session.commit()
-                    else:
-                        self.assertEqual(self.override(None, method="DELETE").status_code, 200)
+                    self.assertEqual(saved.status_code, 200, saved.json)
+                    catalog = self.request(
+                        "GET", "/api/features", client=self.admin, headers=self.admin_headers
+                    ).json
+                    try:
+                        with self.assertRaises(DBAPIError) as refused:
+                            with engine.begin() as connection:
+                                context = MigrationContext.configure(
+                                    connection, opts={"target_metadata": db.metadata}
+                                )
+                                with Operations.context(context):
+                                    migration.downgrade()
+                        self.assertIn(
+                            "Feature controls exist; downgrade refused", str(refused.exception)
+                        )
+                        self.assertEqual(hotel_snapshot(), before)
+                        self.assertEqual(
+                            self.request(
+                                "GET",
+                                "/api/features",
+                                client=self.admin,
+                                headers=self.admin_headers,
+                            ).json,
+                            catalog,
+                        )
+                        ready = self.client.get("/api/ready")
+                        self.assertEqual(ready.status_code, 200, ready.json)
+                        self.assertEqual(ready.json["schema"], "ok")
+                    finally:
+                        if kind == "global":
+                            with self.app.app_context():
+                                set_context("admin", is_system=True)
+                                db.session.delete(db.session.get(FeatureControl, "POS_SALES"))
+                                db.session.commit()
+                        else:
+                            self.assertEqual(self.override(None, method="DELETE").status_code, 200)
+        finally:
+            engine.dispose()
 
     def test_database_isolates_override_reads_and_denies_owner_writes(self):
         self.assertEqual(self.override({"enabled": False}).status_code, 200)

@@ -4,22 +4,25 @@ from ..core_models import utcnow
 from ..extensions import db
 
 FEATURE_CATALOG = {
-    "DASHBOARD": "Bảng điều khiển",
-    "ROOM_DIAGRAM": "Sơ đồ phòng",
-    "RESERVATION_VIEW": "Xem đặt phòng",
-    "RESERVATION_CREATE": "Tạo đặt phòng",
-    "TAPE_CHART": "Timeline đặt phòng",
-    "ARI_MANAGEMENT": "Giá & Phòng trống",
-    "HOUSEKEEPING": "Buồng phòng",
-    "POS_SALES": "Dịch vụ & POS",
-    "CASHBOOK": "Thu chi",
-    "REPORTS_BASIC": "Báo cáo cơ bản",
-    "OTA_SYNC": "Đồng bộ OTA",
-    "REPORTS_ADVANCED": "Báo cáo nâng cao",
-    "INVENTORY_WAREHOUSE": "Quản lý kho",
-    "MULTI_CURRENCY": "Đa tiền tệ",
-    "VOUCHER_PROMO": "Voucher & Khuyến mãi",
-    "API_EXTERNAL": "API bên ngoài",
+    code: f"i18n:features.{code}"
+    for code in (
+        "DASHBOARD",
+        "ROOM_DIAGRAM",
+        "RESERVATION_VIEW",
+        "RESERVATION_CREATE",
+        "TAPE_CHART",
+        "ARI_MANAGEMENT",
+        "HOUSEKEEPING",
+        "POS_SALES",
+        "CASHBOOK",
+        "REPORTS_BASIC",
+        "OTA_SYNC",
+        "REPORTS_ADVANCED",
+        "INVENTORY_WAREHOUSE",
+        "MULTI_CURRENCY",
+        "VOUCHER_PROMO",
+        "API_EXTERNAL",
+    )
 }
 FEATURE_CODE_CHECK = "code IN (" + ",".join(f"'{code}'" for code in FEATURE_CATALOG) + ")"
 

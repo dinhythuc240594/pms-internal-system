@@ -6,7 +6,7 @@ Hệ thống quản lý khách sạn SaaS: website giới thiệu, ứng dụng 
 | --- | --- |
 | `frontend/` | React/Vite: marketing, PMS client và manager. |
 | `backend/` | Flask API, SQLAlchemy models, Alembic migrations và kiểm thử. |
-| `docs/` | Cấu trúc và quy tắc tổ chức mã nguồn. |
+| `docs/` | Kiến trúc, quy tắc tổ chức mã nguồn và báo cáo theo chủ đề. |
 | `tasks/` | Kế hoạch công việc. |
 | `graphify-out/` | Đồ thị phân tích mã nguồn; không phải mã chạy ứng dụng. |
 
@@ -25,6 +25,7 @@ Frontend ở `http://127.0.0.1:5173`, Vite chuyển `/api` đến backend ở `h
 ## Tài liệu
 
 - [Cấu trúc dự án](docs/ARCHITECTURE.md).
+- [Báo cáo theo chủ đề](docs/reports/README.md).
 - [Frontend: luồng đã nối API và giới hạn](frontend/README.md).
 - [Backend: database, migration, kiểm thử và Coolify](backend/README.md).
 - [Hợp đồng API](backend/API_CONTRACT.md).

@@ -4,6 +4,7 @@ from flask_cors import CORS
 
 from common import CommonMethodView, CommonURL
 
+from .adapters.flask_runtime import FlaskRuntime
 from .admin.features_urls import features
 from .admin.urls import admin
 from .auth.urls import auth
@@ -11,6 +12,7 @@ from .bookings.urls import booking
 from .catalog.urls import catalog
 from .channels.urls import channels
 from .commands import register_commands
+from .composition import register_services
 from .config import BACKEND_DIR, load_config
 from .extensions import db, migrate
 from .finance.urls import finance
@@ -19,11 +21,14 @@ from .housekeeping.urls import housekeeping
 from .inventory.urls import inventory
 from .model_registry import register_models
 from .notifications_urls import notifications as notifications_blueprint
+from .ports import configure_runtime
 from .pricing.urls import pricing
 from .reports.urls import reports
 from .saas_billing.urls import billing
 from .security import register_security
 from .workspace_urls import URL as WorkspaceURL
+
+configure_runtime(FlaskRuntime())
 
 
 class URL(CommonURL):
@@ -49,6 +54,7 @@ def create_app(environ=None, *, env_file=BACKEND_DIR / ".env"):
             resources={r"/api/*": {"origins": app.config["CORS_ORIGINS"]}},
             supports_credentials=True,
         )
+    register_services(app)
     register_security(app)
     app.register_blueprint(health_blueprint)
     app.register_blueprint(auth)

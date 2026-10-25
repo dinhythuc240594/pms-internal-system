@@ -1,13 +1,13 @@
+import { getIntlLocale } from '../../../../shared/i18n/store.js';
+import { t as tUi, useI18n } from '../../../../shared/i18n/useI18n.js';
 import React, { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { 
-  ShieldAlert, 
   Search, 
   Download, 
   Eye, 
   CheckCircle2, 
   X, 
-  Terminal,
   Copy,
   Check,
   Clock,
@@ -21,14 +21,18 @@ import {
 
 import { usePms } from '../../../pms/data/usePms';
 import { getThemeTokens } from '../../theme';
+import LegacyOverlay from '../../../pms/components/LegacyOverlay';
+import './AdminLogs.css';
+import { downloadCsv } from '../../../../shared/lib/csv';
 
 export default function AdminLogs() {
+  useI18n();
   const { searchQuery: globalSearch, isDarkMode, theme } = useOutletContext() || {};
   const t = theme || getThemeTokens(isDarkMode);
 
   const { workspace } = usePms();
   const labels={'tenant.created':'Tạo khách sạn','tenant.updated':'Cập nhật khách sạn','membership.created':'Gán tài khoản khách sạn','membership.updated':'Cập nhật vai trò / trạng thái','guest.created':'Tạo hồ sơ khách','guest.updated':'Sửa hồ sơ khách','reservation.created':'Tạo đặt phòng','reservation.updated':'Sửa đặt phòng','reservation.status':'Đổi trạng thái đặt phòng','reservation.payment':'Thu tiền','reservation.refund':'Hoàn tiền','reservation.charge':'Thêm phụ thu','reservation.note':'Thêm ghi chú'};
-  const logs=workspace.auditLogs.map(l=>({...l,action:l.event||l.action||'Cập nhật',timestamp:new Date(l.createdAt||l.at).toLocaleString('vi-VN').replace(', ',' '),operator:l.userId||l.user||'—',operatorRole:l.role||'',tenantName:workspace.tenants.find(t=>t.id===l.tenantId)?.name||'Toàn hệ thống',target:l.entityId||'—',details:labels[l.event]||l.event||'Cập nhật',ipAddress:'—',severity:'Low',status:'Success',metadata:l}));
+  const logs=workspace.auditLogs.map(l=>({...l,action:l.event||l.action||'Cập nhật',timestamp:new Date(l.createdAt||l.at).toLocaleString(getIntlLocale()).replace(', ',' '),operator:l.userId||l.user||'—',operatorRole:l.role||'',tenantName:workspace.tenants.find(t=>t.id===l.tenantId)?.name||'Toàn hệ thống',target:l.entityId||'—',details:labels[l.event]||l.event||'Cập nhật',ipAddress:'—',severity:'Low',status:'Success',metadata:l}));
   const [search, setSearch] = useState('');
   const [severityFilter, setSeverityFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
@@ -60,18 +64,21 @@ export default function AdminLogs() {
   });
 
   const handleExportCSV = () => {
-    showToast('Xuất CSV chưa được triển khai.');
+    downloadCsv(['Thời gian', 'Nhân viên', 'Khách sạn', 'Hành động', 'Đối tượng'], filteredLogs.map(log => [log.timestamp, log.operator, log.tenantName, log.action, log.target]), 'nhat-ky-he-thong.csv');
+    showToast('Đã xuất các sự kiện đang hiển thị.');
   };
 
   return (
-    <div style={{ width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px', fontFamily: t.fontFamily || "'Inter', 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
+    <div className="manager-page admin-logs-page">
       
       {/* Toast Alert */}
       {toastMessage && (
         <div 
+          role="status"
           style={{
             position: 'fixed',
             bottom: '30px',
+            maxWidth: 'calc(100vw - 60px)',
             right: '30px',
             backgroundColor: t.isDark ? '#1E222B' : '#1E242B',
             color: t.primary,
@@ -92,216 +99,54 @@ export default function AdminLogs() {
         </div>
       )}
 
-      {/* -------------------------------------------------------------
-          TOP BAR: Summary Metrics with Interactive Hover Effects
-          ------------------------------------------------------------- */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
+      <section className="admin-logs-summary" aria-label="Tổng quan nhật ký">
         {[
-          { label: 'Tổng sự kiện ghi nhận', val: `${logs.length} Logs`, sub: 'Nhật ký từ máy chủ', color: t.aquaText },
-          { label: 'Thao tác thành công (Success)', val: `${logs.length ? '100%' : '0%'} (${logs.length})`, sub: 'Bình thường', color: t.aquaText },
-          { label: 'Cảnh báo tự động (Warning)', val: '0 Cảnh báo', sub: 'Cần rà soát', color: t.warning },
-          { label: 'Sự kiện nguy cơ cao (High alert)', val: '0 Bị chặn', sub: 'Chưa triển khai giám sát IP', color: t.danger }
-        ].map((card, idx) => (
-          <div 
-            key={idx}
-            style={{ 
-              backgroundColor: t.bgSurface, 
-              padding: '18px 20px', 
-              borderRadius: '20px', 
-              border: `1px solid ${t.border}`, 
-              boxShadow: t.cardShadow,
-              cursor: 'pointer',
-              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-4px)';
-              e.currentTarget.style.borderColor = t.primary;
-              e.currentTarget.style.boxShadow = t.cardHoverShadow || '0 12px 28px rgba(79, 70, 229, 0.18)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.borderColor = t.border;
-              e.currentTarget.style.boxShadow = t.cardShadow;
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '12px', color: t.textSecondary, fontWeight: '700' }}>{card.label}</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginTop: '6px' }}>
-              <div style={{ fontSize: '24px', fontWeight: '900', color: card.color }}>
-                {card.val}
-              </div>
-              <span style={{ fontSize: '11px', color: t.textMuted, fontWeight: '600' }}>{card.sub}</span>
-            </div>
+          { label: 'Sự kiện ghi nhận', value: logs.length, note: 'Nhật ký từ máy chủ' },
+          { label: 'Thao tác thành công', value: logs.length, note: logs.length ? '100% sự kiện ghi nhận' : 'Chưa có sự kiện' },
+          { label: 'Cảnh báo tự động', value: 0, note: 'Cần rà soát', tone: 'warning' },
+          { label: 'Sự kiện bị chặn', value: 0, note: 'Chưa triển khai giám sát IP', tone: 'danger' },
+        ].map(card => (
+          <div key={card.label} className="manager-panel admin-logs-metric">
+            <span>{card.label}</span><strong data-tone={card.tone}>{card.value}</strong><small>{card.note}</small>
           </div>
         ))}
-      </div>
-
-      {/* -------------------------------------------------------------
-          FILTER & SEARCH BAR with Hover Elevation
-          ------------------------------------------------------------- */}
-      <div 
-        style={{
-          backgroundColor: t.bgSurface,
-          borderRadius: '22px',
-          padding: '16px 20px',
-          border: `1px solid ${t.border}`,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: '16px',
-          boxShadow: t.cardShadow,
-          transition: 'all 0.2s ease'
-        }}
-        onMouseEnter={(e) => e.currentTarget.style.borderColor = t.isDark ? '#384252' : '#CBD5E1'}
-        onMouseLeave={(e) => e.currentTarget.style.borderColor = t.border}
-      >
-        <div 
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            backgroundColor: t.bgInput,
-            borderRadius: '20px',
-            padding: '8px 16px',
-            flex: 1,
-            maxWidth: '400px',
-            border: `1px solid ${t.border}`,
-            transition: 'border-color 0.15s, box-shadow 0.15s'
-          }}
-          onFocus={(e) => e.currentTarget.style.borderColor = t.primary}
-          onBlur={(e) => e.currentTarget.style.borderColor = t.border}
-        >
-          <Search size={18} color={t.textSecondary} />
-          <input 
-            type="text"
-            placeholder="Tìm theo hành động, nhân viên, IP, tenant..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{
-              border: 'none',
-              outline: 'none',
-              backgroundColor: 'transparent',
-              paddingLeft: '10px',
-              fontSize: '13px',
-              color: t.textPrimary,
-              width: '100%',
-              fontWeight: '500'
-            }}
-          />
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <select
-            value={severityFilter}
-            onChange={(e) => setSeverityFilter(e.target.value)}
-            style={{
-              padding: '9px 14px',
-              borderRadius: '12px',
-              backgroundColor: t.bgInput,
-              border: `1px solid ${t.border}`,
-              fontSize: '13px',
-              fontWeight: '600',
-              color: t.textPrimary,
-              outline: 'none',
-              cursor: 'pointer',
-              transition: 'all 0.15s'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.borderColor = t.primary}
-            onMouseLeave={(e) => e.currentTarget.style.borderColor = t.border}
-          >
-            <option value="ALL">Tất cả mức độ</option>
-            <option value="High">Mức cao (High)</option>
-            <option value="Medium">Trung bình (Medium)</option>
-            <option value="Low">Mức thấp (Low)</option>
+      </section>
+      <div className="manager-panel admin-logs-filters">
+        <label className="admin-logs-search">
+          <Search size={16} aria-hidden="true" />
+          <input type="search" aria-label="Tìm sự kiện nhật ký" placeholder="Tìm hành động, nhân viên, khách sạn..." value={search} onChange={event => setSearch(event.target.value)} />
+        </label>
+        <div className="admin-logs-filter-actions">
+          <select aria-label="Lọc mức độ sự kiện" value={severityFilter} onChange={event => setSeverityFilter(event.target.value)}>
+            <option value="ALL">Tất cả mức độ</option><option value="High">Mức cao (High)</option><option value="Medium">Trung bình (Medium)</option><option value="Low">Mức thấp (Low)</option>
           </select>
-
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            style={{
-              padding: '9px 14px',
-              borderRadius: '12px',
-              backgroundColor: t.bgInput,
-              border: `1px solid ${t.border}`,
-              fontSize: '13px',
-              fontWeight: '600',
-              color: t.textPrimary,
-              outline: 'none',
-              cursor: 'pointer',
-              transition: 'all 0.15s'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.borderColor = t.primary}
-            onMouseLeave={(e) => e.currentTarget.style.borderColor = t.border}
-          >
-            <option value="ALL">Tất cả trạng thái</option>
-            <option value="Success">Thành công (Success)</option>
-            <option value="Warning">Cảnh báo (Warning)</option>
-            <option value="Failed">Thất bại / bị chặn (Failed)</option>
+          <select aria-label="Lọc trạng thái sự kiện" value={statusFilter} onChange={event => setStatusFilter(event.target.value)}>
+            <option value="ALL">{tUi("common.allStatuses")}</option><option value="Success">Thành công (Success)</option><option value="Warning">Cảnh báo (Warning)</option><option value="Failed">Thất bại / bị chặn (Failed)</option>
           </select>
-
-          <button
-            disabled title="Xuất CSV chưa được triển khai" onClick={handleExportCSV}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              backgroundColor: t.primary,
-              color: '#FFFFFF',
-              border: 'none',
-              padding: '9px 16px',
-              borderRadius: '12px',
-              fontSize: '13px',
-              fontWeight: '800',
-              cursor: 'pointer',
-              boxShadow: '0 4px 12px rgba(79, 70, 229, 0.25)',
-              transition: 'all 0.18s cubic-bezier(0.4, 0, 0.2, 1)'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 6px 16px rgba(79, 70, 229, 0.35)';
-              e.currentTarget.style.filter = 'brightness(1.05)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 4px 12px rgba(79, 70, 229, 0.25)';
-              e.currentTarget.style.filter = 'brightness(1)';
-            }}
-          >
-            <Download size={16} />
-            <span>Xuất file CSV</span>
-          </button>
+          <button className="manager-button" type="button" onClick={handleExportCSV}><Download size={16} aria-hidden="true" />{tUi("common.exportCsv")}</button>
         </div>
       </div>
 
       {/* -------------------------------------------------------------
-          MAIN AUDIT LOGS DATA TABLE with 2-Line Row Layout
+          MAIN AUDIT LOGS DATA TABLE
           ------------------------------------------------------------- */}
-      <div 
-        style={{
-          backgroundColor: t.bgSurface,
-          borderRadius: '24px',
-          border: `1px solid ${t.border}`,
-          overflow: 'hidden',
-          boxShadow: t.cardShadow,
-          width: '100%',
-          transition: 'all 0.2s ease'
-        }}
-      >
-        <div style={{ overflowX: 'auto', width: '100%', WebkitOverflowScrolling: 'touch' }}>
+      <div className="manager-panel admin-logs-table-panel">
+        <div className="manager-table-wrap" role="region" aria-label="Danh sách nhật ký hệ thống" tabIndex={0}>
           <table style={{ width: '100%', minWidth: '920px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
             <thead>
               <tr style={{ backgroundColor: t.isDark ? '#222731' : '#F8FAFC', color: t.textSecondary, borderBottom: `1px solid ${t.border}` }}>
-                <th style={{ padding: '14px 12px', fontWeight: '700', whiteSpace: 'nowrap' }}>Thời gian</th>
+                <th style={{ padding: '14px 12px', fontWeight: '700', whiteSpace: 'nowrap' }}>{tUi("common.time")}</th>
                 <th style={{ padding: '14px 12px', fontWeight: '700', whiteSpace: 'nowrap' }}>Người thực hiện</th>
                 <th style={{ padding: '14px 10px', fontWeight: '700', whiteSpace: 'nowrap' }}>Mã hành động</th>
                 <th style={{ padding: '14px 12px', fontWeight: '700', whiteSpace: 'nowrap' }}>Đối tượng / tenant</th>
                 <th style={{ padding: '14px 12px', fontWeight: '700', whiteSpace: 'nowrap', maxWidth: '220px' }}>Mô tả can thiệp</th>
                 <th style={{ padding: '14px 12px', fontWeight: '700', whiteSpace: 'nowrap' }}>Địa chỉ IP</th>
-                <th style={{ padding: '14px 12px', fontWeight: '700', whiteSpace: 'nowrap' }}>Trạng thái</th>
-                <th style={{ padding: '14px 12px', fontWeight: '700', textAlign: 'center', whiteSpace: 'nowrap' }}>Chi tiết</th>
+                <th style={{ padding: '14px 12px', fontWeight: '700', whiteSpace: 'nowrap' }}>{tUi("common.status")}</th>
+                <th style={{ padding: '14px 12px', fontWeight: '700', textAlign: 'center', whiteSpace: 'nowrap' }}>{tUi("common.details")}</th>
               </tr>
             </thead>
             <tbody>
+              {filteredLogs.length === 0 && <tr><td colSpan={8} className="admin-logs-empty"><span role="status">{logs.length ? 'Không có sự kiện phù hợp với bộ lọc.' : 'Chưa có sự kiện được ghi nhận.'}</span></td></tr>}
               {filteredLogs.map((log) => {
                 const [datePart, timePart] = log.timestamp.split(' ');
                 return (
@@ -451,7 +296,7 @@ export default function AdminLogs() {
           MODAL: PREMIUM LOG DETAILS INSPECTOR
           ============================================================= */}
       {selectedLog && (
-        <div 
+        <LegacyOverlay title="Chi tiết sự kiện nhật ký" onClose={() => { setSelectedLog(null); setLogViewMode('overview'); }}
           style={{
             position: 'fixed',
             inset: 0,
@@ -464,12 +309,14 @@ export default function AdminLogs() {
             padding: '20px'
           }}
         >
-          <div 
+          <div className="admin-logs-dialog"
             style={{
               backgroundColor: t.bgSurface,
-              borderRadius: '24px',
+              borderRadius: '12px',
               width: '100%',
               maxWidth: '680px',
+              minWidth: 0,
+              overflowWrap: 'anywhere',
               padding: '28px 32px',
               boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
               border: `1px solid ${t.border}`,
@@ -478,7 +325,7 @@ export default function AdminLogs() {
             }}
           >
             {/* Modal Top Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+            <div className="admin-logs-dialog-heading" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <div 
                   style={{
@@ -512,7 +359,7 @@ export default function AdminLogs() {
               </div>
 
               {/* Close Button */}
-              <button 
+              <button aria-label="Đóng chi tiết nhật ký"
                 onClick={() => {
                   setSelectedLog(null);
                   setLogViewMode('overview');
@@ -537,7 +384,7 @@ export default function AdminLogs() {
             </div>
 
             {/* Status & Severity Badges Header Ribbon */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', backgroundColor: t.bgInput, borderRadius: '14px', border: `1px solid ${t.border}`, marginBottom: '18px' }}>
+            <div className="admin-logs-dialog-status" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', backgroundColor: t.bgInput, borderRadius: '14px', border: `1px solid ${t.border}`, marginBottom: '18px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <span style={{ fontSize: '12px', fontWeight: '700', color: t.textSecondary }}>Trạng thái:</span>
                 <span 
@@ -578,7 +425,7 @@ export default function AdminLogs() {
             </div>
 
             {/* View Mode Tabs (Overview vs Raw JSON) */}
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '18px', borderBottom: `1px solid ${t.borderSubtle}`, paddingBottom: '12px' }}>
+            <div className="admin-logs-dialog-tabs" style={{ display: 'flex', gap: '8px', marginBottom: '18px', borderBottom: `1px solid ${t.borderSubtle}`, paddingBottom: '12px' }}>
               <button
                 onClick={() => setLogViewMode('overview')}
                 style={{
@@ -626,7 +473,7 @@ export default function AdminLogs() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 
                 {/* 4 Metadata Cards Grid */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: '12px' }}>
                   
                   {/* Card 1: Time */}
                   <div style={{ backgroundColor: t.isDark ? '#1F242D' : '#F8FAFC', padding: '14px 16px', borderRadius: '16px', border: `1px solid ${t.border}` }}>
@@ -684,7 +531,7 @@ export default function AdminLogs() {
                 </div>
 
                 {/* Action Code Box */}
-                <div style={{ backgroundColor: t.bgInput, padding: '12px 16px', borderRadius: '14px', border: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div className="admin-logs-dialog-code" style={{ backgroundColor: t.bgInput, padding: '12px 16px', borderRadius: '14px', border: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <span style={{ fontSize: '12px', fontWeight: '700', color: t.textSecondary }}>Mã hành động can thiệp:</span>
                   <span style={{ fontSize: '12px', fontWeight: '800', fontFamily: 'monospace', backgroundColor: t.aquaBg, color: t.aquaText, padding: '4px 10px', borderRadius: '8px', border: `1px solid ${t.aquaBorder}` }}>
                     {selectedLog.action}
@@ -775,7 +622,7 @@ export default function AdminLogs() {
             )}
 
             {/* Modal Bottom Actions Footer */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '24px', paddingTop: '16px', borderTop: `1px solid ${t.borderSubtle}` }}>
+            <div className="admin-logs-dialog-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginTop: '24px', paddingTop: '16px', borderTop: `1px solid ${t.borderSubtle}` }}>
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(selectedLog.id);
@@ -800,7 +647,7 @@ export default function AdminLogs() {
                 <span>Sao chép ID</span>
               </button>
 
-              <div style={{ display: 'flex', gap: '10px' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
                 <button
                   onClick={() => {
                     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(selectedLog, null, 2));
@@ -849,14 +696,12 @@ export default function AdminLogs() {
                   }}
                   onMouseEnter={(e) => e.currentTarget.style.filter = 'brightness(1.08)'}
                   onMouseLeave={(e) => e.currentTarget.style.filter = 'brightness(1)'}
-                >
-                  Đóng cửa sổ
-                </button>
+                >{tUi("common.closeWindow")}</button>
               </div>
             </div>
 
           </div>
-        </div>
+        </LegacyOverlay>
       )}
 
     </div>

@@ -1,3 +1,5 @@
+import { getIntlLocale } from '../../../../shared/i18n/store.js';
+import { t as tUi, useI18n } from '../../../../shared/i18n/useI18n.js';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CalendarDays } from 'lucide-react';
@@ -8,6 +10,7 @@ import '../../components/DomainForms.css';
 import '../RatesInventory.css';
 
 export default function RatesARI() {
+  useI18n();
   const { roomTypes, rates, settings, access, saveRate } = usePms();
   const [error, setError] = useState(''), [busy, setBusy] = useState(''), [notice, setNotice] = useState('');
   const date = today(settings.timezone);
@@ -21,13 +24,13 @@ export default function RatesARI() {
     catch (err) { setError(err.message); } finally { setBusy(''); }
   }
   return <div className="pms-domain-page pms-rates-page">
-    <header className="domain-toolbar rates-page-heading"><div><span className="rates-kicker">Giá & Phòng trống</span><h1>Giá cho lịch đặt phòng</h1><p>Kiểm soát giá từng đêm và trạng thái bán của khách sạn.</p></div><Link className="rates-link-button" to="/id/ari"><CalendarDays size={16} aria-hidden="true" /> Mở lịch đặt phòng</Link></header>
+    <header className="domain-toolbar rates-page-heading"><div><span className="rates-kicker">{tUi("nav.rates")}</span><h1>{tUi("nav.calendarRates")}</h1><p>Kiểm soát giá từng đêm và trạng thái bán của khách sạn.</p></div><Link className="rates-link-button" to="/id/ari"><CalendarDays size={16} aria-hidden="true" /> Mở lịch đặt phòng</Link></header>
     {error && <p className="domain-error" role="alert">{error}</p>}{confirmedNotice && <p className="rates-notice is-success" role="status">{notice.text}</p>}
-    <section className="domain-panel rates-table-panel"><div className="rates-section-heading"><div><h2>Trạng thái bán hôm nay</h2><p>{new Date(`${date}T12:00:00`).toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' })} · Dừng bán sẽ chặn đặt phòng mới cho ngày này.</p></div></div>
-      <div className="rates-scroll"><table><thead><tr><th scope="col">Loại phòng</th><th scope="col">Giá / đêm ({settings.currency})</th><th scope="col">Trạng thái bán</th><th scope="col">Thao tác</th></tr></thead><tbody>{activeTypes.map(type => {
+    <section className="domain-panel rates-table-panel"><div className="rates-section-heading"><div><h2>Trạng thái bán hôm nay</h2><p>{new Date(`${date}T12:00:00`).toLocaleDateString(getIntlLocale(), { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' })} · Dừng bán sẽ chặn đặt phòng mới cho ngày này.</p></div></div>
+      <div className="rates-scroll"><table><thead><tr><th scope="col">{tUi("common.roomType")}</th><th scope="col">Giá / đêm ({settings.currency})</th><th scope="col">Trạng thái bán</th><th scope="col">{tUi("common.actions")}</th></tr></thead><tbody>{activeTypes.map(type => {
         const rate = rates.find(row => row.roomTypeId === type.id && row.date === date);
         const stopped = Boolean(rate?.stopSell);
-        return <tr key={type.id}><th scope="row">{type.name}<small className="rates-muted">{rate ? 'Giá từng đêm' : 'Giá cơ bản'}</small></th><td className="rates-price">{money(rate?.price ?? type.price, settings.currency)}</td><td><span className={`rates-badge ${stopped ? 'is-paused' : 'is-active'}`}>{stopped ? 'Dừng bán' : 'Đang bán'}</span></td><td><button className="rates-icon-button" disabled={Boolean(busy) || !writable} onClick={() => toggle(type, stopped)} aria-label={`${stopped ? 'Mở' : 'Dừng'} bán ${type.name} hôm nay`}>{busy === type.id ? 'Đang lưu…' : stopped ? 'Mở bán' : 'Dừng bán'}</button></td></tr>;
+        return <tr key={type.id}><th scope="row">{type.name}<small className="rates-muted">{rate ? 'Giá từng đêm' : tUi("nav.basicRates")}</small></th><td className="rates-price">{money(rate?.price ?? type.price, settings.currency)}</td><td><span className={`rates-badge ${stopped ? 'is-paused' : 'is-active'}`}>{stopped ? tUi("rates.stopSell") : 'Đang bán'}</span></td><td><button className="rates-icon-button" disabled={Boolean(busy) || !writable} onClick={() => toggle(type, stopped)} aria-label={`${stopped ? 'Mở' : 'Dừng'} bán ${type.name} hôm nay`}>{busy === type.id ? tUi("common.saving") : stopped ? tUi("rates.openSell") : tUi("rates.stopSell")}</button></td></tr>;
       })}{!activeTypes.length && <tr><td colSpan={4} className="rates-empty">Chưa có loại phòng đang hoạt động.</td></tr>}</tbody></table></div>
     </section>
     <NightlyRates />

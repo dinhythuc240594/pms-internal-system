@@ -1,14 +1,21 @@
-import React, { useState } from 'react';
+import { getIntlLocale } from '../../../../shared/i18n/store.js';
+import { t as tUi, tr as labelUi, useI18n } from '../../../../shared/i18n/useI18n.js';
+import React, { useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { usePms } from '../../data/usePms';
+import IntegrationWorkspace from '../../channel-manager/pages/IntegrationWorkspace';
+import { AccessMessage } from '../../../../shared/components/AccessControl';
 import LegacyOverlay from '../../components/LegacyOverlay';
 import { CORE_ROLES as ROLE_ACTIONS } from '../../data/api';
 import { ROLE_NAMES } from '../../data/access';
+import LanguageSwitcher from '../../../../shared/i18n/LanguageSwitcher.jsx';
 import InventorySettings from '../../inventory/pages/InventorySettings';
 import PricingExchangeRates from '../../rates-inventory/pages/ExchangeRates';
+import CommissionPage from '../../finance/pages/Commissions';
 import { AccessLink } from '../../../../shared/components/AccessControl';
 import { 
   Building2, Bed, ShoppingCart, Calculator, Package, ShieldCheck,
-  ChevronRight, Plus, Edit2, Trash2, Save, Search, X, RefreshCw
+  ChevronRight, Edit2, Trash2, Save, Search, X, RefreshCw, Link2
 } from 'lucide-react';
 
 // --- STYLES ---
@@ -105,11 +112,11 @@ const toggleCircleStyle = (isOn) => ({
   boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
 });
 
-export const Toggle = ({ isOn, onToggle }) => (
-  <div style={toggleSwitchStyle(isOn)} onClick={onToggle}>
-    <div style={toggleCircleStyle(isOn)} />
-  </div>
-);
+export const Toggle = ({ isOn, onToggle, disabled = false, label = 'Kích hoạt' }) => { useI18n(); return ((
+  <button type="button" role="switch" aria-checked={isOn} aria-label={labelUi(label)} disabled={disabled} style={{ ...toggleSwitchStyle(isOn), border: 0, padding: 0 }} onClick={onToggle}>
+    <span style={toggleCircleStyle(isOn)} />
+  </button>
+)); };
 
 // --- DATA MOCK ---
 const SETTING_GROUPS = [
@@ -118,23 +125,25 @@ const SETTING_GROUPS = [
   { id: 'services', name: 'Dịch vụ & Bán hàng', icon: ShoppingCart },
   { id: 'accounting', name: 'Kế toán & Thanh toán', icon: Calculator },
   { id: 'inventory', name: 'Kho & Mua hàng', icon: Package },
+  { id: 'channels', name: 'Channex & Kênh OTA', icon: Link2 },
   { id: 'system', name: 'Hệ thống & Bảo mật', icon: ShieldCheck },
 ];
+const DEFAULT_TABS = { business: 'profile', rooms: 'room_types', services: 'services', accounting: 'transactions', inventory: 'warehouses', channels: 'overview', system: 'security' };
 
-function FutureSettings({children}) { return <><p role="status">Chức năng nâng cao này chưa được triển khai. Thao tác lưu đang tắt.</p><fieldset disabled inert style={{border:0,padding:0,margin:0}}>{children}</fieldset></>; }
+function FutureSettings({children}) {
+  useI18n(); return <><p role="status">{tUi("settings.future")}</p><fieldset disabled inert style={{border:0,padding:0,margin:0}}>{children}</fieldset></>; }
 
 export default function Settings() {
-  const [activeGroup, setActiveGroup] = useState('business');
-  const [activeSubTab, setActiveSubTab] = useState('profile');
+  useI18n();
+  const pms = usePms(), { tenantId } = pms;
+  const [params, setParams] = useSearchParams();
+  const groups = SETTING_GROUPS.filter(group => pms.routeAccess('/id/settings').allowed || group.id === 'channels');
+  const activeGroup = groups.some(group => group.id === params.get('section')) ? params.get('section') : groups[0].id;
+  const activeSubTab = params.get('tab') || DEFAULT_TABS[activeGroup];
+  const setActiveSubTab = tab => setParams({ section: activeGroup, tab });
 
   const handleGroupChange = (id) => {
-    setActiveGroup(id);
-    if (id === 'business') setActiveSubTab('profile');
-    if (id === 'rooms') setActiveSubTab('room_types');
-    if (id === 'services') setActiveSubTab('services');
-    if (id === 'accounting') setActiveSubTab('transactions');
-    if (id === 'inventory') setActiveSubTab('warehouses');
-    if (id === 'system') setActiveSubTab('security');
+    setParams({ section: id });
   };
 
   const renderContent = () => {
@@ -143,11 +152,11 @@ export default function Settings() {
         return (
           <>
             <div className="pms-settings-tabs">
-              <button style={subTabStyle(activeSubTab === 'profile')} onClick={() => setActiveSubTab('profile')}>Hồ sơ & Thông tin chung</button>
-              <button style={subTabStyle(activeSubTab === 'policies')} onClick={() => setActiveSubTab('policies')}>Chính sách khách sạn</button>
-              <button style={subTabStyle(activeSubTab === 'sources')} onClick={() => setActiveSubTab('sources')}>Nguồn đặt phòng</button>
+              <button style={subTabStyle(activeSubTab === 'profile')} onClick={() => setActiveSubTab('profile')}>{tUi("settings.profileTab")}</button>
+              <button style={subTabStyle(activeSubTab === 'policies')} onClick={() => setActiveSubTab('policies')}>{tUi("settings.policies")}</button>
+              <button style={subTabStyle(activeSubTab === 'sources')} onClick={() => setActiveSubTab('sources')}>{tUi('settings.bookingSources')}</button>
             </div>
-            {activeSubTab === 'profile' && <BusinessProfile />}
+            {activeSubTab === 'profile' && <BusinessProfile key={tenantId} />}
             {activeSubTab === 'policies' && <BusinessPolicies />}
             {activeSubTab === 'sources' && <BookingSources />}
           </>
@@ -156,8 +165,8 @@ export default function Settings() {
         return (
           <>
             <div className="pms-settings-tabs">
-              <button style={subTabStyle(activeSubTab === 'room_types')} onClick={() => setActiveSubTab('room_types')}>Danh sách Loại phòng</button>
-              <button style={subTabStyle(activeSubTab === 'bed_types')} onClick={() => setActiveSubTab('bed_types')}>Loại giường</button>
+              <button style={subTabStyle(activeSubTab === 'room_types')} onClick={() => setActiveSubTab('room_types')}>{tUi("settings.roomTypes")}</button>
+              <button style={subTabStyle(activeSubTab === 'bed_types')} onClick={() => setActiveSubTab('bed_types')}>{tUi("settings.beds")}</button>
             </div>
             {activeSubTab === 'room_types' && <RoomTypesGrid />}
             {activeSubTab === 'bed_types' && <BedTypes />}
@@ -167,9 +176,9 @@ export default function Settings() {
         return (
           <>
             <div className="pms-settings-tabs">
-              <button style={subTabStyle(activeSubTab === 'services')} onClick={() => setActiveSubTab('services')}>Danh mục & Dịch vụ</button>
-              <button style={subTabStyle(activeSubTab === 'meals')} onClick={() => setActiveSubTab('meals')}>Các bữa ăn</button>
-              <button style={subTabStyle(activeSubTab === 'sources')} onClick={() => setActiveSubTab('sources')}>Nguồn đặt phòng</button>
+              <button style={subTabStyle(activeSubTab === 'services')} onClick={() => setActiveSubTab('services')}>{tUi("settings.catalogServices")}</button>
+              <button style={subTabStyle(activeSubTab === 'meals')} onClick={() => setActiveSubTab('meals')}>{tUi("settings.meals")}</button>
+              <button style={subTabStyle(activeSubTab === 'sources')} onClick={() => setActiveSubTab('sources')}>{tUi('settings.bookingSources')}</button>
             </div>
             {activeSubTab === 'services' && <ServiceCategories />}
             {activeSubTab === 'meals' && <Meals />}
@@ -180,45 +189,50 @@ export default function Settings() {
         return (
           <>
             <div className="pms-settings-tabs">
-              <button style={subTabStyle(activeSubTab === 'transactions')} onClick={() => setActiveSubTab('transactions')}>Danh mục thu chi</button>
-              <button style={subTabStyle(activeSubTab === 'payments')} onClick={() => setActiveSubTab('payments')}>Phương thức thanh toán</button>
-              <button style={subTabStyle(activeSubTab === 'currency')} onClick={() => setActiveSubTab('currency')}>Tỉ giá tiền tệ</button>
-              <button style={subTabStyle(activeSubTab === 'commissions')} onClick={() => setActiveSubTab('commissions')}>Quản lý Hoa hồng</button>
+              <button style={subTabStyle(activeSubTab === 'transactions')} onClick={() => setActiveSubTab('transactions')}>{tUi("settings.cashCategories")}</button>
+              <button style={subTabStyle(activeSubTab === 'payments')} onClick={() => setActiveSubTab('payments')}>{tUi("payments.method")}</button>
+              <button style={subTabStyle(activeSubTab === 'currency')} onClick={() => setActiveSubTab('currency')}>{tUi("settings.currency")}</button>
+              <button style={subTabStyle(activeSubTab === 'commissions')} onClick={() => setActiveSubTab('commissions')}>{tUi("settings.commissions")}</button>
             </div>
-            {activeSubTab === 'transactions' && <FutureSettings><div>Giao diện Danh mục thu chi</div></FutureSettings>}
+            {activeSubTab === 'transactions' && <CashbookCategories />}
             {activeSubTab === 'payments' && <PaymentMethods />}
             {activeSubTab === 'currency' && <PricingExchangeRates />}
-            {activeSubTab === 'commissions' && <FutureSettings><Commissions /></FutureSettings>}
+            {activeSubTab === 'commissions' && <Commissions key={tenantId} />}
           </>
         );
       case 'inventory':
         return (
           <>
             <div className="pms-settings-tabs">
-              <button style={subTabStyle(activeSubTab === 'warehouses')} onClick={() => setActiveSubTab('warehouses')}>Danh sách kho</button>
-              <button style={subTabStyle(activeSubTab === 'items')} onClick={() => setActiveSubTab('items')}>Mặt hàng & Danh mục</button>
-              <button style={subTabStyle(activeSubTab === 'suppliers')} onClick={() => setActiveSubTab('suppliers')}>Nhà cung cấp</button>
-              <button style={subTabStyle(activeSubTab === 'units')} onClick={() => setActiveSubTab('units')}>Đơn vị tính</button>
-              <button style={subTabStyle(activeSubTab === 'opening')} onClick={() => setActiveSubTab('opening')}>Tồn đầu kỳ</button>
-              <button style={subTabStyle(activeSubTab === 'service_stock')} onClick={() => setActiveSubTab('service_stock')}>Định mức POS</button>
+              <button style={subTabStyle(activeSubTab === 'warehouses')} onClick={() => setActiveSubTab('warehouses')}>{tUi("inventory.warehouses")}</button>
+              <button style={subTabStyle(activeSubTab === 'items')} onClick={() => setActiveSubTab('items')}>{tUi("settings.items")}</button>
+              <button style={subTabStyle(activeSubTab === 'suppliers')} onClick={() => setActiveSubTab('suppliers')}>{tUi("inventory.supplier")}</button>
+              <button style={subTabStyle(activeSubTab === 'units')} onClick={() => setActiveSubTab('units')}>{tUi("inventory.unit")}</button>
+              <button style={subTabStyle(activeSubTab === 'opening')} onClick={() => setActiveSubTab('opening')}>{tUi("inventory.opening")}</button>
+              <button style={subTabStyle(activeSubTab === 'service_stock')} onClick={() => setActiveSubTab('service_stock')}>{tUi("settings.posStock")}</button>
             </div>
             {['warehouses', 'items', 'suppliers', 'opening', 'service_stock'].includes(activeSubTab) && <InventorySettings catalog={activeSubTab} />}
             {activeSubTab === 'units' && <Units />}
           </>
         );
+      case 'channels': {
+        const access = pms.access('channels.view', 'OTA_SYNC', false);
+        if (!access.allowed) return <AccessMessage result={access} />;
+        return <IntegrationWorkspace key={`${tenantId}:${pms.authGeneration}`} pms={pms} embedded />;
+      }
       case 'system':
         return (
           <>
             <div className="pms-settings-tabs">
-              <button style={subTabStyle(activeSubTab === 'security')} onClick={() => setActiveSubTab('security')}>Bảo mật nâng cao</button>
-              <button style={subTabStyle(activeSubTab === 'roles')} onClick={() => setActiveSubTab('roles')}>Phân quyền</button>
+              <button style={subTabStyle(activeSubTab === 'security')} onClick={() => setActiveSubTab('security')}>{tUi("settings.advancedSecurity")}</button>
+              <button style={subTabStyle(activeSubTab === 'roles')} onClick={() => setActiveSubTab('roles')}>{tUi("settings.roles")}</button>
             </div>
             {activeSubTab === 'security' && <FutureSettings><AdvancedSecurity /></FutureSettings>}
             {activeSubTab === 'roles' && <RoleMatrix />}
           </>
         );
       default:
-        return <div>Tính năng đang được phát triển...</div>;
+        return <div>{tUi("settings.developing")}</div>;
     }
   };
 
@@ -228,12 +242,12 @@ export default function Settings() {
       {/* SIDEBAR BÊN TRÁI (SETTINGS HUB) */}
       <div className="pms-settings-navigation" style={{ backgroundColor: '#fff', display: 'flex', flexDirection: 'column' }}>
         <div style={{ padding: '24px' }}>
-          <h1 style={{ fontSize: '20px', fontWeight: '800', color: '#0f172a', margin: 0 }}>Cài đặt</h1>
-          <p style={{ color: '#64748b', fontSize: '13px', margin: '4px 0 0 0' }}>Hệ thống & Danh mục</p>
+          <h1 style={{ fontSize: '20px', fontWeight: '800', color: '#0f172a', margin: 0 }}>{tUi("nav.settingsShort")}</h1>
+          <p style={{ color: '#64748b', fontSize: '13px', margin: '4px 0 0 0' }}>{tUi("settings.catalogs")}</p>
         </div>
 
         <div className="pms-settings-groups" style={{ padding: '0 12px', flex: 1, overflowY: 'auto' }}>
-          {SETTING_GROUPS.map(group => {
+          {groups.map(group => {
             const Icon = group.icon;
             const isActive = activeGroup === group.id;
             return (
@@ -245,7 +259,7 @@ export default function Settings() {
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <Icon size={18} />
-                  <span>{group.name}</span>
+                  <span>{labelUi(group.name)}</span>
                 </div>
                 {isActive && <ChevronRight size={16} />}
               </button>
@@ -270,12 +284,14 @@ export default function Settings() {
 // ==========================================
 
 function RoleMatrix() {
+  useI18n();
   const roles = ['HOTEL_OWNER', 'FRONT_DESK', 'HOUSEKEEPING', 'ACCOUNTANT'];
   const actions = [['rooms.view', 'Xem sơ đồ phòng'], ['reservations.view', 'Xem đặt phòng'], ['reservations.write', 'Tạo / sửa / đổi trạng thái booking'], ['housekeeping.write', 'Cập nhật buồng phòng'], ['payments.write', 'Thanh toán / hoàn tiền / phụ thu'], ['reports.view', 'Báo cáo'], ['settings.write', 'Cài đặt khách sạn'], ['users.write', 'Quản lý người dùng']];
-  return <div><h2 style={{ fontSize: 18 }}>Quyền mặc định theo vai trò</h2><p style={{ color: '#64748b', fontSize: 13 }}>Quyền được kiểm tra trên máy chủ theo vai trò tại khách sạn. Gán vai trò tại mục Người dùng.</p><table style={{ width: '100%', borderCollapse: 'collapse' }}><thead><tr><th style={thStyle}>Thao tác</th>{roles.map(r => <th key={r} style={thStyle}>{ROLE_NAMES[r]}</th>)}</tr></thead><tbody>{actions.map(([action, name]) => <tr key={action}><td style={tdStyle}>{name}</td>{roles.map(r => <td key={r} style={tdStyle}>{ROLE_ACTIONS[r].includes('*') || ROLE_ACTIONS[r].includes(action) ? '✓' : '—'}</td>)}</tr>)}</tbody></table></div>;
+  return <div><h2 style={{ fontSize: 18 }}>{tUi("settings.roleDefaults")}</h2><p style={{ color: '#64748b', fontSize: 13 }}>{tUi("settings.rolesHint")}</p><table style={{ width: '100%', borderCollapse: 'collapse' }}><thead><tr><th style={thStyle}>{tUi("common.actions")}</th>{roles.map(r => <th key={r} style={thStyle}>{labelUi(ROLE_NAMES[r])}</th>)}</tr></thead><tbody>{actions.map(([action, name]) => <tr key={action}><td style={tdStyle}>{labelUi(name)}</td>{roles.map(r => <td key={r} style={tdStyle}>{ROLE_ACTIONS[r].includes('*') || ROLE_ACTIONS[r].includes(action) ? '✓' : '—'}</td>)}</tr>)}</tbody></table></div>;
 }
 
 function MasterGrid({ catalog, title, description, fields, rows, transform, activation = false, searchable = false }) {
+  useI18n();
   const pms = usePms();
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('');
@@ -285,125 +301,208 @@ function MasterGrid({ catalog, title, description, fields, rows, transform, acti
   const [editing, setEditing] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const busyRef = useRef(false);
+  const reset = () => { setDraft(blank()); setEditing(false); setError(''); setMessage(''); };
   const edit = row => { setDraft({ ...row }); setEditing(true); setError(''); setMessage(''); };
   const save = async () => {
+    if (busyRef.current) return;
+    busyRef.current = true; setBusy(true); setError(''); setMessage('');
     try {
       const item = { ...draft };
+      if (catalog === 'roomTypes' && !item.code?.trim()) {
+        if (!editing || (pms[catalog] || []).find(row => row.id === item.id)?.code) throw new Error('Vui lòng nhập mã loại phòng.');
+        delete item.code;
+      }
       for (const field of fields) if (field.type === 'number') item[field.key] = field.key === 'capacity' ? Number(item[field.key]) : String(item[field.key]);
       if (!editing && item.id && (pms[catalog] || []).some(row => row.id === item.id)) throw new Error('Mã đã tồn tại. Hãy chọn Sửa ở bản ghi cần thay đổi.');
       if (!editing) delete item.id;
       await pms.saveMaster(catalog, transform ? transform(item) : item);
       setDraft(blank()); setEditing(false); setError(''); setMessage('Đã lưu vào danh mục của khách sạn hiện tại.');
     } catch (err) { setError(err.message); }
+    finally { busyRef.current = false; setBusy(false); }
   };
-  const toggle = async id => { try { await pms.toggleMaster(catalog, id); setError(''); } catch (err) { setError(err.message); } };
+  const toggle = async id => {
+    if (busyRef.current) return;
+    busyRef.current = true; setBusy(true); setError(''); setMessage('');
+    try { await pms.toggleMaster(catalog, id); }
+    catch (err) { setError(err.message); }
+    finally { busyRef.current = false; setBusy(false); }
+  };
   return <div style={{ width: '100%', marginBottom: 24 }}>
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-      <div><h2 style={{ fontSize: 18, fontWeight: 'bold', color: '#0f172a', margin: '0 0 4px' }}>{title}</h2><p style={{ fontSize: 13, color: '#64748b', margin: 0 }}>{description}</p></div>
-      <button style={btnStyle('#10b981', '#fff')} onClick={() => { setDraft(blank()); setEditing(false); setError(''); }}><Plus size={16} /> Thêm mới</button>
+      <div><h2 style={{ fontSize: 18, fontWeight: 'bold', color: '#0f172a', margin: '0 0 4px' }}>{labelUi(title)}</h2><p style={{ fontSize: 13, color: '#64748b', margin: 0 }}>{description}</p></div>
+      {editing && <button type="button" disabled={busy} style={btnStyle('#fff', '#475569')} onClick={reset}><X size={16} />{' '}{tUi("common.cancel")}</button>}
     </div>
-    {searchable && <div style={{ display: 'flex', gap: 16, marginBottom: 16 }}><select aria-label="Lọc danh mục mặt hàng" value={category} onChange={e => setCategory(e.target.value)} style={{ ...inputStyle, width: 220 }}><option value="">Tất cả danh mục</option>{fields.find(f => f.key === 'category')?.options?.map(c => <option key={c}>{c}</option>)}</select><div style={{ position: 'relative', flex: 1 }}><Search size={16} color="#94a3b8" style={{ position: 'absolute', left: 12, top: 12 }} /><input aria-label="Tìm mặt hàng" value={query} onChange={e => setQuery(e.target.value)} placeholder="Nhập tên hoặc mã hàng hóa..." style={{ ...inputStyle, paddingLeft: 36 }} /></div></div>}
-    {error && <p role="alert" style={{ color: '#dc2626' }}>{error}</p>}{message && <p role="status" style={{ color: '#059669' }}>{message}</p>}
-    <div style={{ border: '1px solid #e2e8f0', borderRadius: 8, overflowX: 'auto' }}><table style={{ width: '100%', borderCollapse: 'collapse' }}><thead><tr>{fields.map(f => <th key={f.key} style={thStyle}>{f.label}</th>)}{activation && <th style={thStyle}>Kích hoạt</th>}<th style={thStyle}>Thao tác</th></tr></thead><tbody>
-      {list.map(row => <tr key={row.id} style={{ opacity: row.active === false ? 0.55 : 1 }}>{fields.map(f => <td key={f.key} style={tdStyle}>{f.type === 'checkbox' ? <input type="checkbox" checked={!!row[f.key]} readOnly disabled /> : f.type === 'number' ? Number(row[f.key] || 0).toLocaleString('vi-VN') : f.key === 'category' ? <span style={{ backgroundColor: '#e0e7ff', color: '#4338ca', padding: '2px 8px', borderRadius: 12, fontSize: 12, fontWeight: 'bold' }}>{row[f.key]}</span> : row[f.key]}</td>)}{activation && <td style={tdStyle}><Toggle isOn={row.active !== false} onToggle={() => toggle(row.id)} /></td>}<td style={tdStyle}><div style={{ display: 'flex', gap: 8 }}><button aria-label={`Sửa ${row.name}`} style={{ border: 0, background: 'none', color: '#3b82f6', cursor: 'pointer' }} onClick={() => edit(row)}><Edit2 size={16} /></button><button aria-label={`${row.active === false ? 'Bật' : 'Tắt'} ${row.name}`} title="Bật/tắt sử dụng; giữ lịch sử đã có" style={{ border: 0, background: 'none', color: row.active === false ? '#10b981' : '#ef4444', cursor: 'pointer' }} onClick={() => toggle(row.id)}><Trash2 size={16} /></button></div></td></tr>)}
-      <tr style={{ background: '#f0fdf4' }}>{fields.map(f => <td key={f.key} style={{ ...tdStyle, padding: 8 }}>{f.type === 'checkbox' ? <input aria-label={f.label} type="checkbox" checked={!!draft[f.key]} onChange={e => setDraft(d => ({ ...d, [f.key]: e.target.checked }))} /> : f.options ? <select aria-label={f.label} value={draft[f.key] ?? ''} onChange={e => setDraft(d => ({ ...d, [f.key]: e.target.value }))} style={{ ...inputStyle, padding: 6 }}><option value="">Chọn...</option>{f.options.map(o => <option key={o} value={o}>{o}</option>)}</select> : <input aria-label={f.label} type={f.type || 'text'} min={f.type === 'number' ? 0 : undefined} readOnly={f.key === 'id' && editing} value={draft[f.key] ?? ''} placeholder={f.label} onChange={e => setDraft(d => ({ ...d, [f.key]: e.target.value }))} style={{ ...inputStyle, padding: 6 }} />}</td>)}{activation && <td style={tdStyle}><Toggle isOn={draft.active !== false} onToggle={() => setDraft(d => ({ ...d, active: d.active === false }))} /></td>}<td style={{ ...tdStyle, padding: 8 }}><button style={{ ...btnStyle('#10b981', '#fff'), width: '100%' }} onClick={save}><Save size={16} /> Lưu</button></td></tr>
+    {searchable && <div style={{ display: 'flex', gap: 16, marginBottom: 16 }}><select aria-label={tUi("settings.itemFilter")} value={category} onChange={e => setCategory(e.target.value)} style={{ ...inputStyle, width: 220 }}><option value="">{tUi("common.allCategories")}</option>{fields.find(f => f.key === 'category')?.options?.map(c => <option key={c}>{c}</option>)}</select><div style={{ position: 'relative', flex: 1 }}><Search size={16} color="#94a3b8" style={{ position: 'absolute', left: 12, top: 12 }} /><input aria-label={tUi("inventory.searchItems")} value={query} onChange={e => setQuery(e.target.value)} placeholder={tUi("settings.itemSearch")} style={{ ...inputStyle, paddingLeft: 36 }} /></div></div>}
+    {error && <p role="alert" style={{ color: '#dc2626' }}>{error}</p>}{message && <p role="status" style={{ color: '#059669' }}>{labelUi(message)}</p>}
+    <div style={{ border: '1px solid #e2e8f0', borderRadius: 8, overflowX: 'auto' }}><table style={{ width: '100%', borderCollapse: 'collapse' }}><thead><tr>{fields.map(f => <th key={f.key} style={thStyle}>{f.label}</th>)}{activation && <th style={thStyle}>{tUi("common.activate")}</th>}<th style={thStyle}>{tUi("common.actions")}</th></tr></thead><tbody>
+      {list.map(row => <tr key={row.id} style={{ opacity: row.active === false ? 0.55 : 1 }}>{fields.map(f => <td key={f.key} style={tdStyle}>{f.type === 'checkbox' ? <input type="checkbox" checked={!!row[f.key]} readOnly disabled /> : f.type === 'number' ? Number(row[f.key] || 0).toLocaleString(getIntlLocale()) : f.key === 'category' ? <span style={{ backgroundColor: '#e0e7ff', color: '#4338ca', padding: '2px 8px', borderRadius: 12, fontSize: 12, fontWeight: 'bold' }}>{row[f.key]}</span> : f.key === 'code' ? row.code || tUi("common.unsetCode") : f.options?.find(o => o.value === row[f.key])?.label ?? row[f.key]}</td>)}{activation && <td style={tdStyle}><Toggle isOn={row.active !== false} disabled={busy} label={`Kích hoạt ${row.name}`} onToggle={() => toggle(row.id)} /></td>}<td style={tdStyle}><div style={{ display: 'flex', gap: 8 }}><button disabled={busy} aria-label={`Sửa ${row.name}`} style={{ border: 0, background: 'none', color: '#3b82f6', cursor: 'pointer' }} onClick={() => edit(row)}><Edit2 size={16} /></button><button disabled={busy} aria-label={`${row.active === false ? tUi("common.on") : tUi("common.off")} ${row.name}`} title="Bật/tắt sử dụng; giữ lịch sử đã có" style={{ border: 0, background: 'none', color: row.active === false ? '#10b981' : '#ef4444', cursor: 'pointer' }} onClick={() => toggle(row.id)}><Trash2 size={16} /></button></div></td></tr>)}
+      {!list.length && <tr><td style={tdStyle} colSpan={fields.length + (activation ? 2 : 1)}>{tUi("settings.noCatalog")}</td></tr>}
+      <tr style={{ background: '#f0fdf4' }}>{fields.map(f => <td key={f.key} style={{ ...tdStyle, padding: 8 }}>{f.type === 'checkbox' ? <input disabled={busy} aria-label={f.label} type="checkbox" checked={!!draft[f.key]} onChange={e => setDraft(d => ({ ...d, [f.key]: e.target.checked }))} /> : f.options ? <select disabled={busy} aria-label={f.label} value={draft[f.key] ?? ''} onChange={e => setDraft(d => ({ ...d, [f.key]: e.target.value }))} style={{ ...inputStyle, padding: 6 }}><option value="">{tUi("common.select")}</option>{f.options.map(o => <option key={o.value ?? o} value={o.value ?? o} disabled={o.disabled}>{o.label ?? o}</option>)}</select> : <input disabled={busy} aria-label={f.label} type={f.type || 'text'} min={f.type === 'number' ? 0 : undefined} maxLength={f.key === 'code' ? 40 : undefined} readOnly={f.key === 'id' && editing} value={draft[f.key] ?? ''} placeholder={f.label} onChange={e => setDraft(d => ({ ...d, [f.key]: e.target.value }))} style={{ ...inputStyle, padding: 6 }} />}</td>)}{activation && <td style={tdStyle}><Toggle isOn={draft.active !== false} disabled={busy} label={tUi("settings.enableCatalog")} onToggle={() => setDraft(d => ({ ...d, active: d.active === false }))} /></td>}<td style={{ ...tdStyle, padding: 8 }}><button disabled={busy} style={{ ...btnStyle('#10b981', '#fff'), width: '100%' }} onClick={save}><Save size={16} /> {busy ? tUi("common.saving") : editing ? tUi("common.saveChanges") : tUi("common.save")}</button></td></tr>
     </tbody></table></div>
   </div>;
 }
 
 function BusinessProfile() {
-  const { settings, saveSettings } = usePms();
-  const [draft, setDraft] = useState(settings);
+  useI18n();
+  const { settings, saveSettings, access } = usePms();
+  const fields = [
+    ['phone', 'Số điện thoại liên hệ', 'tel', 40],
+    ['contactEmail', 'Email liên hệ', 'email', 254],
+    ['website', 'Website', 'url', 2048],
+    ['logoUrl', 'URL logo (HTTPS)', 'url', 2048],
+    ['taxCode', 'Mã số thuế', 'text', 80],
+    ['bankName', 'Ngân hàng', 'text', 160],
+    ['bankAccount', 'Số tài khoản ngân hàng', 'text', 80],
+    ['bankAccountName', 'Tên chủ tài khoản', 'text', 160],
+  ];
+  const [draft, setDraft] = useState(() => ({
+    ...Object.fromEntries(fields.map(([key]) => [key, settings[key] || ''])),
+    name: settings.name || '', currency: settings.currency || 'VND', address: settings.address || '',
+    timezone: settings.timezone || 'Asia/Ho_Chi_Minh', defaultLanguage: settings.defaultLanguage || 'vi',
+  }));
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
-  const save = async () => { try { await saveSettings(draft); setError(''); setMessage('Đã lưu cấu hình.'); } catch (err) { setError(err.message); } };
+  const [busy, setBusy] = useState(false);
+  const [logoError, setLogoError] = useState('');
+  const saving = useRef(false);
+  const canWrite = access('settings.write').allowed;
+  const change = (key, value) => { setDraft(current => ({ ...current, [key]: value })); setMessage(''); setError(''); };
+  const save = async event => {
+    event.preventDefault();
+    if (saving.current || !canWrite) return;
+    saving.current = true; setBusy(true); setError(''); setMessage('');
+    try {
+      const result = await saveSettings(draft);
+      setDraft(current => Object.fromEntries(Object.keys(current).map(key => [key, result[key] ?? current[key]])));
+      setMessage('Đã lưu hồ sơ khách sạn.');
+    } catch (err) { setError(err.message); }
+    finally { saving.current = false; setBusy(false); }
+  };
+  let logoUrl = '';
+  try {
+    const value = draft.logoUrl.trim();
+    const url = new URL(value);
+    if (value.length <= 2048 && /^https:\/\//i.test(value) && ![...value].some(char => /\s/.test(char) || char === '\\' || char.charCodeAt(0) < 32 || char.charCodeAt(0) === 127) && !/^https:\/\/[^/?#]*@/i.test(value) && url.protocol === 'https:' && !url.username && !url.password) logoUrl = value;
+  } catch { /* Preview appears only for a valid HTTPS URL. */ }
+  const fieldStyle = { display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px', fontWeight: 'bold', minWidth: 0 };
 
   return (
-    <div style={{ maxWidth: '800px' }}>
-      <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: '#0f172a', marginBottom: '24px' }}>Hồ sơ khách sạn</h2>
+    <form onSubmit={save} style={{ maxWidth: '800px' }} aria-busy={busy}>
+      <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: '#0f172a', marginBottom: '24px' }}>{tUi("settings.hotelProfile")}</h2>
+      <div className="pms-language-settings"><div><h3>{tUi("language.label")}</h3><p>{tUi("language.help")}</p></div><LanguageSwitcher /></div><fieldset disabled={busy || !canWrite} style={{ border: 0, padding: 0, margin: 0 }}>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <label style={{ fontSize: '13px', fontWeight: 'bold' }}>Tên Khách sạn</label>
-          <input type="text" aria-label="Tên Khách sạn" value={draft.name} onChange={e => setDraft(d => ({ ...d, name: e.target.value }))} style={inputStyle} />
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <label style={{ fontSize: '13px', fontWeight: 'bold' }}>Tiền tệ cơ sở</label>
-          <select aria-label="Tiền tệ cơ sở" value={draft.currency} onChange={e => setDraft(d => ({ ...d, currency: e.target.value }))} style={inputStyle}>
-            <option value="VND">VND - Việt Nam Đồng</option>
+        <label style={fieldStyle}>{tUi("settings.hotelName")}<input type="text" required maxLength={160} value={draft.name} onChange={e => change('name', e.target.value)} style={inputStyle} />
+        </label>
+        <label style={fieldStyle}>{tUi("settings.baseCurrency")}<select value={draft.currency} onChange={e => change('currency', e.target.value)} style={inputStyle}>
+            <option value="VND">{tUi("settings.vnd")}</option>
             <option value="USD">USD - US Dollar</option>
           </select>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', gridColumn: '1 / -1' }}>
-          <label style={{ fontSize: '13px', fontWeight: 'bold' }}>Địa chỉ</label>
-          <input type="text" aria-label="Địa chỉ" value={draft.address} onChange={e => setDraft(d => ({ ...d, address: e.target.value }))} style={inputStyle} />
-        </div>
+        </label>
+        <label style={{ ...fieldStyle, gridColumn: '1 / -1' }}>{tUi("common.address")}<input type="text" maxLength={500} value={draft.address} onChange={e => change('address', e.target.value)} style={inputStyle} />
+        </label>
+        {fields.map(([key, label, type, maximum]) => <label key={key} style={fieldStyle}>{labelUi(label)}
+          <input type={type} maxLength={maximum} value={draft[key]} onChange={e => change(key, e.target.value)} style={inputStyle} placeholder={key === 'logoUrl' ? 'https://...' : undefined} />
+        </label>)}
+        <label style={fieldStyle}>{tUi("settings.timezone")}<input type="text" required maxLength={100} value={draft.timezone} onChange={e => change('timezone', e.target.value)} placeholder="Asia/Ho_Chi_Minh" style={inputStyle} />
+        </label>
+        <label style={fieldStyle}>{tUi("settings.profileLanguage")}<select value={draft.defaultLanguage} onChange={e => change('defaultLanguage', e.target.value)} style={inputStyle}><option value="vi">{tUi("language.vietnamese")}</option><option value="en">English</option></select>
+        </label>
       </div>
+      <p style={{ color: 'var(--text-secondary)', fontSize: 13 }}>{tUi("language.profileHelp")}</p>
+      {logoUrl && (logoError === logoUrl ? <p role="status">{tUi("settings.logoError")}</p> : <img key={logoUrl} src={logoUrl} alt={`Logo ${draft.name || tUi("common.hotelLower")}`} referrerPolicy="no-referrer" loading="lazy" onError={() => setLogoError(logoUrl)} style={{ maxWidth: '100%', width: 160, height: 100, objectFit: 'contain' }} />)}
+      {draft.logoUrl.trim() && !logoUrl && <p>{tUi("settings.logoHint")}</p>}
+      <button type="submit" style={{ ...btnStyle('var(--accent-primary)', '#fff'), marginTop: 24 }}><Save size={16} aria-hidden="true" /> {busy ? tUi("common.saving") : tUi("profile.save")}</button>
+      </fieldset>
       <div style={{ marginTop: '24px' }}>
-        {error && <p role="alert" style={{ color: '#dc2626' }}>{error}</p>}{message && <p role="status">{message}</p>}
-        <button onClick={save} style={btnStyle('var(--accent-primary)', '#fff')}><Save size={16}/> Lưu cấu hình</button>
+        {error && <p role="alert" style={{ color: '#dc2626' }}>{error}</p>}{message && <p role="status">{labelUi(message)}</p>}
       </div>
-    </div>
+      {!canWrite && <p role="status">{tUi("settings.profileReadOnly")}</p>}
+    </form>
   );
 }
 
 function BusinessPolicies() {
-  const { settings, saveSettings } = usePms();
-  const [draft, setDraft] = useState(settings);
+  useI18n();
+  const { settings, saveSettings, access } = usePms();
+  const [draft, setDraft] = useState(() => ({ checkInTime: settings.checkInTime, checkOutTime: settings.checkOutTime, policies: settings.policies || '' }));
   const [message, setMessage] = useState('');
-  const save = async () => { try { await saveSettings(draft); setMessage('Đã lưu giờ nhận/trả phòng.'); } catch (err) { setMessage(err.message); } };
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const working = useRef(false);
+  const canWrite = access('settings.write').allowed;
+  const save = async event => {
+    event.preventDefault();
+    if (working.current || !canWrite) return;
+    working.current = true; setBusy(true); setMessage(''); setError('');
+    try { await saveSettings(draft); setMessage('Đã lưu chính sách nhận/trả phòng.'); }
+    catch (err) { setError(err.message); }
+    finally { working.current = false; setBusy(false); }
+  };
 
   return (
-    <div style={{ width: '100%' }}>
+    <form onSubmit={save} aria-busy={busy} data-workspace-draft style={{ width: '100%' }}>
+      <fieldset disabled={busy || !canWrite} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: '#0f172a' }}>Chính sách nhận / trả phòng</h2>
-        <button onClick={save} style={btnStyle('var(--accent-primary)', '#fff')}><Save size={16}/> Lưu chính sách</button>
+        <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: '#0f172a' }}>{tUi("settings.checkInPolicy")}</h2>
+        <button type="submit" style={btnStyle('var(--accent-primary)', '#fff')}><Save size={16}/> {busy ? tUi("common.saving") : tUi("settings.savePolicy")}</button>
       </div>
       
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <label style={{ fontSize: '13px', fontWeight: 'bold' }}>Giờ nhận phòng (Check-in)</label>
-          <input type="time" value={draft.checkInTime} onChange={e => setDraft(d => ({ ...d, checkInTime: e.target.value }))} style={inputStyle} />
+          <label htmlFor="policy-checkin" style={{ fontSize: '13px', fontWeight: 'bold' }}>{tUi("settings.checkInTime")}</label>
+          <input id="policy-checkin" type="time" required value={draft.checkInTime} onChange={e => setDraft(d => ({ ...d, checkInTime: e.target.value }))} style={inputStyle} />
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <label style={{ fontSize: '13px', fontWeight: 'bold' }}>Giờ trả phòng (Check-out)</label>
-          <input type="time" value={draft.checkOutTime} onChange={e => setDraft(d => ({ ...d, checkOutTime: e.target.value }))} style={inputStyle} />
+          <label htmlFor="policy-checkout" style={{ fontSize: '13px', fontWeight: 'bold' }}>{tUi("settings.checkOutTime")}</label>
+          <input id="policy-checkout" type="time" required value={draft.checkOutTime} onChange={e => setDraft(d => ({ ...d, checkOutTime: e.target.value }))} style={inputStyle} />
         </div>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        <label style={{ fontSize: '13px', fontWeight: 'bold' }}>Nội dung Chính sách (Hiển thị cho khách hàng)</label>
+        <label htmlFor="policy-content" style={{ fontSize: '13px', fontWeight: 'bold' }}>{tUi("settings.policyContent")}</label>
         {/* THAY THẾ RICH TEXT EDITOR LỖI THỜI BẰNG TEXTAREA GỌN NHẸ */}
         <textarea 
-          rows="8" 
+          id="policy-content" rows="8" maxLength={4000}
           value={draft.policies || ''} onChange={e => setDraft(d => ({ ...d, policies:e.target.value }))}
           style={{ ...inputStyle, resize: 'vertical', fontFamily: 'monospace' }} 
         />
-        {message && <p role="status">{message}</p>}<p style={{ fontSize: '12px', color: '#64748b', margin: 0 }}>Có thể sử dụng định dạng danh sách (-).</p>
+        <p style={{ fontSize: '12px', color: '#64748b', margin: 0 }}>{tUi("settings.policyHint")}</p>
       </div>
-    </div>
+      </fieldset>
+      {error && <p role="alert" style={{ color: '#dc2626' }}>{error}</p>}
+      {message && <p role="status">{labelUi(message)}</p>}
+      {!canWrite && <p role="status">{tUi("settings.policyReadOnly")}</p>}
+    </form>
   );
 }
 function RoomTypesGrid() {
+  useI18n();
   const { roomTypes, rooms } = usePms();
   const rows = roomTypes.map(t => ({ ...t, roomNumbers: rooms.filter(r => r.typeId === t.id && r.active !== false).map(r => r.id).join(', ') }));
-  return <MasterGrid catalog="roomTypes" title="Danh sách Loại phòng" description={`Số lượng phòng hiện tại: ${rooms.filter(r=>r.active!==false).length}`} rows={rows} fields={[{ key: 'id', label: 'Mã' }, { key: 'name', label: 'Tên Loại Phòng' }, { key: 'roomNumbers', label: 'Danh sách số phòng' }, { key: 'capacity', label: 'Sức chứa', type: 'number', default: 2 }, { key: 'price', label: 'Giá niêm yết', type: 'number' }]} transform={item => ({ ...item, roomNumbers: item.roomNumbers.split(',').map(n => n.trim().replace(/^R(?=\d)/i, '')).filter(Boolean) })} />;
+  return <MasterGrid catalog="roomTypes" title={tUi("settings.roomTypes")} description={`Số lượng phòng hiện tại: ${rooms.filter(r=>r.active!==false).length}`} rows={rows} fields={[{ key: 'code', label: 'Mã' }, { key: 'name', label: 'Tên Loại Phòng' }, { key: 'roomNumbers', label: 'Danh sách số phòng' }, { key: 'capacity', label: 'Sức chứa', type: 'number', default: 2 }, { key: 'price', label: 'Giá niêm yết', type: 'number' }]} transform={item => ({ ...item, roomNumbers: item.roomNumbers.split(',').map(n => n.trim().replace(/^R(?=\d)/i, '')).filter(Boolean) })} />;
 }
 
 function ServiceCategories() {
+  useI18n();
   const { serviceCategories, units } = usePms();
-  return <><MasterGrid catalog="serviceCategories" title="Quản lý Dịch vụ (Đã gộp)" description="Danh mục dịch vụ của khách sạn" fields={[{ key: 'name', label: 'Tên Nhóm (Danh mục)' }, { key: 'tax', label: 'VAT (%)', type: 'number' }]} />
-    <MasterGrid catalog="services" title="Các Dịch vụ thuộc nhóm" description="Dịch vụ được sử dụng tại POS" fields={[{ key: 'name', label: 'Tên Dịch vụ' }, { key: 'category', label: 'Nhóm', options: serviceCategories.filter(c => c.active !== false).map(c => c.name) }, { key: 'price', label: 'Giá bán', type: 'number' }, { key: 'unit', label: 'Đơn vị tính', options: units.filter(u => u.active !== false).map(u => u.name) }]} /></>;
+  return <><MasterGrid catalog="serviceCategories" title={tUi("settings.mergedServices")} description={tUi("settings.serviceCatalog")} fields={[{ key: 'name', label: 'Tên Nhóm (Danh mục)' }, { key: 'tax', label: 'VAT (%)', type: 'number' }]} />
+    <MasterGrid catalog="services" title={tUi("settings.categoryServices")} description={tUi("settings.posServices")} fields={[{ key: 'name', label: 'Tên Dịch vụ' }, { key: 'category', label: 'Nhóm', options: serviceCategories.filter(c => c.active !== false).map(c => c.name) }, { key: 'price', label: 'Giá bán', type: 'number' }, { key: 'unit', label: 'Đơn vị tính', options: units.filter(u => u.active !== false).map(u => u.name) }]} /></>;
 }
 
 function Meals() {
-  return <MasterGrid catalog="meals" title="Các bữa ăn" activation fields={[{key:"name",label:"Tên bữa ăn"},{key:"price",label:"Phụ thu",type:"number"}]} />;
+  useI18n();
+  return <MasterGrid catalog="meals" title={tUi("settings.meals")} activation fields={[{key:"name",label:"Tên bữa ăn"},{key:"price",label:"Phụ thu",type:"number"}]} />;
 }
 
 function PaymentMethods() {
-  return <><MasterGrid catalog="paymentMethods" title="Phương thức thanh toán" activation fields={[{key:"name",label:"Tên phương thức"},{key:"type",label:"Loại",options:["CASH","BANK_TRANSFER","CREDIT_CARD","DEBIT_CARD","E_WALLET","CITY_LEDGER"]}]} /><MasterGrid catalog="funds" title="Quỹ nhận tiền" activation fields={[{key:"name",label:"Tên quỹ"},{key:"type",label:"Loại",options:["cash","bank"]},{key:"currency",label:"Tiền tệ",options:["VND","USD"],default:"VND"},{key:"accountNumber",label:"Số tài khoản"},{key:"bank",label:"Ngân hàng"}]} /></>;
+  useI18n();
+  return <><MasterGrid catalog="paymentMethods" title={tUi("payments.method")} activation fields={[{key:"name",label:"Tên phương thức"},{key:"type",label:"Loại",options:["CASH","BANK_TRANSFER","CREDIT_CARD","DEBIT_CARD","E_WALLET","CITY_LEDGER"]}]} /><MasterGrid catalog="funds" title={tUi("payments.fund")} activation fields={[{key:"name",label:"Tên quỹ"},{key:"type",label:"Loại",options:["cash","bank"]},{key:"currency",label:"Tiền tệ",options:["VND","USD"],default:"VND"},{key:"accountNumber",label:"Số tài khoản"},{key:"bank",label:"Ngân hàng"}]} /></>;
 }
 
 function ExchangeRates() {
+  useI18n();
   const [rates, setRates] = useState([
     { code: 'USD', rate: 25400, active: true },
     { code: 'EUR', rate: 27500, active: true },
@@ -421,8 +520,8 @@ function ExchangeRates() {
     <div style={{ width: '100%' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
         <div>
-          <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: '#0f172a', margin: '0 0 4px 0' }}>Tỉ giá tiền tệ</h2>
-          <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>Quy đổi dựa trên loại tiền mặc định của khách sạn (VND).</p>
+          <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: '#0f172a', margin: '0 0 4px 0' }}>{tUi("settings.currency")}</h2>
+          <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>{tUi("settings.currencyHint")}</p>
         </div>
       </div>
 
@@ -430,9 +529,9 @@ function ExchangeRates() {
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr>
-              <th style={thStyle}>Loại (Currency)</th>
-              <th style={{...thStyle, width: '200px'}}>Tỉ giá quy đổi</th>
-              <th style={{...thStyle, width: '100px', textAlign: 'center'}}>Kích hoạt</th>
+              <th style={thStyle}>{tUi("settings.currencyType")}</th>
+              <th style={{...thStyle, width: '200px'}}>{tUi("settings.exchangeRate")}</th>
+              <th style={{...thStyle, width: '100px', textAlign: 'center'}}>{tUi("common.activate")}</th>
             </tr>
           </thead>
           <tbody>
@@ -444,7 +543,7 @@ function ExchangeRates() {
                 </td>
                 <td style={{...tdStyle, textAlign: 'center'}}>
                   <div style={{ display: 'flex', justifyContent: 'center' }}>
-                    <Toggle isOn={r.active} onToggle={() => toggleRate(idx)} />
+                    <Toggle isOn={r.active} label={`Kích hoạt tỷ giá ${r.code}`} onToggle={() => toggleRate(idx)} />
                   </div>
                 </td>
               </tr>
@@ -453,21 +552,22 @@ function ExchangeRates() {
         </table>
       </div>
       <div style={{ marginTop: '16px' }}>
-        <button style={btnStyle('var(--accent-primary)', '#fff')}><Save size={16}/> Lưu tỉ giá</button>
+        <button style={btnStyle('var(--accent-primary)', '#fff')}><Save size={16}/>{' '}{tUi("settings.saveRate")}</button>
       </div>
     </div>
   );
 }
 
 function AdvancedSecurity() {
+  useI18n();
   const [mfa, setMfa] = useState(false);
 
   return (
     <div style={{ width: '100%' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <div>
-          <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: '#0f172a', margin: '0 0 4px 0' }}>Bảo mật nâng cao</h2>
-          <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>Thiết lập các lớp bảo vệ phụ cho hệ thống tài khoản khách sạn.</p>
+          <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: '#0f172a', margin: '0 0 4px 0' }}>{tUi("settings.advancedSecurity")}</h2>
+          <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>{tUi("settings.securityIntro")}</p>
         </div>
       </div>
 
@@ -477,15 +577,14 @@ function AdvancedSecurity() {
             <ShieldCheck size={24} color="#4338ca" />
           </div>
           <div>
-            <div style={{ fontWeight: 'bold', color: '#0f172a', fontSize: '16px', marginBottom: '4px' }}>Chức năng Bảo mật 2 lớp (2FA) {mfa ? 'đang BẬT' : 'đang TẮT'}</div>
-            <div style={{ color: '#475569', fontSize: '13px', lineHeight: '1.5', maxWidth: '600px' }}>
-              Khi bật bảo mật 2 lớp, hệ thống sẽ gửi mã OTP qua Email hoặc SMS để xác thực mỗi khi đăng nhập trên thiết bị mới.<br/><br/>
-              <em>Lưu ý: Nếu khách sạn thuộc chuỗi (Multi-property), thiết lập này sẽ áp dụng cho toàn bộ các khách sạn trong chuỗi.</em>
+            <div style={{ fontWeight: 'bold', color: '#0f172a', fontSize: '16px', marginBottom: '4px' }}>{tUi("settings.twoFactorFeature")}{' '}{mfa ? tUi("settings.isOn") : tUi("settings.isOff")}</div>
+            <div style={{ color: '#475569', fontSize: '13px', lineHeight: '1.5', maxWidth: '600px' }}>{tUi("settings.twoFactorHint")}<br/><br/>
+              <em>{tUi("settings.chainHint")}</em>
             </div>
           </div>
         </div>
         <div style={{ marginTop: '8px' }}>
-          <Toggle isOn={mfa} onToggle={() => setMfa(!mfa)} />
+          <Toggle isOn={mfa} label={tUi("settings.twoFactor")} onToggle={() => setMfa(!mfa)} />
         </div>
       </div>
     </div>
@@ -493,37 +592,57 @@ function AdvancedSecurity() {
 }
 
 function BookingSources() {
+  useI18n();
   const [filterType, setFilterType] = useState('Travel Agency');
   
-  const { bookingSources: sources, saveMaster, toggleMaster } = usePms();
+  const { bookingSources: sources, saveMaster, toggleMaster, access } = usePms();
   const [draft, setDraft] = useState({ name: '', commission: 0, email: '' });
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
-  const otas = sources.filter(s => s.type === 'OTA');
-  const toggleOta = async id => { try { await toggleMaster('bookingSources', id); setError(''); } catch (err) { setError(err.message); } };
-  const save = async () => { try { await saveMaster('bookingSources', { ...draft, type: filterType, commission: Number(draft.commission) }); setDraft({ name: '', commission: 0, email: '' }); setError(''); setMessage('Đã lưu nguồn đặt phòng.'); } catch (err) { setError(err.message); } };
+  const [busy, setBusy] = useState(false);
+  const working = useRef(false);
+  const canWrite = access('settings.write').allowed;
+  const toggleOta = async id => {
+    if (working.current || !canWrite) return;
+    working.current = true; setBusy(true); setError(''); setMessage('');
+    try { await toggleMaster('bookingSources', id); setMessage('Đã cập nhật trạng thái nguồn đặt phòng.'); }
+    catch (err) { setError(err.message); }
+    finally { working.current = false; setBusy(false); }
+  };
+  const save = async event => {
+    event.preventDefault();
+    if (working.current || !canWrite) return;
+    working.current = true; setBusy(true); setError(''); setMessage('');
+    try {
+      await saveMaster('bookingSources', { ...draft, type: filterType, commission: Number(draft.commission) });
+      setDraft({ name: '', commission: 0, email: '' }); setMessage('Đã lưu nguồn đặt phòng.');
+    } catch (err) { setError(err.message); }
+    finally { working.current = false; setBusy(false); }
+  };
 
   const filteredSources = sources.filter(s => s.type === filterType);
-  const showCommissionAndEmail = ['Travel Agency', 'Corporate', 'Reference'].includes(filterType);
+  const showCommissionAndEmail = ['OTA', 'Travel Agency', 'Corporate', 'Reference'].includes(filterType);
 
   return (
     <div style={{ width: '100%' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
         <div>
-          <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: '#0f172a', margin: '0 0 4px 0' }}>Nguồn đặt phòng & Đối tác</h2>
-          <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>
-            {filterType === 'OTA' ? 'Kích hoạt các kênh bán phòng trực tuyến (OTA) mà khách sạn sử dụng.' : 'Quản lý danh sách đối tác và thiết lập hoa hồng.'}
-          </p>
+          <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: '#0f172a', margin: '0 0 4px 0' }}>{tUi("settings.sourcesPartners")}</h2>
+          <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>{tUi("settings.sourceIntro")}</p>
         </div>
         {filterType === 'OTA' && (
-          <AccessLink to="/id/ota" style={{ ...btnStyle('#3b82f6', '#fff'), textDecoration: 'none' }}><RefreshCw size={16} aria-hidden="true" /> Quản lý kênh OTA</AccessLink>
+          <AccessLink to="/id/settings?section=channels" aria-disabled={busy} onClick={event => { if (busy) event.preventDefault(); }} style={{ ...btnStyle('#3b82f6', '#fff'), textDecoration: 'none' }}><RefreshCw size={16} aria-hidden="true" />{' '}{tUi("nav.channelManagement")}</AccessLink>
         )}
       </div>
 
+      <form onSubmit={save} aria-busy={busy} data-workspace-draft>
+      <fieldset disabled={busy || !canWrite} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
       <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
         {['Travel Agency', 'Corporate', 'OTA', 'Direct', 'Reference'].map(type => (
           <button 
             key={type}
+            type="button"
+            aria-pressed={filterType === type}
             onClick={() => { setFilterType(type); setDraft({ name: '', commission: 0, email: '' }); setError(''); setMessage(''); }}
             style={{ 
               padding: '6px 12px', 
@@ -541,25 +660,14 @@ function BookingSources() {
         ))}
       </div>
 
-      {error && <p role="alert" style={{ color: '#dc2626' }}>{error}</p>}{message && <p role="status">{message}</p>}
-      {filterType === 'OTA' ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '12px' }}>
-          {otas.map((ota) => (
-            <div key={ota.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
-              <div style={{ fontWeight: 'bold', color: '#0f172a', fontSize: '14px' }}>{ota.name}</div>
-              <Toggle isOn={ota.active} onToggle={() => toggleOta(ota.id)} />
-            </div>
-          ))}
-        </div>
-      ) : (
         <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr>
-                <th style={thStyle}>Tên Đối tác / Nguồn</th>
-                {showCommissionAndEmail && <th style={{...thStyle, width: '120px', textAlign: 'center'}}>Hoa hồng (%)</th>}
-                {showCommissionAndEmail && <th style={thStyle}>Email liên hệ</th>}
-                <th style={{...thStyle, width: '100px', textAlign: 'center'}}>Thao tác</th>
+                <th style={thStyle}>{tUi("settings.partnerName")}</th>
+                {showCommissionAndEmail && <th style={{...thStyle, width: '120px', textAlign: 'center'}}>{tUi("settings.commissionPercent")}</th>}
+                {showCommissionAndEmail && <th style={thStyle}>{tUi("common.email")}</th>}
+                <th style={{...thStyle, width: '100px', textAlign: 'center'}}>{tUi("common.actions")}</th>
               </tr>
             </thead>
             <tbody>
@@ -576,141 +684,81 @@ function BookingSources() {
                   )}
                   <td style={{...tdStyle, textAlign: 'center'}}>
                     <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                      <button aria-label={`Sửa ${s.name}`} onClick={() => { setDraft({ ...s, email: s.email || '' }); setMessage(''); }} style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#3b82f6' }}><Edit2 size={16}/></button>
-                      <button aria-label={`Bật tắt ${s.name}`} onClick={() => toggleOta(s.id)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#ef4444' }}><Trash2 size={16}/></button>
+                      <button type="button" aria-label={`Sửa ${s.name}`} onClick={() => { setDraft({ ...s, email: s.email || '' }); setMessage(''); setError(''); }} style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#3b82f6' }}><Edit2 size={16}/></button>
+                      <button type="button" aria-label={`Bật tắt ${s.name}`} onClick={() => toggleOta(s.id)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#ef4444' }}><Trash2 size={16}/></button>
                     </div>
                   </td>
                 </tr>
               ))}
               {/* IN-LINE EDIT (Thêm Đối Tác Nhanh) */}
               <tr style={{ backgroundColor: '#f0fdf4' }}>
-                <td style={{...tdStyle, padding: '8px'}}><input type="text" aria-label="Tên nguồn đặt phòng" value={draft.name} onChange={e => setDraft(d => ({ ...d, name: e.target.value }))} placeholder={`Tên đối tác ${filterType}...`} style={{...inputStyle, padding: '6px'}} /></td>
-                {showCommissionAndEmail && <td style={{...tdStyle, padding: '8px'}}><input type="number" aria-label="Hoa hồng nguồn" value={draft.commission} min="0" onChange={e => setDraft(d => ({ ...d, commission: e.target.value }))} placeholder="%" style={{...inputStyle, padding: '6px', textAlign: 'center'}} /></td>}
-                {showCommissionAndEmail && <td style={{...tdStyle, padding: '8px'}}><input type="email" aria-label="Email nguồn" value={draft.email} onChange={e => setDraft(d => ({ ...d, email: e.target.value }))} placeholder="Email liên hệ (Nếu có)" style={{...inputStyle, padding: '6px'}} /></td>}
+                <td style={{...tdStyle, padding: '8px'}}><input type="text" required maxLength={160} aria-label={tUi("settings.sourceName")} value={draft.name} onChange={e => setDraft(d => ({ ...d, name: e.target.value }))} placeholder={`Tên đối tác ${filterType}...`} style={{...inputStyle, padding: '6px'}} /></td>
+                {showCommissionAndEmail && <td style={{...tdStyle, padding: '8px'}}><input type="number" required aria-label={tUi("settings.sourceCommission")} value={draft.commission} min="0" max="100" step="0.0001" onChange={e => setDraft(d => ({ ...d, commission: e.target.value }))} placeholder="%" style={{...inputStyle, padding: '6px', textAlign: 'center'}} /></td>}
+                {showCommissionAndEmail && <td style={{...tdStyle, padding: '8px'}}><input type="email" maxLength={254} aria-label={tUi("settings.sourceEmail")} value={draft.email} onChange={e => setDraft(d => ({ ...d, email: e.target.value }))} placeholder={tUi("settings.optionalEmail")} style={{...inputStyle, padding: '6px'}} /></td>}
                 <td style={{...tdStyle, textAlign: 'center', padding: '8px'}}>
-                  <button onClick={save} style={{ backgroundColor: '#10b981', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer', width: '100%' }}>Lưu</button>
+                  <button type="submit" style={{ backgroundColor: '#10b981', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer', width: '100%' }}>{busy ? tUi("common.saving") : tUi("common.save")}</button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-      )}
+      </fieldset>
+      {error && <p role="alert" style={{ color: '#dc2626' }}>{error}</p>}{message && <p role="status">{labelUi(message)}</p>}
+      {!canWrite && <p role="status">{tUi("settings.sourceReadOnly")}</p>}
+      </form>
     </div>
   );
 }
 
 function BedTypes() {
-  return <MasterGrid catalog="bedTypes" title="Loại giường" fields={[{ key: "name", label: "Tên loại giường" }]} />;
+  useI18n();
+  return <MasterGrid catalog="bedTypes" title={tUi("settings.beds")} fields={[{ key: "name", label: "Tên loại giường" }]} />;
 }
 
 function Units() {
-  return <MasterGrid catalog="units" title="Đơn vị tính" fields={[{ key: 'name', label: 'Tên Đơn vị tính' }]} />;
+  useI18n();
+  return <MasterGrid catalog="units" title={tUi("inventory.unit")} fields={[{ key: 'name', label: 'Tên Đơn vị tính' }]} />;
+}
+
+function CashbookCategories() {
+  useI18n();
+  return <MasterGrid catalog="cashbookCategories" title={tUi("settings.cashCategories")}
+    description={tUi("settings.cashCategoryHint")}
+    activation fields={[
+      { key: 'name', label: 'Tên danh mục thu chi' },
+      { key: 'type', label: 'Loại thu chi', default: 'INCOME', options: [
+        { value: 'INCOME', label: 'Khoản thu' }, { value: 'EXPENSE', label: 'Khoản chi' },
+      ] },
+    ]} />;
 }
 
 function Commissions() {
-  const [activeTab, setActiveTab] = useState('types'); // 'types' | 'subjects'
+  useI18n();
+  const { commissionTypes } = usePms();
+  const [activeTab, setActiveTab] = useState('settlements');
+  const typeOptions = commissionTypes.map(type => ({
+    value: type.id,
+    label: type.name + (type.active === false ? ' (ngừng sử dụng)' : ''),
+    disabled: type.active === false,
+  }));
 
-  const commTypes = [
-    { id: 1, name: 'Chi phí giới thiệu khách (Taxi, Xe ôm)' },
-    { id: 2, name: 'Chiết khấu Đại lý (TA)' }
-  ];
-
-  const commSubjects = [
-    { id: 1, name: 'Anh Tài Taxi Vinasun', type: 'Chi phí giới thiệu khách (Taxi, Xe ôm)' },
-    { id: 2, name: 'Chị Lan Đại Lý', type: 'Chiết khấu Đại lý (TA)' }
-  ];
-
-  return (
-    <div style={{ width: '100%', maxWidth: '1000px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <div>
-          <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: '#0f172a', margin: '0 0 4px 0' }}>Quản lý Hoa hồng</h2>
-          <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>Cấu hình danh mục loại chi phí và các đối tượng nhận chi hoa hồng.</p>
-        </div>
-      </div>
-
-      <div className="pms-settings-tabs">
-        <button style={subTabStyle(activeTab === 'types')} onClick={() => setActiveTab('types')}>Loại chi phí hoa hồng</button>
-        <button style={subTabStyle(activeTab === 'subjects')} onClick={() => setActiveTab('subjects')}>Đối tượng chi hoa hồng</button>
-      </div>
-
-      {activeTab === 'types' && (
-        <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr>
-                <th style={{...thStyle, width: '60px'}}>#</th>
-                <th style={thStyle}>Tên loại chi phí hoa hồng</th>
-                <th style={{...thStyle, width: '100px', textAlign: 'center'}}>Thao tác</th>
-              </tr>
-            </thead>
-            <tbody>
-              {commTypes.map((t, idx) => (
-                <tr key={t.id}>
-                  <td style={tdStyle}>{idx + 1}</td>
-                  <td style={{...tdStyle, fontWeight: 'bold'}}>{t.name}</td>
-                  <td style={{...tdStyle, textAlign: 'center'}}>
-                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                      <button style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#3b82f6' }}><Edit2 size={16}/></button>
-                      <button style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#ef4444' }}><Trash2 size={16}/></button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              <tr style={{ backgroundColor: '#f0fdf4' }}>
-                <td style={{...tdStyle, padding: '8px'}}>+</td>
-                <td style={{...tdStyle, padding: '8px'}}><input type="text" placeholder="Tên loại chi phí mới..." style={{...inputStyle, padding: '6px'}} /></td>
-                <td style={{...tdStyle, textAlign: 'center', padding: '8px'}}>
-                  <button style={{ backgroundColor: '#10b981', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer', width: '100%' }}>Lưu</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {activeTab === 'subjects' && (
-        <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr>
-                <th style={{...thStyle, width: '60px'}}>#</th>
-                <th style={thStyle}>Tên Đối tượng</th>
-                <th style={thStyle}>Thuộc Loại chi phí</th>
-                <th style={{...thStyle, width: '100px', textAlign: 'center'}}>Thao tác</th>
-              </tr>
-            </thead>
-            <tbody>
-              {commSubjects.map((s, idx) => (
-                <tr key={s.id}>
-                  <td style={tdStyle}>{idx + 1}</td>
-                  <td style={{...tdStyle, fontWeight: 'bold'}}>{s.name}</td>
-                  <td style={{...tdStyle, color: '#475569'}}>{s.type}</td>
-                  <td style={{...tdStyle, textAlign: 'center'}}>
-                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                      <button style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#3b82f6' }}><Edit2 size={16}/></button>
-                      <button style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#ef4444' }}><Trash2 size={16}/></button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              <tr style={{ backgroundColor: '#f0fdf4' }}>
-                <td style={{...tdStyle, padding: '8px'}}>+</td>
-                <td style={{...tdStyle, padding: '8px'}}><input type="text" placeholder="Tên đối tượng..." style={{...inputStyle, padding: '6px'}} /></td>
-                <td style={{...tdStyle, padding: '8px'}}>
-                  <select style={{...inputStyle, padding: '6px'}}>
-                    <option>Chi phí giới thiệu khách (Taxi, Xe ôm)</option>
-                    <option>Chiết khấu Đại lý (TA)</option>
-                  </select>
-                </td>
-                <td style={{...tdStyle, textAlign: 'center', padding: '8px'}}>
-                  <button style={{ backgroundColor: '#10b981', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer', width: '100%' }}>Lưu</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      )}
+  return <div style={{ width: '100%' }}>
+    <div className="pms-settings-tabs">
+      <button type="button" aria-pressed={activeTab === 'settlements'} style={subTabStyle(activeTab === 'settlements')} onClick={() => setActiveTab('settlements')}>{tUi("settings.settleCommission")}</button>
+      <button type="button" aria-pressed={activeTab === 'types'} style={subTabStyle(activeTab === 'types')} onClick={() => setActiveTab('types')}>{tUi("settings.commissionCostType")}</button>
+      <button type="button" aria-pressed={activeTab === 'subjects'} style={subTabStyle(activeTab === 'subjects')} onClick={() => setActiveTab('subjects')}>{tUi("settings.commissionRecipient")}</button>
     </div>
-  );
+    {activeTab !== 'settlements' && <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{tUi("settings.commissionCatalogHint")}</p>}
+    {activeTab === 'settlements' ? <CommissionPage /> : activeTab === 'types' ? <MasterGrid key="commissionTypes" catalog="commissionTypes"
+      title={tUi("settings.commissionCostType")} description={tUi("settings.addCostFirst")}
+      activation fields={[{ key: 'name', label: 'Tên loại chi phí hoa hồng' }]} /> : <>
+      {!commissionTypes.some(type => type.active !== false) && <p role="status">{tUi("settings.activeCostRequired")}</p>}
+      <MasterGrid key="commissionRules" catalog="commissionRules" title={tUi("settings.commissionRecipient")}
+        description={tUi("settings.commissionRecipientHint")}
+        activation fields={[
+          { key: 'name', label: 'Tên đối tượng nhận hoa hồng' },
+          { key: 'typeId', label: 'Loại chi phí hoa hồng', options: typeOptions },
+        ]} />
+    </>}
+  </div>;
 }

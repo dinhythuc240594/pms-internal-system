@@ -48,6 +48,7 @@ ROLE_ACTIONS = {
         "pos.cancel",
         "cashbook.reverse",
         "reports.view",
+        "reports.advanced.view",
         "payments.write",
         "rates.view",
         "inventory.view",
@@ -181,12 +182,9 @@ def audit(event, entity_type, entity_id, details=None):
         details=details or {},
     )
     db.session.add(entry)
-    from .notifications import emit_audit
+    from .composition import services
 
-    emit_audit(entry)
-    from .channels.service import enqueue_audit
-
-    enqueue_audit(entry)
+    services().events.publish(entry)
     return entry
 
 

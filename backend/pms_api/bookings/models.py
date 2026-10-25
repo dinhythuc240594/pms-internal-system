@@ -39,12 +39,13 @@ class Reservation(MoneySnapshot, db.Model):
     checked_in_at = db.Column(db.DateTime(timezone=True))
     checked_out_at = db.Column(db.DateTime(timezone=True))
     cancelled_at = db.Column(db.DateTime(timezone=True))
+    no_show_at = db.Column(db.DateTime(timezone=True))
     __table_args__ = (
         UniqueConstraint("tenant_id", "id"),
         ForeignKeyConstraint(["tenant_id", "source_id"], ["masters.tenant_id", "masters.id"]),
         CheckConstraint("check_out > check_in", name="positive_stay"),
         CheckConstraint(
-            "status IN ('CONFIRMED','IN_HOUSE','CHECKED_OUT','CANCELLED')", name="status"
+            "status IN ('CONFIRMED','IN_HOUSE','CHECKED_OUT','CANCELLED','NO_SHOW')", name="status"
         ),
     )
 

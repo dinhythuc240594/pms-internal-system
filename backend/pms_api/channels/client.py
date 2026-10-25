@@ -6,10 +6,13 @@ ARI: https://docs.channex.io/api-v.1-documentation/ari
 
 import json
 import socket
+import ssl
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import HTTPRedirectHandler, Request, build_opener
-from uuid import UUID
+
+from .errors import ProviderError
+from .identifiers import remote_id as remote_id
 
 BASES = {
     "staging": "https://staging.channex.io/api/v1",
@@ -18,24 +21,9 @@ BASES = {
 MAX_RESPONSE = 2 * 1024 * 1024
 
 
-class ProviderError(Exception):
-    def __init__(self, code, retryable=False):
-        self.code, self.retryable = code, retryable
-        super().__init__(code)
-
-
 class NoRedirect(HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         return None
-
-
-def remote_id(value):
-    try:
-        if not isinstance(value, str) or len(value) != 36:
-            raise ValueError
-        return str(UUID(value))
-    except ValueError, TypeError, AttributeError:
-        raise ProviderError("invalid_remote_id") from None
 
 
 class ChannexClient:
@@ -52,7 +40,17 @@ class ChannexClient:
         self.base, self.api_key = BASES[environment], api_key
         self.transport = transport or build_opener(NoRedirect())
 
-    def _request(self, method, path, body=None, query=None):
+    def _request(
+        self,
+        method,
+        path,
+        body=None,
+        query=None,
+        *,
+        allow_async=False,
+        allow_empty=False,
+        timeout=15,
+    ):
         url = self.base + path + ("?" + urlencode(query) if query else "")
         raw = json.dumps(body, allow_nan=False).encode() if body is not None else None
         req = Request(
@@ -66,24 +64,34 @@ class ChannexClient:
             },
         )
         try:
-            with self.transport.open(req, timeout=15) as response:
+            with self.transport.open(req, timeout=timeout) as response:
                 if not 200 <= response.status < 300:
                     raise ProviderError("provider_rejected")
+                status = response.status
                 data = response.read(MAX_RESPONSE + 1)
             if len(data) > MAX_RESPONSE:
                 raise ProviderError("provider_response_too_large")
+            if allow_empty and method == "DELETE" and status == 204 and not data:
+                return {"meta": {"message": "Success"}, "_http_status": status}
             result = json.loads(data)
             if (
                 not isinstance(result, dict)
                 or "errors" in result
-                or not ({"data", "meta"} & result.keys())
+                or not (
+                    {"data", "meta"} & result.keys()
+                    or (allow_async and isinstance(result.get("async_meta"), dict))
+                )
+            ):
+                raise ProviderError("provider_invalid_response")
+            if "async_meta" in result and (
+                not allow_async or not isinstance(result["async_meta"], dict)
             ):
                 raise ProviderError("provider_invalid_response")
             if not isinstance(result.get("meta", {}), dict):
                 raise ProviderError("provider_invalid_response")
             if result.get("meta", {}).get("warnings"):
                 raise ProviderError("provider_rejected")
-            return result
+            return {**result, "_http_status": status} if allow_async or allow_empty else result
         except HTTPError as error:
             code = (
                 "provider_rate_limited"
@@ -92,9 +100,22 @@ class ChannexClient:
                 if error.code >= 500
                 else "provider_rejected"
             )
-            raise ProviderError(code, error.code == 429 or error.code >= 500) from None
-        except URLError, TimeoutError, socket.timeout, OSError:
-            raise ProviderError("provider_unavailable", True) from None
+            raise ProviderError(
+                code, error.code == 429 or error.code >= 500, http_status=error.code
+            ) from None
+        except (URLError, TimeoutError, socket.timeout, OSError) as error:
+            reason = error.reason if isinstance(error, URLError) else error
+            if isinstance(reason, (TimeoutError, socket.timeout)):
+                failure_type = "timeout"
+            elif isinstance(reason, ssl.SSLError):
+                failure_type = "tls"
+            elif isinstance(reason, socket.gaierror):
+                failure_type = "dns"
+            elif isinstance(reason, ConnectionError):
+                failure_type = "connection"
+            else:
+                failure_type = "transport"
+            raise ProviderError("provider_unavailable", True, failure_type=failure_type) from None
         except ValueError, UnicodeDecodeError:
             raise ProviderError("provider_invalid_response") from None
 
@@ -113,6 +134,157 @@ class ChannexClient:
         if not isinstance(rows, list) or len(rows) > 100:
             raise ProviderError("provider_invalid_response")
         return rows
+
+    def property(self, property_id):
+        property_id = remote_id(property_id)
+        result = self._request("GET", f"/properties/{property_id}")
+        entity = result.get("data")
+        if not isinstance(entity, dict) or entity.get("id") != property_id:
+            raise ProviderError("provider_invalid_response")
+        return entity
+
+    def properties(self, page):
+        return self._request(
+            "GET",
+            "/properties",
+            query={"pagination[page]": page, "pagination[limit]": 25, "order[title]": "asc"},
+        )
+
+    def create_property(self, values):
+        result = self._request("POST", "/properties", {"property": values})
+        entity = result.get("data")
+        if not isinstance(entity, dict):
+            raise ProviderError("provider_invalid_response")
+        remote_id(entity.get("id"))
+        return entity
+
+    def catalog_entity(self, resource, identifier):
+        if resource not in {"room_types", "rate_plans"}:
+            raise ProviderError("provider_invalid_response")
+        identifier = remote_id(identifier)
+        result = self._request("GET", f"/{resource}/{identifier}")
+        entity = result.get("data")
+        if not isinstance(entity, dict) or entity.get("id") != identifier:
+            raise ProviderError("provider_invalid_response")
+        return entity
+
+    def write_catalog(self, resource, values, identifier=None):
+        if resource not in {"room_types", "rate_plans"}:
+            raise ProviderError("provider_invalid_response")
+        path = "/" + resource
+        if identifier is not None:
+            identifier = remote_id(identifier)
+            path += "/" + identifier
+        result = self._request(
+            "POST" if identifier is None else "PUT", path, {resource[:-1]: values}
+        )
+        entity = result.get("data")
+        if not isinstance(entity, dict) or (
+            identifier is not None and entity.get("id") != identifier
+        ):
+            raise ProviderError("provider_invalid_response") from None
+        remote_id(entity.get("id"))
+        return entity
+
+    def setup_webhook(self, property_id, callback_url, webhook_secret):
+        """Reconcile only our exact property callback, including after an uncertain commit."""
+        property_id = remote_id(property_id)
+        if (
+            not isinstance(webhook_secret, str)
+            or not 32 <= len(webhook_secret) <= 1024
+            or any(ord(char) < 32 or ord(char) > 126 for char in webhook_secret)
+        ):
+            raise ProviderError("credentials_unavailable")
+
+        def matches(entity):
+            try:
+                attributes = entity["attributes"]
+                related = entity["relationships"].get("property", {}).get("data")
+                return (
+                    attributes.get("callback_url") == callback_url
+                    and attributes.get("is_global", False) is False
+                    and isinstance(related, dict)
+                    and related.get("id") == property_id
+                )
+            except KeyError, TypeError, AttributeError:
+                raise ProviderError("provider_invalid_response") from None
+
+        found, seen, expected_total = [], set(), None
+        for page in range(1, 11):
+            result = self._request(
+                "GET",
+                "/webhooks",
+                query={"pagination[page]": page, "pagination[limit]": 100},
+            )
+            rows, meta = result.get("data"), result.get("meta", {})
+            total, size = meta.get("total"), meta.get("limit", 100)
+            if (
+                not isinstance(rows, list)
+                or type(total) is not int
+                or total < 0
+                or type(size) is not int
+                or not 1 <= size <= 100
+                or meta.get("page", page) != page
+                or len(rows) != min(size, max(0, total - len(seen)))
+                or (expected_total is not None and total != expected_total)
+            ):
+                raise ProviderError("provider_invalid_response")
+            if total > 1000:
+                raise ProviderError("channel_webhook_list_too_large")
+            expected_total = total
+            for entity in rows:
+                if not isinstance(entity, dict) or not isinstance(entity.get("attributes"), dict):
+                    raise ProviderError("provider_invalid_response")
+                webhook_id = remote_id(entity.get("id"))
+                if webhook_id in seen:
+                    raise ProviderError("provider_invalid_response")
+                seen.add(webhook_id)
+                if matches(entity):
+                    found.append(entity)
+            if len(seen) == total:
+                break
+        else:
+            raise ProviderError("channel_webhook_list_too_large")
+        if len(found) > 1:
+            raise ProviderError("channel_webhook_ambiguous")
+        values = {
+            "callback_url": callback_url,
+            "property_id": property_id,
+            "event_mask": "booking",
+            "is_global": False,
+            "is_active": True,
+            "send_data": False,
+            "request_params": {},
+            "headers": {"X-Channex-Webhook-Secret": webhook_secret},
+        }
+        if found:
+            entity = found[0]
+            webhook_id = remote_id(entity["id"])
+            if all(
+                entity["attributes"].get(key) == value
+                for key, value in values.items()
+                if key != "property_id"
+            ):
+                return webhook_id
+            result = self._request("PUT", f"/webhooks/{webhook_id}", {"webhook": values})
+        else:
+            webhook_id = None
+            result = self._request("POST", "/webhooks", {"webhook": values})
+        entity = result.get("data")
+        if (
+            not isinstance(entity, dict)
+            or not matches(entity)
+            or any(
+                entity["attributes"].get(key) != value
+                for key, value in values.items()
+                if key != "property_id"
+            )
+        ):
+            raise ProviderError("provider_invalid_response")
+        saved_id = remote_id(entity.get("id"))
+        if webhook_id is not None and saved_id != webhook_id:
+            raise ProviderError("provider_invalid_response")
+        return saved_id
 
     def revision(self, revision_id):
         result = self._request("GET", f"/booking_revisions/{remote_id(revision_id)}")
@@ -142,13 +314,14 @@ class ChannexClient:
             },
         )
         rows = result.get("data")
-        total = result.get("meta", {}).get("total", len(rows) if isinstance(rows, list) else 0)
-        if (
-            not isinstance(total, int)
-            or isinstance(total, bool)
-            or not isinstance(rows, list)
-            or len(rows) > 100
-            or total > 100
-        ):
+        metadata = result.get("meta", {})
+        if not isinstance(rows, list) or not isinstance(metadata, dict):
+            raise ProviderError("provider_invalid_response")
+        total = metadata.get("total", len(rows))
+        if type(total) is not int or total < 0:
+            raise ProviderError("provider_invalid_response")
+        if len(rows) > 100 or total > 100:
             raise ProviderError("channel_catalog_too_large")
+        if total != len(rows):
+            raise ProviderError("provider_invalid_response")
         return rows

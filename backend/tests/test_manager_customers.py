@@ -1,7 +1,13 @@
 """Manager client profiles must never leak into a hotel workspace."""
 
+from pathlib import Path
+
+from alembic.migration import MigrationContext
+from alembic.operations import Operations
+from alembic.script import ScriptDirectory
 from domain_fixture import DomainTestCase
-from sqlalchemy import text
+from sqlalchemy import create_engine, text
+from sqlalchemy.exc import DBAPIError
 
 from pms_api.extensions import db
 from pms_api.security import set_context
@@ -146,15 +152,45 @@ class ManagerCustomerTests(DomainTestCase):
                 self.assertEqual(response.json["error"]["code"], "tenant_suspended")
 
     def test_customer_profile_downgrade_refuses_saved_contact_data(self):
-        self.assertEqual(
-            self.update({"contactPhone": "0901234567", "customerNotes": "Private"}).status_code, 200
-        )
-        before = self.manager.get("/api/tenants").json
-        runner = self.app.test_cli_runner()
-        refused = runner.invoke(args=["db", "downgrade", "0013_manager_billing"])
-        self.assertNotEqual(refused.exit_code, 0)
-        self.assertIn("customer profiles exist; downgrade refused", str(refused.exception).lower())
-        restored = runner.invoke(args=["db", "upgrade"])
-        self.assertEqual(restored.exit_code, 0, restored.output)
-        self.assertEqual(self.manager.get("/api/tenants").json, before)
-        self.assertEqual(self.client.get("/api/auth/session").status_code, 200)
+        scripts = ScriptDirectory(str(Path(__file__).resolve().parents[1] / "migrations"))
+        migration = scripts.get_revision("0014_manager_customers").module
+        engine = create_engine(self.app.config["DATABASE_MIGRATION_URL"], hide_parameters=True)
+        try:
+            before_empty = self.manager.get("/api/tenants").json
+            # Exercise the profile migration alone while preserving later schema and quotas.
+            with engine.begin() as connection:
+                revision = connection.scalar(text("SELECT version_num FROM alembic_version"))
+                self.assertEqual(revision, scripts.get_current_head())
+                context = MigrationContext.configure(
+                    connection, opts={"target_metadata": db.metadata}
+                )
+                with Operations.context(context):
+                    migration.downgrade()
+                    self.assertIsNone(
+                        connection.scalar(text("SELECT to_regclass('tenant_client_profiles')"))
+                    )
+                    migration.upgrade()
+            self.assertEqual(self.manager.get("/api/tenants").json, before_empty)
+            self.assertEqual(
+                self.update({"contactPhone": "0901234567", "customerNotes": "Private"}).status_code,
+                200,
+            )
+            before = self.manager.get("/api/tenants").json
+            with self.assertRaises(DBAPIError) as refused:
+                with engine.begin() as connection:
+                    context = MigrationContext.configure(
+                        connection, opts={"target_metadata": db.metadata}
+                    )
+                    with Operations.context(context):
+                        migration.downgrade()
+            self.assertIn(
+                "customer profiles exist; downgrade refused", str(refused.exception).lower()
+            )
+            with engine.connect() as connection:
+                self.assertEqual(
+                    connection.scalar(text("SELECT version_num FROM alembic_version")), revision
+                )
+            self.assertEqual(self.manager.get("/api/tenants").json, before)
+            self.assertEqual(self.client.get("/api/auth/session").status_code, 200)
+        finally:
+            engine.dispose()

@@ -9,6 +9,21 @@ from pms_api.config import ConfigurationError, load_config
 
 
 class ConfigurationTests(unittest.TestCase):
+    def test_manager_channex_keys_are_optional_and_runtime_only_in_production(self):
+        base = {"DATABASE_URL": "postgresql://app:secret@db/pms"}
+        config = load_config(base, env_file=None)
+        self.assertIsNone(config["CHANNEX_MANAGER_API_KEY_STAGING"])
+        self.assertIsNone(config["CHANNEX_MANAGER_API_KEY_PRODUCTION"])
+        config = load_config(
+            {**base, "CHANNEX_MANAGER_API_KEY_STAGING": "fixture-manager-key"}, env_file=None
+        )
+        self.assertEqual(config["CHANNEX_MANAGER_API_KEY_STAGING"], "fixture-manager-key")
+        with tempfile.TemporaryDirectory() as directory:
+            env_file = Path(directory) / ".env"
+            env_file.write_text("CHANNEX_MANAGER_API_KEY_STAGING=private-local-key\n")
+            config = load_config({**base, "APP_ENV": "production"}, env_file=env_file)
+            self.assertIsNone(config["CHANNEX_MANAGER_API_KEY_STAGING"])
+
     def test_database_url_is_required_without_local_fallback(self):
         for environment in ("development", "production"):
             with self.subTest(environment=environment):
@@ -90,6 +105,28 @@ class ConfigurationTests(unittest.TestCase):
                         {"DATABASE_URL": "postgresql://app:secret@db/pms", "CORS_ORIGINS": origin},
                         env_file=None,
                     )
+
+    def test_channex_callback_requires_trusted_https_origin_and_redacts_errors(self):
+        base = {"DATABASE_URL": "postgresql://app:secret@db/pms"}
+        for value in (None, ""):
+            config = load_config({**base, "CHANNEX_WEBHOOK_BASE_URL": value}, env_file=None)
+            self.assertIsNone(config["CHANNEX_WEBHOOK_BASE_URL"])
+        config = load_config(
+            {**base, "CHANNEX_WEBHOOK_BASE_URL": "https://api.example.com/"}, env_file=None
+        )
+        self.assertEqual(config["CHANNEX_WEBHOOK_BASE_URL"], "https://api.example.com")
+        for value in (
+            "http://api.example.com",
+            "https://api.example.com/path",
+            "https://user:private-secret@api.example.com",
+            "https://api.example.com?",
+            "https://api.example.com#",
+            "https://api.example.com:bad",
+            "https://api.example.com\n",
+        ):
+            with self.subTest(value=value), self.assertRaises(ConfigurationError) as caught:
+                load_config({**base, "CHANNEX_WEBHOOK_BASE_URL": value}, env_file=None)
+            self.assertNotIn("private-secret", str(caught.exception))
 
     def test_project_cli_does_not_autoload_local_urls_in_production(self):
         with tempfile.TemporaryDirectory() as directory:

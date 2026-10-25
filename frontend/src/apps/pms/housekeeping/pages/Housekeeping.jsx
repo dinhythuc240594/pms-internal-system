@@ -1,11 +1,15 @@
+import { t as tUi, tr as labelUi, useI18n } from '../../../../shared/i18n/useI18n.js';
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { usePms } from '../../data/usePms';
 import { timestamp } from '../../data/presentation';
 import { bookingRooms, today } from '../../data/model';
 import { Search, Download, CheckCircle, Clock, AlertCircle, Calendar, User, History } from 'lucide-react';
+import { downloadCsv } from '../../../../shared/lib/csv';
+import './Housekeeping.css';
 
 export default function Housekeeping() {
+  useI18n();
   const [activeTab, setActiveTab] = useState('status'); // 'status' or 'history'
 
   const { rooms, bookings, cleanRoom, dirtyRoom, housekeepingLog, housekeepingWorkLogs, housekeepingTasks, housekeepingStaff, setCondition, roomTypes, settings, access, runAction } = usePms();
@@ -21,14 +25,18 @@ export default function Housekeeping() {
     const booking = bookings.find(b => bookingRooms(b).includes(String(r.id)) && b.status === 'IN_HOUSE');
     return { id: 'R-' + r.id, number: r.id, typeId: r.typeId, condition: r.condition, booking: booking ? 'Đang ở' : 'Trống', hkCode: booking ? 'OCC' : r.condition === 'maintenance' ? 'OOO' : r.condition === 'inspection' ? 'VI' : r.condition === 'dirty' ? 'VD' : 'VC', hkDesc: booking ? 'Khách đang ở (' + booking.guest + ')' : r.condition === 'maintenance' ? 'Phòng bảo trì' : r.condition === 'inspection' ? 'Phòng chờ kiểm tra' : r.condition === 'dirty' ? 'Phòng trống cần dọn' : 'Phòng trống sạch', staff: worker?.name||'', staffId: task?.staffId, taskId: task?.id, note: task?.note||'' };
   }).filter(r => r.id.includes(query) && (!conditionFilter || r.condition === conditionFilter) && (!bookingFilter || r.booking === bookingFilter) && (!typeFilter || r.typeId === typeFilter)&&(!staffFilter||r.staffId===staffFilter));
-  const allHistory=[...housekeepingLog,...housekeepingWorkLogs.filter(log=>!log.condition&&log.room)].map(log=>({...log,date:new Date(log.createdAt||log.at).toLocaleDateString('en-CA',{timeZone:settings.timezone}),time:timestamp(log.createdAt||log.at),user:log.actor||log.actorName||log.actorId||'—',room:'R-'+log.room,action:({clean:'Phòng sạch',dirty:'Phòng bẩn',maintenance:'Phòng bảo trì',inspection:'Đang kiểm tra'})[log.condition]||({'housekeeping.task_created':'Tạo việc dọn','housekeeping.task_assigned':'Phân công','housekeeping.task_superseded':'Hủy việc cũ'})[log.action]||'Cập nhật công việc',note:log.note||log.details?.note||''}));
+  const allHistory=[...housekeepingLog,...housekeepingWorkLogs.filter(log=>!log.condition&&log.room)].map(log=>({...log,date:new Date(log.createdAt||log.at).toLocaleDateString('en-CA',{timeZone:settings.timezone}),time:timestamp(log.createdAt||log.at, settings.timezone),user:log.actor||log.actorName||log.actorId||'—',room:'R-'+log.room,action:({clean:'Phòng sạch',dirty:'Phòng bẩn',maintenance:'Phòng bảo trì',inspection:'Đang kiểm tra'})[log.condition]||({'housekeeping.task_created':'Tạo việc dọn','housekeeping.task_assigned':'Phân công','housekeeping.task_superseded':'Hủy việc cũ'})[log.action]||'Cập nhật công việc',note:log.note||log.details?.note||''}));
   const historyList=allHistory.filter(log=>(!historyFilter.start||log.date>=historyFilter.start)&&(!historyFilter.end||log.date<=historyFilter.end)&&(!historyFilter.room||log.room===historyFilter.room)&&(!historyFilter.actor||log.user===historyFilter.actor));
+  function exportHousekeeping() {
+    if (activeTab === 'history') downloadCsv(['Ngày', 'Thời gian', 'Phòng', 'Nhân viên', 'Thao tác', 'Ghi chú'], historyList.map(row => [row.date, row.time, row.room, row.user, row.action, row.note]), 'lich-su-buong-phong.csv');
+    else downloadCsv(['Phòng', 'Loại phòng', 'Tình trạng', 'Lưu trú', 'Mã buồng phòng', 'Nhân viên', 'Ghi chú'], roomStatusList.map(row => [row.number, roomTypes.find(type => type.id === row.typeId)?.name || '', ({clean:'Sạch',dirty:'Bẩn',inspection:'Kiểm tra',maintenance:'Bảo trì'})[row.condition], row.booking, row.hkCode, row.staff, row.note]), 'buong-phong.csv');
+  }
 
   // Helpers for UI Badges
   const getConditionBadge = (condition) => {
-    if (condition === 'clean') return <span style={{ ...badgeStyle, backgroundColor: '#d1fae5', color: '#059669', border: '1px solid #10b981' }}><CheckCircle size={14} /> Phòng sạch</span>;
-    if (condition === 'dirty') return <span style={{ ...badgeStyle, backgroundColor: '#fee2e2', color: '#dc2626', border: '1px solid #ef4444' }}><AlertCircle size={14} /> Phòng bẩn</span>;
-    return <span style={badgeStyle}>{condition==='maintenance'?'Phòng bảo trì':condition==='inspection'?'Đang kiểm tra':condition}</span>;
+    if (condition === 'clean') return <span style={{ ...badgeStyle, backgroundColor: '#d1fae5', color: '#059669', border: '1px solid #10b981' }}><CheckCircle size={14} />{' '}{tUi("hk.cleanRoom")}</span>;
+    if (condition === 'dirty') return <span style={{ ...badgeStyle, backgroundColor: '#fee2e2', color: '#dc2626', border: '1px solid #ef4444' }}><AlertCircle size={14} />{' '}{tUi("hk.dirtyRoom")}</span>;
+    return <span style={badgeStyle}>{condition==='maintenance'?tUi("hk.maintenanceRoom"):condition==='inspection'?tUi("hk.inspecting"):condition}</span>;
   };
 
   const getHkCodeBadge = (code) => {
@@ -46,21 +54,19 @@ export default function Housekeeping() {
       {/* Header & Local Tabs */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '24px' }}>
         <div>
-          <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827', margin: '0 0 16px 0' }}>Quản lý Buồng phòng</h1>
+          <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827', margin: '0 0 16px 0' }}>{tUi("hk.management")}</h1>
           <div style={{ display: 'flex', gap: '8px', backgroundColor: '#e5e7eb', padding: '4px', borderRadius: '8px', width: 'fit-content' }}>
             <button onClick={() => setActiveTab('status')} style={activeTab === 'status' ? activeTabStyle : inactiveTabStyle}>
               <CheckCircle size={16} /> Trạng thái phòng
             </button>
             <button onClick={() => setActiveTab('history')} style={activeTab === 'history' ? activeTabStyle : inactiveTabStyle}>
-              <History size={16} /> Lịch sử dọn phòng
-            </button>
+              <History size={16} />{' '}{tUi("hk.history")}</button>
           </div>
         </div>
         
         <div>
-          <button disabled title="Chức năng xuất Excel chưa triển khai" style={{ backgroundColor: '#fff', border: '1px solid #d1d5db', padding: '10px 16px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '500' }}>
-            <Download size={16} /> Xuất Excel
-          </button>
+          <button type="button" onClick={exportHousekeeping} disabled={!access('housekeeping.view', 'HOUSEKEEPING').allowed} style={{ backgroundColor: '#fff', border: '1px solid #d1d5db', padding: '10px 16px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '500' }}>
+            <Download size={16} />{' '}{tUi("common.exportCsv")}</button>
         </div>
       </div>
 
@@ -71,26 +77,26 @@ export default function Housekeeping() {
         <div className="pms-housekeeping-filters" style={{ padding: '20px', borderBottom: '1px solid #e5e7eb', display: 'flex', gap: '16px', alignItems: 'center', backgroundColor: '#f9fafb' }}>
           {activeTab === 'status' ? (
             <>
-              <select aria-label="Loại phòng" value={typeFilter} onChange={e => setTypeFilter(e.target.value)} style={inputStyle}><option value="">Tất cả Loại phòng</option>{roomTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select>
-              <select aria-label="Tình trạng phòng" value={conditionFilter} onChange={e => setConditionFilter(e.target.value)} style={inputStyle}><option value="">Tình trạng: Tất cả</option><option value="clean">Phòng sạch</option><option value="dirty">Phòng bẩn</option><option value="inspection">Đang kiểm tra</option><option value="maintenance">Bảo trì / hỏng</option></select>
-              <select aria-label="Trạng thái lưu trú" value={bookingFilter} onChange={e => setBookingFilter(e.target.value)} style={inputStyle}><option value="">TT Đặt phòng: Tất cả</option><option>Trống</option><option>Đang ở</option></select>
-              <select aria-label="Nhân viên được giao" style={inputStyle} value={staffFilter} onChange={e=>setStaffFilter(e.target.value)}><option value="">Nhân viên: Tất cả</option>{housekeepingStaff.map(row=><option key={row.id} value={row.id}>{row.name}</option>)}</select>
+              <select aria-label={tUi("common.roomType")} value={typeFilter} onChange={e => setTypeFilter(e.target.value)} style={inputStyle}><option value="">{tUi("hk.allTypes")}</option>{roomTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select>
+              <select aria-label={tUi("hk.roomCondition")} value={conditionFilter} onChange={e => setConditionFilter(e.target.value)} style={inputStyle}><option value="">{tUi("hk.allConditions")}</option><option value="clean">{tUi("hk.cleanRoom")}</option><option value="dirty">{tUi("hk.dirtyRoom")}</option><option value="inspection">{tUi("hk.inspecting")}</option><option value="maintenance">{tUi("hk.maintenanceAction")}</option></select>
+              <select aria-label={tUi("hk.stayStatus")} value={bookingFilter} onChange={e => setBookingFilter(e.target.value)} style={inputStyle}><option value="">{tUi("hk.allStayStatuses")}</option><option value="Trống">{tUi("hk.vacant")}</option><option value="Đang ở">{tUi("hk.occupied")}</option></select>
+              <select aria-label={tUi("hk.assignedStaff")} style={inputStyle} value={staffFilter} onChange={e=>setStaffFilter(e.target.value)}><option value="">{tUi("hk.allStaff")}</option>{housekeepingStaff.map(row=><option key={row.id} value={row.id}>{row.name}</option>)}</select>
               <div style={{ position: 'relative', flex: 1, maxWidth: '250px' }}>
                 <Search size={16} style={{ position: 'absolute', left: '12px', top: '10px', color: '#9ca3af' }} />
-                <input type="text" value={query} onChange={e => setQuery(e.target.value)} placeholder="Tìm theo số phòng..." style={{ ...inputStyle, paddingLeft: '36px', width: '100%' }} />
+                <input type="text" value={query} onChange={e => setQuery(e.target.value)} placeholder={tUi("hk.searchRoom")} style={{ ...inputStyle, paddingLeft: '36px', width: '100%' }} />
               </div>
             </>
           ) : (
             <>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Calendar size={18} color="#6b7280" />
-                <input aria-label="Lịch sử từ ngày" type="date" value={historyFilter.start} onChange={e=>setHistoryFilter(f=>({...f,start:e.target.value}))} style={inputStyle} />
+                <input aria-label={tUi("hk.historyFrom")} type="date" value={historyFilter.start} onChange={e=>setHistoryFilter(f=>({...f,start:e.target.value}))} style={inputStyle} />
                 <span>-</span>
-                <input aria-label="Lịch sử đến ngày" type="date" value={historyFilter.end} onChange={e=>setHistoryFilter(f=>({...f,end:e.target.value}))} style={inputStyle} />
+                <input aria-label={tUi("hk.historyTo")} type="date" value={historyFilter.end} onChange={e=>setHistoryFilter(f=>({...f,end:e.target.value}))} style={inputStyle} />
               </div>
-              <select aria-label="Phòng trong lịch sử" style={inputStyle} value={historyFilter.room} onChange={e=>setHistoryFilter(f=>({...f,room:e.target.value}))}><option value="">Tất cả phòng</option>{[...new Set(allHistory.map(log=>log.room))].map(room=><option key={room}>{room}</option>)}</select>
-              <select aria-label="Người thao tác lịch sử" style={inputStyle} value={historyFilter.actor} onChange={e=>setHistoryFilter(f=>({...f,actor:e.target.value}))}><option value="">Tất cả nhân viên</option>{[...new Set(allHistory.map(log=>log.user))].map(actor=><option key={actor}>{actor}</option>)}</select>
-              <button style={{ backgroundColor: '#4f46e5', color: '#fff', border: 'none', padding: '9px 16px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>Lọc</button>
+              <select aria-label={tUi("hk.historyRoom")} style={inputStyle} value={historyFilter.room} onChange={e=>setHistoryFilter(f=>({...f,room:e.target.value}))}><option value="">{tUi("common.allRooms")}</option>{[...new Set(allHistory.map(log=>log.room))].map(room=><option key={room}>{room}</option>)}</select>
+              <select aria-label={tUi("hk.historyActor")} style={inputStyle} value={historyFilter.actor} onChange={e=>setHistoryFilter(f=>({...f,actor:e.target.value}))}><option value="">{tUi("common.allStaff")}</option>{[...new Set(allHistory.map(log=>log.user))].map(actor=><option key={actor}>{actor}</option>)}</select>
+              <button style={{ backgroundColor: '#4f46e5', color: '#fff', border: 'none', padding: '9px 16px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>{tUi("common.filter")}</button>
             </>
           )}
         </div>
@@ -102,20 +108,20 @@ export default function Housekeeping() {
               {activeTab === 'status' ? (
                 <tr style={{ backgroundColor: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
                   <th style={{ ...thStyle, width: '40px', textAlign: 'center' }}><input type="checkbox" /></th>
-                  <th style={thStyle}>Phòng</th>
-                  <th style={thStyle}>Tình trạng</th>
-                  <th style={thStyle}>Trạng thái hệ thống (PMS)</th>
-                  <th style={thStyle}>Mã dọn phòng (HK)</th>
-                  <th style={thStyle}>Phân công</th>
-                  <th style={thStyle}>Ghi chú</th>
+                  <th style={thStyle}>{tUi("common.room")}</th>
+                  <th style={thStyle}>{tUi("hk.condition")}</th>
+                  <th style={thStyle}>{tUi("hk.systemStatus")}</th>
+                  <th style={thStyle}>{tUi("hk.hkCode")}</th>
+                  <th style={thStyle}>{tUi("hk.assignment")}</th>
+                  <th style={thStyle}>{tUi("common.notes")}</th>
                 </tr>
               ) : (
                 <tr style={{ backgroundColor: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
-                  <th style={thStyle}>Thời gian</th>
-                  <th style={thStyle}>Nhân viên thao tác</th>
-                  <th style={thStyle}>Phòng</th>
-                  <th style={thStyle}>Hành động (Trạng thái)</th>
-                  <th style={thStyle}>Ghi chú</th>
+                  <th style={thStyle}>{tUi("common.time")}</th>
+                  <th style={thStyle}>{tUi("hk.operator")}</th>
+                  <th style={thStyle}>{tUi("common.room")}</th>
+                  <th style={thStyle}>{tUi("hk.actionStatus")}</th>
+                  <th style={thStyle}>{tUi("common.notes")}</th>
                 </tr>
               )}
             </thead>
@@ -147,11 +153,11 @@ export default function Housekeeping() {
                           <User size={14} /> {room.staff}
                         </div>
                       ) : (
-                        <Link to="/id/housekeeping/plan" style={{ background: 'none', border: '1px dashed #d1d5db', color: '#6b7280', padding: '4px 8px', borderRadius: '12px', fontSize: '12px', cursor: 'pointer' }}>+ Giao việc</Link>
+                        <Link className="hk-room-action" to="/id/housekeeping/plan">{tUi("hk.assignAction")}</Link>
                       )}
                     </td>
                     <td style={{ ...tdStyle, color: '#6b7280', fontStyle: room.note ? 'normal' : 'italic' }}>
-                      {room.taskId?<Link to='/id/housekeeping/plan'>{room.note||'Xem công việc'}</Link>:room.note||'Không có'}{access('housekeeping.manage').allowed&&!room.taskId&&<button style={{marginLeft:8}} onClick={()=>runAction('housekeeping.write','HOUSEKEEPING',()=>setCondition(room.number,room.condition==='maintenance'?'dirty':'maintenance'))}>{room.condition==='maintenance'?'Kết thúc bảo trì':'Bảo trì / hỏng'}</button>}
+                      {room.taskId?<Link className="hk-room-task-link" to='/id/housekeeping/plan'>{room.note||tUi("hk.viewTask")}</Link>:room.note||tUi("common.none")}{access('housekeeping.manage').allowed&&!room.taskId&&<button type="button" className="hk-room-action" onClick={()=>runAction('housekeeping.write','HOUSEKEEPING',()=>setCondition(room.number,room.condition==='maintenance'?'dirty':'maintenance'))}>{room.condition==='maintenance'?tUi("hk.endMaintenance"):tUi("hk.maintenanceAction")}</button>}
                     </td>
                   </tr>
                 ))
@@ -170,9 +176,9 @@ export default function Housekeeping() {
                     <td style={{ ...tdStyle, fontWeight: 'bold' }}>{hist.room}</td>
                     <td style={tdStyle}>
                       {hist.action === 'Phòng sạch' ? (
-                        <span style={{ color: '#059669', fontWeight: '600' }}>Đổi thành Phòng sạch</span>
+                        <span style={{ color: '#059669', fontWeight: '600' }}>{tUi("hk.markClean")}</span>
                       ) : (
-                        <span style={{ color: '#dc2626', fontWeight: '600' }}>Đổi thành {hist.action}</span>
+                        <span style={{ color: '#dc2626', fontWeight: '600' }}>{tUi("hk.changeTo")}{' '}{labelUi(hist.action)}</span>
                       )}
                     </td>
                     <td style={{ ...tdStyle, color: '#6b7280' }}>{hist.note}</td>

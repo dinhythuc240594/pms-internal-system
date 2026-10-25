@@ -13,6 +13,11 @@ test('validation and conflict errors do not become outage screens', () => {
   assert.equal(errorStatus({ status: 409 }), null);
 });
 
+test('CSRF failures show their message without claiming the user lacks permission', () => {
+  assert.equal(errorStatus({ status: 403, code: 'csrf_failed', reason: 'role' }), null);
+  assert.equal(errorStatus({ status: 403, code: 'forbidden' }), 403);
+});
+
 test('access decisions classify session and permissions without replacing their messages', () => {
   assert.equal(errorStatus({ reason: 'session' }), 401);
   for (const reason of ['role', 'tenant', 'feature', 'expired', 'suspended']) assert.equal(errorStatus({ reason }), 403);

@@ -1,3 +1,5 @@
+import { getIntlLocale } from '../../../../shared/i18n/store.js';
+import { t as tUi, tr as labelUi, useI18n } from '../../../../shared/i18n/useI18n.js';
 import React, { useEffect, useRef, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Users, ShieldCheck, Search, Plus, Check, X, CheckCircle2, Edit3, RefreshCw } from 'lucide-react';
@@ -5,6 +7,7 @@ import { usePms } from '../../../pms/data/usePms';
 import LegacyOverlay from '../../../pms/components/LegacyOverlay';
 import { getThemeTokens } from '../../theme';
 import { SYSTEM_ROLES, systemUserInput } from './systemUserForm';
+import './AdminUsers.css';
 
 const roleLabels = { SUPER_ADMIN: 'Super Admin', SYSTEM_MANAGER: 'System Manager' };
 const rolePermissions = [
@@ -16,9 +19,10 @@ const rolePermissions = [
   { name: 'Nhật ký kiểm toán toàn hệ thống', manager: false },
 ];
 const emptyDraft = () => ({ name: '', email: '', password: '', globalRole: 'SYSTEM_MANAGER', active: true });
-const displayDate = value => value ? new Date(value).toLocaleString('vi-VN') : '—';
+const displayDate = value => value ? new Date(value).toLocaleString(getIntlLocale()) : '—';
 
 export default function AdminUsers() {
+  useI18n();
   const { searchQuery: globalSearch, isDarkMode, theme } = useOutletContext() || {};
   const t = theme || getThemeTokens(isDarkMode);
   const { user, listSystemUsers, saveSystemUser } = usePms();
@@ -91,55 +95,55 @@ export default function AdminUsers() {
   const effectiveSearch = (search || globalSearch || '').trim().toLowerCase();
   const filteredUsers = users.filter(account => `${account.name} ${account.email} ${account.globalRole} ${roleLabels[account.globalRole]}`.toLowerCase().includes(effectiveSearch));
   const editingSelf = editingUser?.id === user?.id;
-  const inputStyle = { width: '100%', padding: '10px 14px', borderRadius: '12px', border: `1px solid ${t.border}`, backgroundColor: t.bgInput, color: t.textPrimary, fontSize: '13px', fontWeight: '600' };
+  const inputStyle = { width: '100%', minWidth: 0, padding: '10px 12px', borderRadius: '6px', border: `1px solid ${t.border}`, backgroundColor: t.bgInput, color: t.textPrimary, fontSize: '13px', fontWeight: '600' };
   const labelStyle = { display: 'block', fontSize: '12px', fontWeight: '700', color: t.textPrimary, marginBottom: '6px' };
-  const buttonStyle = { padding: '10px 18px', borderRadius: '12px', border: `1px solid ${t.border}`, backgroundColor: t.bgInput, color: t.textPrimary, cursor: 'pointer', fontWeight: '700', fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '8px' };
+  const buttonStyle = { minHeight: '40px', padding: '10px 16px', borderRadius: '6px', border: `1px solid ${t.border}`, backgroundColor: t.bgInput, color: t.textPrimary, cursor: 'pointer', fontWeight: '700', fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '8px' };
   const cellStyle = { padding: '16px 20px', whiteSpace: 'nowrap' };
 
-  if (!canManage) return <div role="alert" style={{ color: t.textPrimary, backgroundColor: t.bgSurface, padding: '24px', borderRadius: '24px', border: `1px solid ${t.border}` }}>Chỉ Super Admin có quyền quản lý tài khoản hệ thống.</div>;
+  if (!canManage) return <div role="alert" style={{ color: t.textPrimary, backgroundColor: t.bgSurface, padding: '24px', borderRadius: '12px', border: `1px solid ${t.border}` }}>Chỉ Super Admin có quyền quản lý tài khoản hệ thống.</div>;
 
   return (
-    <div style={{ maxWidth: '1440px', width: '100%', minWidth: 0, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px', fontFamily: t.fontFamily }}>
+    <div className="manager-page admin-users-page">
       {toastMessage && (
         <div role="status" style={{ position: 'fixed', bottom: '30px', right: '30px', maxWidth: 'calc(100vw - 60px)', backgroundColor: t.isDark ? '#1E222B' : '#1E242B', color: '#FFFFFF', padding: '14px 22px', borderRadius: '16px', boxShadow: '0 10px 30px rgba(0,0,0,0.25)', fontSize: '13px', fontWeight: '800', zIndex: 100, display: 'flex', alignItems: 'center', gap: '10px', border: `1px solid ${t.border}` }}>
           <CheckCircle2 size={18} aria-hidden="true" /><span>{toastMessage}</span>
         </div>
       )}
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-        <div style={{ backgroundColor: t.bgInput, borderRadius: '20px', padding: '4px', display: 'flex', alignItems: 'center', gap: '4px', border: `1px solid ${t.border}`, flexWrap: 'wrap' }}>
+      <div className="admin-users-toolbar">
+        <div className="admin-users-tabs" role="group" aria-label="Chọn nội dung quản lý nhân sự">
           {[
             { id: 'users', icon: Users, label: `Nhân sự nội bộ${loading ? '' : ` (${users.length})`}` },
-            { id: 'matrix', icon: ShieldCheck, label: 'Ma trận phân quyền (RBAC matrix)' },
+            { id: 'matrix', icon: ShieldCheck, label: 'Ma trận phân quyền' },
           ].map(tab => (
-            <button key={tab.id} aria-pressed={activeTab === tab.id} onClick={() => setActiveTab(tab.id)} style={{ padding: '10px 20px', borderRadius: '16px', border: 'none', backgroundColor: activeTab === tab.id ? t.primary : 'transparent', color: activeTab === tab.id ? '#FFFFFF' : t.textSecondary, fontSize: '13px', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 0.18s ease' }}>
+            <button key={tab.id} type="button" aria-pressed={activeTab === tab.id} onClick={() => setActiveTab(tab.id)}>
               <tab.icon size={16} aria-hidden="true" /><span>{tab.label}</span>
             </button>
           ))}
         </div>
         {activeTab === 'users' && (
-          <button onClick={() => openModal()} disabled={loading || busy} style={{ ...buttonStyle, backgroundColor: t.primary, color: '#FFFFFF', border: 'none', borderRadius: '14px', fontWeight: '800', opacity: loading || busy ? 0.6 : 1, boxShadow: '0 4px 14px rgba(79, 70, 229, 0.25)' }}>
+          <button className="manager-button manager-button-primary" onClick={() => openModal()} disabled={loading || busy}>
             <Plus size={18} strokeWidth={2.5} aria-hidden="true" /><span>Thêm quản trị viên</span>
           </button>
         )}
       </div>
 
       {activeTab === 'users' && (
-        <div style={{ backgroundColor: t.bgSurface, borderRadius: '24px', border: `1px solid ${t.border}`, boxShadow: t.cardShadow, overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div style={{ padding: '20px 24px 0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
-            <div style={{ backgroundColor: t.bgInput, borderRadius: '14px', padding: '8px 14px', display: 'flex', alignItems: 'center', maxWidth: '380px', width: '100%', border: `1px solid ${t.border}` }}>
+        <div className="manager-panel admin-users-list">
+          <div className="admin-users-list-toolbar">
+            <div className="admin-users-search">
               <Search size={16} color={t.textSecondary} aria-hidden="true" />
-              <input type="search" aria-label="Tìm nhân sự nội bộ" placeholder="Tìm theo tên, email, vai trò..." value={search} onChange={event => setSearch(event.target.value)} style={{ border: 'none', backgroundColor: 'transparent', paddingLeft: '10px', fontSize: '13px', color: t.textPrimary, width: '100%', fontWeight: '500' }} />
+              <input type="search" aria-label="Tìm nhân sự nội bộ" placeholder="Tìm theo tên, email, vai trò..." value={search} onChange={event => setSearch(event.target.value)} style={{ border: 'none', backgroundColor: 'transparent', paddingLeft: '8px', minWidth: 0, fontSize: '13px', color: t.textPrimary, width: '100%', fontWeight: '500' }} />
             </div>
             <div style={{ fontSize: '12.5px', color: t.textSecondary }}>
               {!loading && !listError && <span>Hiển thị <strong>{filteredUsers.length}</strong> / {users.length} tài khoản</span>}
             </div>
           </div>
-          <div style={{ overflowX: 'auto', width: '100%', WebkitOverflowScrolling: 'touch' }}>
+          <div className="manager-table-wrap" role="region" aria-label="Danh sách nhân sự nội bộ" tabIndex={0}>
             <table aria-busy={loading} style={{ width: '100%', minWidth: '900px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
               <thead>
                 <tr style={{ backgroundColor: t.isDark ? '#222731' : '#F8FAFC', color: t.textSecondary, borderBottom: `1px solid ${t.border}` }}>
-                  {['Nhân viên', 'Vai trò (Role)', 'Trạng thái', 'Ngày tạo', 'Thao tác'].map(label => <th key={label} scope="col" style={{ padding: '14px 20px', fontWeight: '700', whiteSpace: 'nowrap' }}>{label}</th>)}
+                  {['Nhân viên', 'Vai trò (Role)', 'Trạng thái', 'Ngày tạo', 'Thao tác'].map(label => <th key={label} scope="col" style={{ padding: '14px 20px', fontWeight: '700', whiteSpace: 'nowrap' }}>{labelUi(label)}</th>)}
                 </tr>
               </thead>
               <tbody>
@@ -147,7 +151,7 @@ export default function AdminUsers() {
                 {!loading && listError && (
                   <tr><td colSpan={5} style={{ padding: '24px' }}>
                     <p role="alert" style={{ color: t.danger, margin: '0 0 12px' }}>{listError}</p>
-                    <button disabled={busy} onClick={() => setRevision(value => value + 1)} style={buttonStyle}><RefreshCw size={15} aria-hidden="true" />Thử lại</button>
+                    <button disabled={busy} onClick={() => setRevision(value => value + 1)} style={buttonStyle}><RefreshCw size={15} aria-hidden="true" />{tUi("common.retry")}</button>
                   </td></tr>
                 )}
                 {!loading && !listError && filteredUsers.length === 0 && <tr><td colSpan={5} style={{ padding: '32px 24px', color: t.textSecondary }}><span role="status">{users.length ? 'Không có tài khoản phù hợp với tìm kiếm.' : 'Chưa có tài khoản hệ thống. Thêm quản trị viên để bắt đầu.'}</span></td></tr>}
@@ -155,7 +159,7 @@ export default function AdminUsers() {
                   <tr key={account.id} style={{ borderBottom: `1px solid ${t.borderSubtle}`, transition: 'background-color 0.15s ease' }} onMouseEnter={event => { event.currentTarget.style.backgroundColor = t.bgSurfaceHover; }} onMouseLeave={event => { event.currentTarget.style.backgroundColor = 'transparent'; }}>
                     <td style={cellStyle}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div aria-hidden="true" style={{ width: '38px', height: '38px', borderRadius: '12px', background: 'linear-gradient(135deg, #2870EA 0%, #1D5BD8 100%)', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '14px', boxShadow: '0 2px 8px rgba(40, 112, 234, 0.22)', flexShrink: 0 }}>{account.name.charAt(0)}</div>
+                        <div aria-hidden="true" style={{ width: '38px', height: '38px', borderRadius: '12px', backgroundColor: t.aquaBg, color: t.aquaText, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600', fontSize: '14px', flexShrink: 0 }}>{account.name.charAt(0)}</div>
                         <div>
                           <div style={{ fontWeight: '800', color: t.textPrimary }}>{account.name}{account.id === user.id && <span style={{ marginLeft: '6px', fontSize: '11px', color: t.textSecondary }}>(Bạn)</span>}</div>
                           <div style={{ fontSize: '11px', color: t.textSecondary }}>{account.email}</div>
@@ -165,7 +169,7 @@ export default function AdminUsers() {
                     <td style={cellStyle}>
                       <span style={{ fontSize: '12px', fontWeight: '800', padding: '4px 10px', borderRadius: '10px', backgroundColor: account.globalRole === 'SUPER_ADMIN' ? t.aquaBg : t.bgInput, color: account.globalRole === 'SUPER_ADMIN' ? t.aquaText : t.textPrimary, border: `1px solid ${account.globalRole === 'SUPER_ADMIN' ? t.aquaBorder : t.border}`, display: 'inline-block' }}>{roleLabels[account.globalRole]}</span>
                     </td>
-                    <td style={cellStyle}><span style={{ fontSize: '12px', fontWeight: '800', color: account.active ? t.success : t.textSecondary }}>{account.active ? 'Đang hoạt động' : 'Ngừng hoạt động'}</span></td>
+                    <td style={cellStyle}><span style={{ fontSize: '12px', fontWeight: '800', color: account.active ? t.success : t.textSecondary }}>{account.active ? tUi("common.active") : tUi("common.inactive")}</span></td>
                     <td style={{ ...cellStyle, fontSize: '12px', color: t.textSecondary }}>{displayDate(account.createdAt)}</td>
                     <td style={cellStyle}><button aria-label={`Chỉnh sửa tài khoản ${account.name}`} disabled={busy} onClick={() => openModal(account)} style={{ ...buttonStyle, padding: '8px 12px', fontSize: '12px' }}><Edit3 size={14} aria-hidden="true" />Chỉnh sửa</button></td>
                   </tr>
@@ -177,12 +181,12 @@ export default function AdminUsers() {
       )}
 
       {activeTab === 'matrix' && (
-        <div style={{ backgroundColor: t.bgSurface, borderRadius: '24px', border: `1px solid ${t.border}`, overflow: 'hidden', boxShadow: t.cardShadow, padding: '24px' }}>
+        <div className="manager-panel admin-users-matrix">
           <div style={{ marginBottom: '20px' }}>
             <h2 style={{ fontSize: '16px', fontWeight: '800', color: t.textPrimary, margin: 0 }}>Ma trận phân quyền vai trò (Role-based access control)</h2>
             <p style={{ fontSize: '12px', color: t.textSecondary, margin: '4px 0 0' }}>Quyền cố định theo vai trò hệ thống. Bảng chỉ để xem; thay đổi vai trò trong thông tin tài khoản.</p>
           </div>
-          <div style={{ overflowX: 'auto' }}>
+          <div role="region" aria-label="Ma trận phân quyền nhân sự" tabIndex={0} style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', minWidth: '620px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
               <thead><tr style={{ backgroundColor: t.isDark ? '#222731' : '#F8FAFC', borderBottom: `1px solid ${t.border}` }}>
                 <th scope="col" style={{ padding: '16px 20px', fontWeight: '800', color: t.textPrimary }}>Chức năng & Hành động</th>
@@ -204,7 +208,7 @@ export default function AdminUsers() {
 
       {isAddUserModalOpen && (
         <LegacyOverlay title={editingUser ? `Chỉnh sửa tài khoản ${editingUser.name}` : 'Thêm quản trị viên nội bộ'} onClose={closeModal} style={{ position: 'fixed', inset: 0, backgroundColor: t.bgModalBackdrop, backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '20px' }}>
-          <div style={{ backgroundColor: t.bgSurface, borderRadius: '28px', width: '100%', maxWidth: '680px', padding: '28px 32px', boxShadow: t.cardShadow, border: `1px solid ${t.border}`, maxHeight: '92vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div className="admin-users-dialog" style={{ backgroundColor: t.bgSurface, borderRadius: '16px', width: '100%', maxWidth: '680px', padding: '28px 32px', boxShadow: t.cardShadow, border: `1px solid ${t.border}`, maxHeight: '92vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', gap: '12px' }}>
               <div>
                 <h2 style={{ fontSize: '18px', fontWeight: '800', color: t.textPrimary, margin: 0 }}>{editingUser ? `Chỉnh sửa tài khoản: ${editingUser.name}` : 'Thêm quản trị viên nội bộ'}</h2>
@@ -216,7 +220,7 @@ export default function AdminUsers() {
               {saveError && <p role="alert" style={{ color: t.danger, fontSize: '13px', margin: 0 }}>{saveError}</p>}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: '12px' }}>
                 <div>
-                  <label htmlFor="system-user-name" style={labelStyle}>Họ và tên nhân viên <span style={{ color: t.danger }}>*</span></label>
+                  <label htmlFor="system-user-name" style={labelStyle}>{tUi("hk.staffName")}{' '}<span style={{ color: t.danger }}>*</span></label>
                   <input id="system-user-name" type="text" required maxLength={160} disabled={busy} autoComplete="name" placeholder="Ví dụ: Lê Tuấn Anh" value={newUser.name} onChange={event => setNewUser(previous => ({ ...previous, name: event.target.value }))} style={inputStyle} />
                 </div>
                 <div>
@@ -233,7 +237,7 @@ export default function AdminUsers() {
                 <div>
                   <label htmlFor="system-user-active" style={labelStyle}>Trạng thái tài khoản</label>
                   <select id="system-user-active" disabled={busy || editingSelf} value={newUser.active ? 'active' : 'inactive'} onChange={event => setNewUser(previous => ({ ...previous, active: event.target.value === 'active' }))} style={inputStyle} aria-describedby={editingSelf ? 'system-user-self-help' : 'system-user-active-help'}>
-                    <option value="active">Đang hoạt động</option><option value="inactive">Ngừng hoạt động</option>
+                    <option value="active">{tUi("common.active")}</option><option value="inactive">{tUi("common.inactive")}</option>
                   </select>
                 </div>
               </div>
@@ -243,9 +247,9 @@ export default function AdminUsers() {
                 <input id="system-user-password" type="password" required minLength={12} maxLength={128} disabled={busy} autoComplete="new-password" value={newUser.password} onChange={event => setNewUser(previous => ({ ...previous, password: event.target.value }))} style={inputStyle} aria-describedby="system-user-password-help" />
                 <p id="system-user-password-help" style={{ fontSize: '11px', color: t.textSecondary, margin: '6px 0 0' }}>Từ 12 đến 128 ký tự.</p>
               </div>}
-              <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '10px', marginTop: '8px', paddingTop: '14px', borderTop: `1px solid ${t.borderSubtle}` }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', flexWrap: 'wrap', alignItems: 'center', gap: '10px', marginTop: '8px', paddingTop: '14px', borderTop: `1px solid ${t.borderSubtle}` }}>
                 <button type="button" disabled={busy} onClick={closeModal} style={buttonStyle}>Hủy bỏ</button>
-                <button type="submit" disabled={busy} style={{ ...buttonStyle, padding: '10px 24px', border: 'none', backgroundColor: t.primary, color: '#FFFFFF', fontWeight: '800', opacity: busy ? 0.6 : 1, boxShadow: '0 4px 12px rgba(40, 112, 234, 0.25)' }}>{busy ? 'Đang lưu…' : editingUser ? 'Lưu cập nhật' : 'Tạo tài khoản'}</button>
+                <button type="submit" disabled={busy} style={{ ...buttonStyle, padding: '10px 24px', border: 'none', backgroundColor: t.primary, color: '#FFFFFF', fontWeight: '800', opacity: busy ? 0.6 : 1, boxShadow: 'none' }}>{busy ? tUi("common.saving") : editingUser ? 'Lưu cập nhật' : 'Tạo tài khoản'}</button>
               </div>
             </form>
           </div>

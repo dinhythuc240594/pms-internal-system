@@ -130,9 +130,10 @@ export function applyCommand(ws, command, { session, tenantId, now = Date.now() 
       data.bookings = data.bookings.map(other => other.id === b.id ? updated : other);
     } else if (c.type === 'booking.status') {
       const b = data.bookings.find(b => b.id === c.id);
-      const allowed = { CONFIRMED: ['IN_HOUSE', 'CANCELLED'], IN_HOUSE: ['CHECKED_OUT'] };
+      const allowed = { CONFIRMED: ['IN_HOUSE', 'CANCELLED', 'NO_SHOW'], IN_HOUSE: ['CHECKED_OUT'] };
       if (!b || !allowed[b.status]?.includes(c.status)) throw new Error('Không thể đổi trạng thái đặt phòng này.');
       const room = data.rooms.find(r => r.id === b.room);
+      if (c.status === 'NO_SHOW' && b.checkIn > new Date(now).toLocaleDateString('en-CA', { timeZone: tenant.timezone || data.settings.timezone })) throw new Error('Chưa đến ngày nhận phòng để ghi nhận khách không đến.');
       if (c.status === 'IN_HOUSE') {
         const date = today(tenant.timezone || data.settings.timezone);
         if (b.checkIn > date || b.checkOut <= date) throw new Error('Booking chưa đến ngày nhận phòng hoặc đã quá ngày trả phòng.');
@@ -140,6 +141,7 @@ export function applyCommand(ws, command, { session, tenantId, now = Date.now() 
         if (data.bookings.some(other => other.id !== b.id && other.room === b.room && other.status === 'IN_HOUSE') || !availableRooms(data.rooms, data.bookings, b.checkIn, b.checkOut, '', b.id).some(r => r.id === b.room)) throw new Error('Phòng đang có khách hoặc trùng lịch.');
       }
       b.status = c.status;
+      if (c.status === 'NO_SHOW') b.noShowAt = new Date(now).toISOString();
       if (c.status === 'CHECKED_OUT') { room.condition = 'dirty'; data.housekeepingLog.unshift({ id: c.logId, room: room.id, action: 'Phòng bẩn sau check-out', at: new Date(now).toISOString(), user: user.name }); }
     } else if (c.type === 'room.condition') {
       const room = data.rooms.find(r => r.id === c.id);

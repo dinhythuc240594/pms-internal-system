@@ -18,6 +18,10 @@ class ChannelConnection(db.Model):
     property_id = db.Column(db.String(36), nullable=False)
     credential_ref = db.Column(db.String(120), nullable=False)
     webhook_secret_ref = db.Column(db.String(120), nullable=False)
+    secrets_ciphertext = db.Column(db.Text)
+    verified_at = db.Column(db.DateTime(timezone=True))
+    ari_available_at = db.Column(db.DateTime(timezone=True))
+    webhook_id = db.Column(db.String(36))
     actor_id = db.Column(db.String(40), db.ForeignKey("users.id"), nullable=False)
     active = db.Column(db.Boolean, nullable=False, default=False)
     __table_args__ = (
@@ -35,6 +39,9 @@ class ChannelMapping(db.Model):
     remote_room_type_id = db.Column(db.String(36), nullable=False)
     remote_rate_plan_id = db.Column(db.String(36), nullable=False)
     active = db.Column(db.Boolean, nullable=False, default=True)
+    used_at = db.Column(db.DateTime(timezone=True))
+    published_ranges = db.Column(JSONB, nullable=False, default=list)
+    pause_requested = db.Column(db.Boolean, nullable=False, default=False)
     __table_args__ = (
         db.UniqueConstraint("tenant_id", "id"),
         db.UniqueConstraint("tenant_id", "room_type_id"),
@@ -61,7 +68,10 @@ class ChannelJob(db.Model):
     __table_args__ = (
         db.UniqueConstraint("tenant_id", "id"),
         db.UniqueConstraint("tenant_id", "dedupe_key"),
-        db.CheckConstraint("kind IN ('push_ari','pull_bookings','ack_revision')", name="kind"),
+        db.CheckConstraint(
+            "kind IN ('push_ari','pull_bookings','ack_revision','setup_webhook','pause_mapping')",
+            name="kind",
+        ),
         db.CheckConstraint("status IN ('queued','processing','succeeded','failed')", name="status"),
         db.CheckConstraint("attempts >= 0", name="attempts"),
         db.Index("ix_channel_jobs_ready", "tenant_id", "status", "available_at"),

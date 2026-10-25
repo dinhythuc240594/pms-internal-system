@@ -1,6 +1,7 @@
+import { t as tUi, useI18n } from '../../../shared/i18n/useI18n.js';
 import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Plus, RefreshCw, RotateCcw, Save, Trash2, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Boxes, Plus, RefreshCw, RotateCcw, Save, Trash2, X } from 'lucide-react';
 import { usePms } from '../data/usePms';
 import { today } from '../data/model';
 import LegacyOverlay from '../components/LegacyOverlay';
@@ -33,6 +34,7 @@ export function InventoryLines({ lines, onChange, items, warehouses = [], kind, 
 }
 
 function DocumentForm({ kind, masters, pms, close, saved }) {
+  useI18n();
   const warehouses = activeRows(masters.warehouses), items = activeRows(masters.items);
   const [form, setForm] = useState({ date: today(pms.settings.timezone), warehouseId: warehouses.find(row => row.isDefault)?.id || warehouses[0]?.id || '', toWarehouseId: '', supplierId: '', note: '' });
   const [lines, setLines] = useState([freshLine()]), [intent, setIntent] = useState(() => crypto.randomUUID());
@@ -68,7 +70,7 @@ function DocumentForm({ kind, masters, pms, close, saved }) {
           <label>{kind === 'transfer' ? 'Kho chuyển' : 'Kho của phiếu'}<select required value={form.warehouseId} onChange={event => change('warehouseId', event.target.value)}><option value="">Chọn kho</option>{warehouses.map(row => <option key={row.id} value={row.id}>{row.name}</option>)}</select></label>
           {kind === 'transfer' && <label>Kho nhận<select required value={form.toWarehouseId} onChange={event => change('toWarehouseId', event.target.value)}><option value="">Chọn kho nhận</option>{warehouses.filter(row => row.id !== form.warehouseId).map(row => <option key={row.id} value={row.id}>{row.name}</option>)}</select></label>}
           <label>Ngày phiếu<input type="date" required max={today(pms.settings.timezone)} value={form.date} onChange={event => change('date', event.target.value)} /></label>
-          {kind === 'receipt' && <label>Nhà cung cấp<select value={form.supplierId} onChange={event => change('supplierId', event.target.value)}><option value="">Không chọn nhà cung cấp</option>{activeRows(masters.suppliers).map(row => <option key={row.id} value={row.id}>{row.name}</option>)}</select></label>}
+          {kind === 'receipt' && <label>{tUi("inventory.supplier")}<select value={form.supplierId} onChange={event => change('supplierId', event.target.value)}><option value="">Không chọn nhà cung cấp</option>{activeRows(masters.suppliers).map(row => <option key={row.id} value={row.id}>{row.name}</option>)}</select></label>}
         </div>
         <label>Ghi chú phiếu<textarea maxLength={500} rows={2} value={form.note} onChange={event => change('note', event.target.value)} /></label>
         <h3>Mặt hàng trong phiếu</h3>
@@ -79,7 +81,7 @@ function DocumentForm({ kind, masters, pms, close, saved }) {
         {!warehouses.length || !items.length ? <p role="status">Cần tạo kho và mặt hàng đang hoạt động trong Cài đặt → Kho & Mua hàng.</p> : null}
         <p>Đơn vị tiền tệ: {pms.settings.currency}. Đơn giá và số lượng hỗ trợ tối đa 4 chữ số thập phân.</p>
         {error && <p className="domain-error" role="alert">{error}</p>}
-        <div className="domain-toolbar"><button type="button" disabled={busy} onClick={allowClose}>Hủy</button><button type="submit" className="primary inventory-icon-button" disabled={blocked || !warehouses.length || !items.length}><Save size={16} aria-hidden="true" /> {busy ? 'Đang ghi sổ…' : 'Ghi sổ phiếu kho'}</button></div>
+        <div className="domain-toolbar"><button type="button" disabled={busy} onClick={allowClose}>{tUi("common.cancel")}</button><button type="submit" className="primary inventory-icon-button" disabled={blocked || !warehouses.length || !items.length}><Save size={16} aria-hidden="true" /> {busy ? 'Đang ghi sổ…' : 'Ghi sổ phiếu kho'}</button></div>
       </fieldset></form>
     </section>
   </LegacyOverlay>;
@@ -104,6 +106,7 @@ function PosStockReturn({ row, pms, saved, onBusy }) {
 }
 
 function DocumentDetail({ id, pms, close, changed }) {
+  useI18n();
   const detail = useInventoryQuery('/inventory/documents/' + encodeURIComponent(id));
   const [reason, setReason] = useState(''), [busy, setBusy] = useState(false), [error, setError] = useState('');
   const [intent, setIntent] = useState(() => crypto.randomUUID());
@@ -121,9 +124,9 @@ function DocumentDetail({ id, pms, close, changed }) {
   return <LegacyOverlay title="Chi tiết phiếu kho" onClose={() => { if (!inFlight.current) close(); }}><section className="inventory-dialog">
     <div className="domain-toolbar"><h2>Chi tiết phiếu kho</h2><button type="button" aria-label="Đóng chi tiết phiếu" disabled={busy} onClick={close}><X size={18} aria-hidden="true" /></button></div>
     {detail.loading && <p role="status">Đang tải chi tiết phiếu…</p>}
-    {detail.error && <div className="domain-error" role="alert"><p>{detail.error}</p><button type="button" onClick={detail.refresh}>Thử lại</button></div>}
-    {row && <><dl className="inventory-detail"><div><dt>Loại phiếu</dt><dd>{INVENTORY_KINDS[row.kind] || row.kind}</dd></div><div><dt>Ngày</dt><dd>{row.date}</dd></div><div><dt>Kho</dt><dd>{row.warehouse}</dd></div>{row.toWarehouse && <div><dt>Kho nhận</dt><dd>{row.toWarehouse}</dd></div>}<div><dt>Nhà cung cấp</dt><dd>{row.supplier || '—'}</dd></div><div><dt>Mã phiếu</dt><dd className="inventory-id">{row.id}</dd></div></dl>
-      {row.note && <p>Ghi chú: {row.note}</p>}
+    {detail.error && <div className="domain-error" role="alert"><p>{detail.error}</p><button type="button" onClick={detail.refresh}>{tUi("common.retry")}</button></div>}
+    {row && <><dl className="inventory-detail"><div><dt>Loại phiếu</dt><dd>{INVENTORY_KINDS[row.kind] || row.kind}</dd></div><div><dt>{tUi("common.date")}</dt><dd>{row.date}</dd></div><div><dt>Kho</dt><dd>{row.warehouse}</dd></div>{row.toWarehouse && <div><dt>Kho nhận</dt><dd>{row.toWarehouse}</dd></div>}<div><dt>{tUi("inventory.supplier")}</dt><dd>{row.supplier || '—'}</dd></div><div><dt>Mã phiếu</dt><dd className="inventory-id">{row.id}</dd></div></dl>
+      {row.note && <p>{tUi("hk.notePrefix")}{' '}{row.note}</p>}
       {row.reversalOfId && <p>Phiếu đảo của: <span className="inventory-id">{row.reversalOfId}</span></p>}
       {row.reversedById && <p>Đã đảo bằng phiếu: <span className="inventory-id">{row.reversedById}</span></p>}
       {row.posInvoiceId && <p>Xuất/hoàn kho từ hóa đơn POS: <span className="inventory-id">{row.posInvoiceId}</span>. Hoàn tiền POS không tự nhập lại hàng; lượng hàng trả lại được ghi riêng.</p>}
@@ -140,6 +143,7 @@ export default function InventoryDocuments({ kind = 'receipt', embedded = false,
 }
 
 function DocumentWorkspace({ kind, pms, embedded, onChanged }) {
+  useI18n();
   const [filters, setFilters] = useState({ warehouseId: '', start: '', end: today(pms.settings.timezone), page: 1 });
   const [version, setVersion] = useState(0), [creating, setCreating] = useState(false), [selected, setSelected] = useState(null), [notice, setNotice] = useState('');
   const masters = useInventoryQuery('/inventory/masters', version);
@@ -154,15 +158,15 @@ function DocumentWorkspace({ kind, pms, embedded, onChanged }) {
   const refresh = () => setVersion(value => value + 1);
   function saved(result) { setCreating(false); setSelected(result.id); setNotice(`Đã ghi sổ ${INVENTORY_KINDS[kind].toLocaleLowerCase('vi')}.`); refresh(); onChanged?.(); }
   return <div className="pms-domain-page pms-inventory">
-    <header className="domain-toolbar"><div><Heading>{INVENTORY_KINDS[kind]}</Heading><p>{kind === 'count' ? 'Đối chiếu số lượng thực tế với tồn kho và ghi chênh lệch.' : kind === 'opening' ? 'Thiết lập số lượng và giá vốn ban đầu trước khi bắt đầu vận hành kho.' : 'Ghi sổ và tra cứu lịch sử hàng hóa trong khách sạn.'}</p></div><div className="domain-toolbar"><button type="button" className="inventory-icon-button" onClick={refresh}><RefreshCw size={16} aria-hidden="true" /> Tải lại</button>{!embedded && <Link to="/id/inventory/stock">Xem tồn kho</Link>}{canWrite && <button type="button" className="primary inventory-icon-button" disabled={masters.loading || Boolean(masters.error) || openingLocked} onClick={() => { setNotice(''); setCreating(true); }}><Plus size={16} aria-hidden="true" /> {kind === 'opening' ? 'Thiết lập tồn đầu kỳ' : 'Tạo phiếu'}</button>}</div></header>
+    <header className="domain-toolbar"><div><Heading>{INVENTORY_KINDS[kind]}</Heading><p>{kind === 'count' ? 'Đối chiếu số lượng thực tế với tồn kho và ghi chênh lệch.' : kind === 'opening' ? 'Thiết lập số lượng và giá vốn ban đầu trước khi bắt đầu vận hành kho.' : 'Ghi sổ và tra cứu lịch sử hàng hóa trong khách sạn.'}</p></div><div className="inventory-toolbar-actions"><button type="button" className="inventory-icon-button" onClick={refresh}><RefreshCw size={16} aria-hidden="true" />{' '}{tUi("common.reload")}</button>{!embedded && <Link className="inventory-link-button inventory-icon-button" to="/id/inventory/stock"><Boxes size={16} aria-hidden="true" />Xem tồn kho</Link>}{canWrite && <button type="button" className="primary inventory-icon-button" disabled={masters.loading || Boolean(masters.error) || openingLocked} onClick={() => { setNotice(''); setCreating(true); }}><Plus size={16} aria-hidden="true" /> {kind === 'opening' ? 'Thiết lập tồn đầu kỳ' : 'Tạo phiếu'}</button>}</div></header>
     {!pms.access('inventory.write').allowed && <p role="status">Bạn đang xem kho. Vai trò hoặc gói hiện tại chưa cho phép ghi sổ.</p>}
     {openingLocked && <p role="status">Tồn đầu kỳ đã khóa vì kho đã có giao dịch. Số liệu gốc được giữ trong lịch sử; bổ sung hàng bằng phiếu nhập kho.</p>}
     {notice && <p className="inventory-positive" role="status">{notice}</p>}
     {masters.error && <div className="domain-error" role="alert"><p>{masters.error}</p><button type="button" onClick={masters.refresh}>Tải lại danh mục</button></div>}
-    <section className="domain-panel"><div className="domain-fields"><label>Lọc kho<select value={filters.warehouseId} onChange={event => filter('warehouseId', event.target.value)}><option value="">Tất cả kho</option>{(masters.data?.warehouses || []).map(row => <option key={row.id} value={row.id}>{row.name}</option>)}</select></label><label>Từ ngày<input type="date" value={filters.start} onChange={event => filter('start', event.target.value)} /></label><label>Đến ngày<input type="date" min={filters.start || undefined} value={filters.end} onChange={event => filter('end', event.target.value)} /></label></div>
+    <section className="domain-panel"><div className="domain-fields"><label>Lọc kho<select value={filters.warehouseId} onChange={event => filter('warehouseId', event.target.value)}><option value="">Tất cả kho</option>{(masters.data?.warehouses || []).map(row => <option key={row.id} value={row.id}>{row.name}</option>)}</select></label><label>{tUi("common.fromDate")}<input type="date" value={filters.start} onChange={event => filter('start', event.target.value)} /></label><label>Đến ngày<input type="date" min={filters.start || undefined} value={filters.end} onChange={event => filter('end', event.target.value)} /></label></div>
       {documents.loading && <p role="status">Đang tải phiếu kho…</p>}
-      {documents.error && <div className="domain-error" role="alert"><p>{documents.error}</p><button type="button" onClick={documents.refresh}>Thử lại</button></div>}
-      {!documents.loading && !documents.error && <><div className="inventory-scroll"><table><thead><tr><th>Ngày</th>{kind === 'all' && <th>Loại phiếu</th>}<th>Kho</th>{['transfer', 'all'].includes(kind) && <th>Kho nhận</th>}<th>Nhà cung cấp</th><th>Ghi chú</th><th>Trạng thái</th><th>Chi tiết</th></tr></thead><tbody>{rows.map(row => <tr key={row.id}><td>{row.date}</td>{kind === 'all' && <td>{INVENTORY_KINDS[row.kind] || row.kind}</td>}<td>{row.warehouse}</td>{['transfer', 'all'].includes(kind) && <td>{row.toWarehouse || '—'}</td>}<td>{row.supplier || '—'}</td><td className="inventory-wrap">{row.note || '—'}</td><td>{row.reversedById ? 'Đã đảo' : row.reversalOfId ? 'Phiếu đảo' : 'Đã ghi sổ'}</td><td><button type="button" aria-label={`Xem phiếu ${row.id}`} onClick={() => setSelected(row.id)}>Xem phiếu</button></td></tr>)}{!rows.length && <tr><td colSpan={kind === 'all' ? 8 : kind === 'transfer' ? 7 : 6}>Chưa có phiếu kho phù hợp với khoảng ngày và kho đã chọn.</td></tr>}</tbody></table></div>
+      {documents.error && <div className="domain-error" role="alert"><p>{documents.error}</p><button type="button" onClick={documents.refresh}>{tUi("common.retry")}</button></div>}
+      {!documents.loading && !documents.error && <><div className="inventory-scroll"><table><thead><tr><th>{tUi("common.date")}</th>{kind === 'all' && <th>Loại phiếu</th>}<th>Kho</th>{['transfer', 'all'].includes(kind) && <th>Kho nhận</th>}<th>{tUi("inventory.supplier")}</th><th>{tUi("common.notes")}</th><th>{tUi("common.status")}</th><th>{tUi("common.details")}</th></tr></thead><tbody>{rows.map(row => <tr key={row.id}><td>{row.date}</td>{kind === 'all' && <td>{INVENTORY_KINDS[row.kind] || row.kind}</td>}<td>{row.warehouse}</td>{['transfer', 'all'].includes(kind) && <td>{row.toWarehouse || '—'}</td>}<td>{row.supplier || '—'}</td><td className="inventory-wrap">{row.note || '—'}</td><td>{row.reversedById ? 'Đã đảo' : row.reversalOfId ? 'Phiếu đảo' : 'Đã ghi sổ'}</td><td><button type="button" aria-label={`Xem phiếu ${row.id}`} onClick={() => setSelected(row.id)}>Xem phiếu</button></td></tr>)}{!rows.length && <tr><td colSpan={kind === 'all' ? 8 : kind === 'transfer' ? 7 : 6}>Chưa có phiếu kho phù hợp với khoảng ngày và kho đã chọn.</td></tr>}</tbody></table></div>
         <div className="domain-toolbar"><span>{pagination?.totalItems ?? rows.length} phiếu · Trang {filters.page}</span><div><button type="button" className="inventory-icon-button" aria-label="Trang trước" disabled={filters.page <= 1} onClick={() => setFilters(previous => ({ ...previous, page: previous.page - 1 }))}><ArrowLeft size={16} aria-hidden="true" /></button><button type="button" className="inventory-icon-button" aria-label="Trang tiếp" disabled={filters.page * 20 >= (pagination?.totalItems ?? 0)} onClick={() => setFilters(previous => ({ ...previous, page: previous.page + 1 }))}><ArrowRight size={16} aria-hidden="true" /></button></div></div>
       </>}
     </section>

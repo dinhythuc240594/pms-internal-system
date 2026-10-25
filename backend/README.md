@@ -1,6 +1,47 @@
 # LOHA PMS Backend
 
-Backend Flask/PostgreSQL đã có BE-01–05: đăng nhập bằng session cookie, khách sạn/membership/quyền/RLS, cấu hình phòng và danh mục, giá theo ngày/khóa bán, nhiều phòng/khách trong booking, nhận phòng, dịch vụ/thuế/phí/chiết khấu, cọc/thanh toán/hoàn tiền và checkout. Frontend dùng API thật; chỉ lựa chọn khách sạn được lưu trong trình duyệt. Dữ liệu demo cũ trong localStorage không được nhập tự động.
+Kiến trúc backend: xem [ánh xạ design pattern và phạm vi refactor](ARCHITECTURE.md).
+HTTP views đã tách sang lớp application; tài liệu ghi rõ phần domain/repository,
+transaction, khả năng tương thích và giới hạn kiểm chứng PostgreSQL.
+
+Backend Flask/PostgreSQL đã có nền tảng quyền/RLS, phòng/khách/booking, thanh toán, POS/quỹ, buồng phòng, kho, giá và tỷ giá, báo cáo, thuê bao và tích hợp Channex. Frontend dùng API thật; chỉ lựa chọn khách sạn được lưu trong trình duyệt. Dữ liệu demo cũ trong localStorage không được nhập tự động. Xem [hợp đồng API](API_CONTRACT.md) và [báo cáo cập nhật 14/10/2026](../docs/reports/reviews/remaining-functions-2026-10-14.md) để phân biệt phần đã triển khai, giới hạn và phần còn cần nghiệm thu.
+
+## Bổ sung nghiệp vụ — 14/10/2026
+
+- Hồ sơ khách sạn lưu liên hệ, website/logo HTTPS, mã số thuế, ngân hàng và ngôn ngữ hồ sơ. Logo dùng URL, chưa có tải ảnh lên.
+- Danh mục thu/chi được quản lý trong Settings; phiếu thu/chi lưu tên và loại danh mục tại thời điểm ghi, có lọc danh mục và mở đúng phiếu từ lịch sử hoa hồng.
+- Booking ghi nhận **Không đến (NO_SHOW)** từ ngày nhận phòng theo múi giờ khách sạn, trả tồn phòng và giữ nguyên tiền đã ghi. Không tự tính phí hoặc chuyển tiền cọc thành phí.
+- Báo cáo nguồn/phòng/hạng phòng, hủy, quốc tịch và giảm giá dùng dữ liệu thật, có quyền REPORTS_ADVANCED và xuất CSV.
+- Hoa hồng chốt sau checkout trên tiền phòng sau giảm giá tiền phòng, lưu tỷ lệ lịch sử, cho chi một phần và liên kết phiếu chi. Booking có chiết khấu hóa đơn chưa phân bổ hoặc điều chỉnh sau checkout bị chặn chi để đối soát; không tự gọi ngân hàng/OTA.
+- Client sửa họ tên, xem phiên đăng nhập và thu hồi các phiên khác. Workspace cập nhật nền mỗi 30 giây hoặc khi quay lại cửa sổ, giữ bản nháp đang sửa; có thông báo và tải lại khi đọc thất bại. Booking có phiếu xem/in; CSV có tại booking, báo cáo, buồng phòng và nhật ký Manager.
+
+Migration nối tiếp là `0018_channel_mapping_lifecycle` → `0019_cash_categories` →
+`0020_no_show` → `0021_booking_commissions`, hợp nhất với
+`0019_self_service_audit` tại `0022_merge_client_settings` để hỗ trợ nhật ký sửa hồ sơ/
+thu hồi phiên cho tài khoản khách sạn. Áp dụng bằng `python manage.py db upgrade`
+với cấu hình migration của môi trường đích trước khi mở phiên bản frontend mới,
+rồi kiểm tra `/api/ready`. Các migration giữ dữ liệu cũ; downgrade từ chối bỏ cột/
+bảng nếu đã có lịch sử danh mục, no-show hoặc hoa hồng. Kiểm thử database tạm
+không thay cho việc áp migration trên database nghiệp vụ.
+
+Buồng phòng có worker lập kế hoạch tự động, chạy riêng với cùng image và cấu hình
+database runtime của API. Thay email ví dụ bằng tài khoản SYSTEM_MANAGER hoặc
+SUPER_ADMIN đang hoạt động; lệnh dùng tài khoản đó để ghi nhật ký, không tạo tài
+khoản mới và không nhận mật khẩu:
+
+```sh
+python manage.py process-housekeeping-plans --actor-email manager@example.com --watch --interval 900
+```
+
+Bỏ `--watch` để chạy một lượt; thêm `--tenant <tenant_id>` để giới hạn khách sạn.
+Worker dùng ngày hiện tại theo múi giờ từng khách sạn, kiểm tra gói/quyền hiện tại
+và dùng cùng bộ tạo kế hoạch với nút trên giao diện. Lặp lại không tạo trùng việc;
+booking thêm sau lần chạy trước vẫn được bổ sung. Web API không tự khởi động
+worker này. Worker Channex vẫn là tiến trình riêng như hướng dẫn bên dưới.
+
+Night Audit/chốt ngày và tự ghi doanh thu từng đêm chưa triển khai; quy tắc ghi
+nhận cần được chốt trước khi thêm bút toán. Các phần còn lại nằm trong báo cáo
+ngày 14/10, không coi toàn bộ thiết kế hệ thống đã hoàn thành.
 
 ## Chạy trên Windows
 
@@ -208,9 +249,9 @@ Lệnh này đọc cấu hình riêng của cluster, tạo database `pms_test_<U
 - `.env.example`: cấu hình mẫu; `.env` chứa cấu hình thật trên laptop.
 - `Dockerfile`: image backend dành cho Coolify/Linux.
 
-BE-06 và BE-07 thêm migration `0005_finance` và `0006_housekeeping`; giữ nguyên lịch sử 0001–0004. Sau khi triển khai code mới, chạy `python manage.py db upgrade` bằng `DATABASE_MIGRATION_URL` của Coolify rồi kiểm tra `/api/ready`. PostgreSQL local và Coolify vẫn là hai database riêng. Chi tiết chức năng và kiểm chứng: [BE06_07_IMPLEMENTATION_REPORT.md](../BE06_07_IMPLEMENTATION_REPORT.md).
+BE-06 và BE-07 thêm migration `0005_finance` và `0006_housekeeping`; giữ nguyên lịch sử 0001–0004. Sau khi triển khai code mới, chạy `python manage.py db upgrade` bằng `DATABASE_MIGRATION_URL` của Coolify rồi kiểm tra `/api/ready`. PostgreSQL local và Coolify vẫn là hai database riêng. Chi tiết chức năng và kiểm chứng: [BE06_07_IMPLEMENTATION_REPORT.md](../docs/reports/backend/BE06_07_IMPLEMENTATION_REPORT.md).
 
-BE-08–09 có báo cáo vận hành/tài chính và quản trị hai gói FREE/PRO. Bản sửa P1 thêm migration `0007_subscription_controls` sau `cdb4bc7d62d0`: RLS, lịch sử thuê bao chỉ thêm, điều khoản/quota và danh mục hai gói mặc định nếu danh mục trống. Không sửa migration cũ hoặc thay dữ liệu gói đã có. Chạy `python manage.py db upgrade` trong backend Coolify dùng cấu hình runtime của Coolify, rồi kiểm tra `/api/ready`; không dùng `.env` local trên host. Xem [API_CONTRACT.md](API_CONTRACT.md) và [báo cáo sửa P1](../BE08_09_P1_FIX_REPORT.md) để biết định nghĩa chỉ số và kết quả kiểm chứng.
+BE-08–09 có báo cáo vận hành/tài chính và quản trị hai gói FREE/PRO. Bản sửa P1 thêm migration `0007_subscription_controls` sau `cdb4bc7d62d0`: RLS, lịch sử thuê bao chỉ thêm, điều khoản/quota và danh mục hai gói mặc định nếu danh mục trống. Không sửa migration cũ hoặc thay dữ liệu gói đã có. Chạy `python manage.py db upgrade` trong backend Coolify dùng cấu hình runtime của Coolify, rồi kiểm tra `/api/ready`; không dùng `.env` local trên host. Xem [API_CONTRACT.md](API_CONTRACT.md) và [báo cáo sửa P1](../docs/reports/backend/BE08_09_P1_FIX_REPORT.md) để biết định nghĩa chỉ số và kết quả kiểm chứng.
 
 BE-10/11 bổ sung `0008_inventory` → `0009_pricing`: kho có sổ biến động/POS tiêu hao,
 giá cuối tuần/LOS, voucher/khuyến mãi và tỷ giá VND/USD. Chạy migration bằng tài khoản
@@ -220,16 +261,83 @@ cấp đã chọn cho BE-12, chưa có đồng bộ OTA trong hai nhóm này.
 
 ## Channex và thông báo (BE-12)
 
+Trang Channex của Manager/Super Admin đọc property, loại phòng/gói giá, lịch sử
+booking và tồn/giá trực tiếp từ Channex qua backend. Manager chọn nguồn và môi
+trường rõ ràng; backend không tự chuyển nguồn khi lỗi. Có thể dùng khóa kết nối
+đã lưu của từng khách sạn hoặc cấu hình thêm nguồn hệ thống bằng hai biến runtime
+backend tùy chọn `CHANNEX_MANAGER_API_KEY_STAGING` và
+`CHANNEX_MANAGER_API_KEY_PRODUCTION`. Không cần tạo khóa mới nếu nguồn khách sạn
+đã có quyền đọc. Không đặt khóa trong biến `VITE_`; production không đọc `.env`.
+
+Property Channex chưa liên kết LOHA vẫn hiện trong danh sách. Đọc dữ liệu không
+tạo khách sạn, import/ACK booking hay đẩy tồn/giá. Dữ liệu tồn thiếu được hiển thị
+là chưa biết. Giao diện LOHA thêm/sửa loại phòng và gói giá qua API Channex,
+có CSRF và kiểm tra quyền hệ thống. Loại phòng đã ghép LOHA chỉ đổi tên; số phòng
+và sức chứa được bảo vệ. Chỉ sửa giá mặc định của gói manual/per-room đơn giản;
+gói phức tạp vẫn xem được. Tab Kênh OTA lấy danh mục adapter thật từ Channex,
+cho tạo kết nối, kiểm tra thông tin, đọc phòng/gói giá OTA để ghép nối, đổi tên,
+kiểm tra sẵn sàng, bật/dừng đồng bộ và xóa kết nối đã dừng. Khóa/mật khẩu OTA
+không được trả lại trình duyệt; thay đổi chỉ gửi trường được adapter cho phép.
+Giao diện giữ nguyên các thiết lập và ghép nối khác khi sửa một phần. Cấu hình
+kênh dùng chung nhiều khách sạn chỉ được xem; đổi thiết lập/ghép nối phải dừng
+đồng bộ trước. Dừng đồng bộ không đóng bán phòng trên OTA; Channex có thể lên lịch
+xóa kết nối sau 30 ngày. Bật kết nối đẩy tồn/giá/hạn chế đầy đủ sang OTA.
+Airbnb dùng liên kết OAuth do chủ tài khoản chấp thuận rồi chọn listing và gói
+giá để ghép; phải gỡ listing trước khi dừng đồng bộ Airbnb. Không dùng iframe,
+không xóa phòng/gói.
+Khóa API ở lại backend. Sau kết quả ghi chưa xác nhận, tải lại danh mục trước khi
+gửi lại để tránh tạo trùng. Thay giá mặc định không tự đẩy giá/tồn theo ngày.
+Xem hợp đồng các endpoint `/api/admin/channex/...` tại [API_CONTRACT.md](API_CONTRACT.md).
+
+Manager/Super Admin có danh sách Channex tập trung qua `GET /api/admin/channex`:
+trạng thái kết nối, số phòng/loại phòng, ghép nối đang bật/đang đóng bán và tác vụ
+mới nhất, lấy từ database local, không gọi Channex hay trả khóa/tham chiếu bí mật.
+`GET /api/tenants/<tenant_id>/channels/catalog` tải loại phòng/gói giá của property
+đã lưu cho dropdown, kể cả khi kết nối đang tạm dừng. API vẫn kiểm tra quyền
+`channels.view`/`OTA_SYNC`, xác thực dữ liệu và giới hạn 100 mục mỗi danh mục;
+gói giá không được ARI hỗ trợ vẫn hiển thị với `supported:false`.
+
 Migration mới: `0010_channels` → `0011_notifications`. Chạy migration trước khi
 mở giao diện OTA/thông báo. Downgrade từ chối xóa cấu hình/lịch sử đã phát sinh.
 Thông báo trong ứng dụng được lưu cùng giao dịch nghiệp vụ, hộp thư riêng từng
 người nhận và cấu hình vai trò do owner quản lý. Email/mobile chưa được kích hoạt.
 
-Trong màn hình OTA, chọn staging và lấy hai tên biến môi trường riêng cho khách
-sạn. Người vận hành đặt khóa API Channex và secret webhook ngẫu nhiên (ít nhất 32
-ký tự) vào đúng các biến **runtime phía server**, sau đó cấu hình property và
-mapping room type/rate plan. Các biến `VITE_` không được chứa những khóa này.
-Production chỉ đọc biến runtime; `.env` local không cấp khóa production.
+Luồng cấu hình khóa trong ứng dụng cần migration `0013_channel_credentials` và
+`CHANNEX_ENCRYPTION_KEY` chung cho API/worker. Tạo khóa Fernet **một lần**:
+
+```sh
+python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+```
+
+Lưu khóa này trong runtime secret của Coolify, sao lưu riêng với database và dùng
+cùng giá trị ở mọi API/worker. Không thay khóa tùy ý: khóa khác sẽ không đọc được
+cấu hình đã lưu. Production chỉ đọc runtime; local đọc hai biến cấu hình chung
+trong `.env`. Các biến `VITE_` không được chứa khóa.
+
+Chủ khách sạn mở **Kênh OTA → Thiết lập kết nối**, chọn môi trường, nhập Property
+ID/API key rồi **Kiểm tra & lưu**. Backend kiểm tra quyền và quyền đọc đúng property
+trên Channex trước khi mã hóa cả API key/secret webhook, ràng buộc với tenant,
+property và môi trường. Phản hồi chỉ chứa trạng thái, không trả khóa. Để trống API
+key khi chỉnh sửa sẽ giữ khóa cũ; đổi property/môi trường phải nhập khóa mới và chỉ
+được thực hiện trước khi có lịch sử. Bật lại kết nối sẽ xác minh lại khóa; tạm dừng
+vẫn được khi Channex hoặc khóa mã hóa gặp sự cố. Xác minh property không chứng minh
+quyền ghi ARI; cần kiểm thử tác vụ đồng bộ.
+
+System Manager / Super Admin mở **Khách hàng & khách sạn → OTA** tại khách sạn cần
+cấu hình. Kết nối, ghép phòng và lịch sử dùng đúng khách sạn trong đường dẫn,
+không đổi khách sạn đang chọn ở PMS. Quyền OTA, trạng thái khách sạn và thuê bao
+vẫn được kiểm tra như ở ứng dụng PMS. Migration `0017_merge_catalog_channels`
+nối lịch sử OTA/manager với danh mục phòng; chạy `python manage.py db upgrade`
+trước khi triển khai phiên bản này.
+
+Đặt `CHANNEX_WEBHOOK_BASE_URL=https://api.example.com` (HTTPS origin, không có
+path/query) chung cho API/worker để tự đăng ký webhook. Sau khi lưu khóa với đồng
+bộ bật, job `setup_webhook` dùng secret đã mã hóa, tạo hoặc cập nhật webhook có đúng
+callback `/api/channex/webhooks/<tenant_id>` và property. Worker tìm lại webhook
+trước mỗi lần thử để tránh tạo trùng sau lỗi giao dịch. Theo dõi trạng thái riêng
+trong OTA/lịch sử; lưu khóa thành công chưa có nghĩa webhook đã sẵn sàng. Nếu chưa
+có HTTPS công khai, để trống biến này và dùng poll. Cấu hình cũ dùng biến theo
+tenant vẫn hoạt động; nhập lại API key sẽ chuyển sang mã hóa, không tự chuyển đổi.
 
 Chạy worker riêng bằng cùng image/code và runtime database:
 
@@ -237,24 +345,69 @@ Chạy worker riêng bằng cùng image/code và runtime database:
 python manage.py process-channel-jobs --watch --interval 15 --limit 10
 ```
 
-Worker cần cả các biến Channex giống backend. Có thể chạy một lượt với
-`--tenant <tenant_id>` để giới hạn một khách sạn. Web server chỉ tạo hàng đợi;
-nếu không chạy worker thì trạng thái giữ `queued`. Worker dùng dữ liệu tồn/giá
+Worker cần hai biến Channex chung giống backend (và biến theo tenant nếu còn dùng
+cấu hình cũ). Có thể chạy một lượt với `--tenant <tenant_id>` để giới hạn một khách
+sạn. Lưu khóa gọi Channex để xác minh property ngay; các tác vụ đồng bộ chỉ được
+xếp hàng trên web, giữ `queued` nếu không chạy worker. Worker dùng dữ liệu tồn/giá
 hiện tại, kiểm tra quyền/gói và thử lại lỗi tạm thời. Không cần Redis/Celery.
 Worker nhận booking mỗi phút để bù webhook bị lỡ và xếp lịch gửi tồn/giá cho
 366 ngày mỗi ngày, chia thành các tác vụ tối đa 31 ngày.
 
-Mapping đã có lịch sử không được đổi hoặc tắt tùy ý. Tắt kết nối chỉ dừng worker,
-không đóng bán trên OTA; người vận hành phải xử lý tồn/đóng bán tại Channex trước
-khi thay đổi hệ thống. ARI hiện gửi giá cơ bản hoặc giá theo ngày, chưa chuyển
+Migration `0023_channel_ari_pacing` lưu thời điểm được phép gửi ARI tiếp theo của
+từng kết nối. Chạy `python manage.py db upgrade` trước khi khởi động API/worker
+phiên bản mới. Các lần gửi tồn/giá hoặc đóng bán cách nhau ít nhất 7 giây; lỗi
+tạm thời giữ nhịp chờ ít nhất 60 giây hoặc lâu hơn theo lịch thử lại của tác vụ.
+Thời gian chờ được lưu trong database nên khởi động lại worker không bỏ qua nó;
+nhận booking và ACK vẫn được xử lý trong thời gian chờ ARI. Nhịp thực tế còn phụ
+thuộc `--interval`. Quy tắc này dựa trên
+[giới hạn Channex](https://docs.channex.io/api-v.1-documentation/rate-limits).
+
+Lỗi đang chờ thử lại vẫn có trong lịch sử đồng bộ và log, nhưng chỉ tác vụ đã
+thất bại mới phát thông báo “Đồng bộ OTA thất bại”. Các thông báo cũ được giữ
+nguyên. Log lỗi có `http_status` hoặc `cause` (`timeout`, `dns`, `tls`,
+`connection`, `transport`) để phân biệt lỗi HTTP và lỗi kết nối; không ghi khóa
+API hay nội dung booking. Trên Coolify cần chạy worker thường trực bằng lệnh
+trên; ứng dụng backend API chỉ xếp hàng và không tự chạy worker.
+
+Migration `0018_channel_mapping_lifecycle` bổ sung trạng thái ghép nối; chạy
+`python manage.py db upgrade` và dùng cùng phiên bản cho API/worker. Lịch sử đăng
+ký webhook hoặc lấy feed rỗng không khóa mã ghép nối. Backend ghi nhận mã và cửa
+sổ ngày trước khi gửi ARI; ghép nối đã nhận booking hoặc có thể đã gửi dữ liệu
+không được đổi mã phòng/gói giá. Migration giữ bảo vệ với lịch sử ARI cũ chưa
+xác định được chính xác ghép nối đã sử dụng.
+
+Tạm dừng ghép nối đã dùng tạo job `pause_mapping`: trạng thái `pauseRequested`
+giữ nguyên cho đến khi Channex chấp nhận tồn bằng 0 và `stop_sell=true` trên các
+cửa sổ đã ghi nhận và 366 ngày sắp tới. Khi đó worker mới đặt `active=false`.
+Lỗi đóng bán không báo tạm dừng thành công; kiểm tra và thử lại tại Lịch sử đồng
+bộ. Có thể bật lại cùng mã sau khi đóng bán hoàn tất; booking sửa/hủy vẫn nhận
+qua ghép nối đã dùng. Ghép nối chưa dùng có thể sửa mã hoặc tạm dừng ngay.
+
+Tắt toàn bộ kết nối chỉ dừng worker, không đóng bán trên OTA; cần hoàn tất đóng
+bán trước khi tắt kết nối. ARI hiện gửi giá cơ bản hoặc giá theo ngày, chưa chuyển
 quy tắc LOS, voucher và khuyến mãi PMS thành rate plan OTA.
 
-Tạo webhook Channex tới `/api/channex/webhooks/<tenant_id>` và cấu hình header
-`X-Channex-Webhook-Secret` bằng secret tương ứng. Booking không xử lý được giữ
+Webhook mới dùng sự kiện `booking`, `send_data=false` và header ngẫu nhiên
+`X-Channex-Webhook-Secret` do hệ thống tạo. Cấu hình cũ có thể giữ webhook đã đăng
+ký thủ công. Booking không xử lý được giữ
 trạng thái lỗi và không ACK; operator cần kiểm tra lý do trước khi thử lại.
 Trước dùng thật, kiểm thử staging gồm ARI, booking mới/sửa/hủy, nhận lại cùng
 revision và ACK. Kiểm thử HTTP giả lập không thay cho nghiệm thu sandbox thật.
 Xem [hợp đồng API](API_CONTRACT.md) và [checklist BE-12](../tasks/be12.md).
+
+Manager có thể tạo Property Channex ngay trong LOHA bằng
+`POST /api/admin/channex/properties`. Chỉ `SUPER_ADMIN` và `SYSTEM_MANAGER`
+được dùng, kèm phiên đăng nhập và CSRF. Body gồm
+`{accountId,name,currency,timezone,country?,city?,address?,email?,phone?}`;
+`accountId` phải là `system:staging` hoặc `system:production`, dùng khóa hệ thống
+có quyền tạo Property (ví dụ All Properties). Tiền tệ hỗ trợ `VND`/`USD`, múi giờ
+IANA; các trường tùy chọn trống được bỏ qua. Property được tạo với loại `hotel`
+trong Default Group của tài khoản Channex. Response 201 gồm
+`{environment,property:{id,name,currency,timezone,city,country,linkedHotel:null}}`.
+Thao tác không tạo khách sạn PMS và không tự liên kết; chọn Property vừa tạo
+để thực hiện ghép nối sau đó. Không tự thử lại khi lỗi hoặc timeout: tải lại danh
+sách Property để kiểm tra kết quả trước khi tạo lại, tránh Property trùng.
+Hợp đồng upstream: [Create Property API](https://docs.channex.io/api-v.1-documentation/hotels-collection/create-property-api).
 
 ### Hồ sơ khách hàng và hóa đơn Manager
 
@@ -264,8 +417,8 @@ mềm, công nợ, tổng quan hệ thống và hồ sơ/phiên đăng nhập c�
 trong backend của môi trường triển khai, rồi kiểm tra `/api/ready`. Hai migration
 chỉ thêm bảng; downgrade bị chặn khi đã có hồ sơ hoặc hóa đơn để giữ dữ liệu.
 Hóa đơn SaaS tách khỏi doanh thu khách sạn và chỉ dành cho vai trò hệ thống.
-Ghi nhận khoản thu chưa tự gia hạn gói. Xem [báo cáo Manager](../tasks/manager-completion.md)
-và [trang lỗi LOHA](../tasks/error-pages.md).
+Ghi nhận khoản thu chưa tự gia hạn gói. Xem [báo cáo Manager](../docs/reports/manager/manager-completion.md)
+và [trang lỗi LOHA](../docs/reports/frontend/error-pages.md).
 
 ## Chuẩn viết API dùng common
 
@@ -282,19 +435,19 @@ from common import CommonMethodView
 from ..security import require_tenant
 
 
-class ListGuestsView(CommonMethodView):
+class ListReservationsView(CommonMethodView):
     @staticmethod
-    @require_tenant("guests.view")
+    @require_tenant("reservations.view")
     def dispatch_request(tenant_id):
-        return ListGuestsView.json_response({"guests": load_guests(tenant_id)})
+        return {"bookings": booking_snapshot(tenant_id)["bookings"]}
 ```
 
 Đăng ký trong `urls.py` theo mẫu:
 
 ```python
 URL.register(
-    booking, URL.LIST_GUESTS, "pms_api.bookings.routes:ListGuestsView",
-    endpoint="list_guests", methods=["GET"],
+    booking, URL.LIST_RESERVATIONS, "pms_api.bookings.routes:ListReservationsView",
+    endpoint="list_reservations", methods=["GET"],
 )
 ```
 
@@ -316,4 +469,30 @@ URL.register(
 
 Chuẩn hóa lần này giữ nguyên 117 rule, endpoint và HTTP methods, không đổi
 schema, không thêm dependency. Dockerfile đã copy `common/` vào image backend.
-Chi tiết kiểm chứng: [báo cáo chuẩn API](../tasks/api-standardization.md).
+Chi tiết kiểm chứng: [báo cáo chuẩn API](../docs/reports/backend/api-standardization.md).
+
+## Gói tùy chỉnh, số phòng đăng ký và mã loại phòng — 10/10/2026
+
+Chạy `python manage.py db upgrade` trong backend Coolify với biến môi trường runtime
+của Coolify, rồi kiểm tra `/api/ready`. Migration `0015_plan_room_limits` nối sau
+`0014_manager_customers`, tiếp theo là `0016_room_type_codes`. Cần nâng cấp backend
+trước frontend vì model mới đọc `deleted`, `room_count` và `room_types.code`.
+
+- Super Admin tạo/sửa/xóa khỏi danh sách bán/khôi phục gói tùy chỉnh. FREE/PRO là
+  hai gói mặc định; mã gói đã có không đổi. Xóa giữ thuê bao và lịch sử cũ.
+- Marketing lấy giá và tính năng từ `GET /api/public/plans`. Backend không cache;
+  frontend tải lại khi mở trang hoặc quay lại tab. Lỗi API có nút thử lại.
+- Mỗi thuê bao có số phòng đăng ký hữu hạn (`roomCount`); đăng ký 10 phòng chỉ dùng
+  tối đa 10 phòng, đồng thời không vượt trần gói. Khách sạn chưa cấp gói không thêm
+  phòng được. Giá tháng/năm vẫn là giá quản trị nhập, không tự nhân theo số phòng.
+- Nâng cấp giữ quota cũ nếu có trần; thuê bao trước đây không có trần nhận số phòng
+  đang hoạt động (ít nhất một). Kiểm tra và điều chỉnh theo số phòng thực tế đã
+  đăng ký với khách sạn sau nâng cấp. Không xóa phòng hoặc sửa tiền đã ghi nhận.
+- Mã loại phòng do người dùng nhập tách khỏi UUID, giữ cả `2` và `02`. Dữ liệu cũ
+  chưa có mã để trống; liên kết phòng/booking/Channex vẫn dùng UUID.
+- Đơn vị tính mặc định được lưu cho từng khách sạn; giữ đơn vị tùy chỉnh và không
+  tự bật lại đơn vị đã tắt. Settings lưu trực tiếp; không cần nút Thêm mới dư.
+- Booking tạo trực tiếp mặc định VND; OTA giữ tiền tệ Channex gửi về, không suy ra
+  từ quốc tịch khách. Hiện hỗ trợ VND/USD; cần tỷ giá cấu hình khi khác tiền cơ sở.
+
+Xem chi tiết payload và quyền tại [API_CONTRACT.md](API_CONTRACT.md).

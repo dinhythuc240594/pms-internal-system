@@ -148,6 +148,7 @@ class DomainTestCase(unittest.TestCase):
                         status="active",
                         start_date=utcnow(),
                         end_date=utcnow() + datetime.timedelta(days=365),
+                        room_count=100,
                     )
                 )
             db.session.flush()

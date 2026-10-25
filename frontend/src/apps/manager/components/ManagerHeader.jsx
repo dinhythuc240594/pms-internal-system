@@ -1,11 +1,16 @@
+import { t as tUi, tr as labelUi, useI18n } from '../../../shared/i18n/useI18n.js';
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { Search, LogOut, UserRound, ExternalLink, ChevronDown, Sun, Moon, Menu } from 'lucide-react';
 import { usePms } from '../../pms/data/usePms';
+import LanguageSwitcher from '../../../shared/i18n/LanguageSwitcher.jsx';
 
 const PAGE_TITLES = {
   dashboard: ['Tổng quan hệ thống', 'Theo dõi khách sạn và hoạt động quản trị.'],
   tenants: ['Khách hàng & khách sạn', 'Hồ sơ liên hệ, tài khoản và dịch vụ SaaS.'],
+  channex: ['Channex & Kênh OTA', 'Kết nối khách sạn, quản lý kênh bán và đồng bộ với PMS.'],
+  ota: ['Kênh OTA của khách sạn', 'Cấu hình Channex và liên kết phòng theo từng khách sạn.'],
+  'ota-history': ['Lịch sử đồng bộ OTA', 'Theo dõi yêu cầu Channex của khách sạn đang mở.'],
   billing: ['Gói cước & hóa đơn', 'Quản lý thuê bao và lịch sử thay đổi gói.'],
   features: ['Tính năng hệ thống', 'Theo dõi tính năng và quyền sử dụng của khách sạn.'],
   users: ['Nhân sự nội bộ', 'Tài khoản và vai trò quản trị hệ thống.'],
@@ -13,7 +18,8 @@ const PAGE_TITLES = {
   profile: ['Hồ sơ cá nhân', 'Thông tin tài khoản quản trị của bạn.'],
 };
 
-export default function ManagerHeader({ searchQuery, setSearchQuery, isDarkMode, toggleDarkMode, currentRole, onOpenNavigation }) {
+export default function ManagerHeader({ searchQuery, setSearchQuery, isDarkMode, toggleDarkMode, currentRole, mobileNavOpen, onOpenNavigation }) {
+  useI18n();
   const { logout, user } = usePms();
   const location = useLocation();
   const navigate = useNavigate();
@@ -46,21 +52,22 @@ export default function ManagerHeader({ searchQuery, setSearchQuery, isDarkMode,
   return (
     <header className="manager-header">
       <div className="manager-header-title">
-        <button className="manager-icon-button manager-mobile-toggle" type="button" aria-label="Mở menu quản trị" aria-haspopup="dialog" aria-controls="manager-mobile-nav" onClick={onOpenNavigation}><Menu size={20} /></button>
-        <div><span className="manager-header-breadcrumb">Quản trị <span>/</span> {title}</span><h1>{title}</h1><p>{subtitle}</p></div>
+        <button className="manager-icon-button manager-mobile-toggle" type="button" aria-label={tUi("manager.openMenu")} aria-haspopup="dialog" aria-expanded={mobileNavOpen} aria-controls="manager-mobile-nav" onClick={onOpenNavigation}><Menu size={20} /></button>
+        <div><span className="manager-header-breadcrumb">{tUi("manager.admin")}{' '}<span>/</span> {labelUi(title)}</span><h1>{labelUi(title)}</h1><p>{labelUi(subtitle)}</p></div>
       </div>
       <div className="manager-header-actions">
-        {searchable && <label className="manager-header-search"><Search size={17} aria-hidden="true" /><input type="search" aria-label="Tìm trong trang hiện tại" placeholder="Tìm trong trang…" value={searchQuery} onChange={event => setSearchQuery(event.target.value)} /></label>}
-        <button className="manager-icon-button" type="button" onClick={toggleDarkMode} aria-label={isDarkMode ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối'} title={isDarkMode ? 'Giao diện sáng' : 'Giao diện tối'}>{isDarkMode ? <Sun size={19} /> : <Moon size={19} />}</button>
+        <LanguageSwitcher compact />
+        {searchable && <label className="manager-header-search"><Search size={17} aria-hidden="true" /><input type="search" aria-label={tUi("manager.searchLabel")} placeholder={tUi("manager.searchPlaceholder")} value={searchQuery} onChange={event => setSearchQuery(event.target.value)} /></label>}
+        <button className="manager-icon-button" type="button" onClick={toggleDarkMode} aria-label={isDarkMode ? tUi("manager.switchLight") : tUi("manager.switchDark")} title={isDarkMode ? tUi("manager.light") : tUi("manager.dark")}>{isDarkMode ? <Sun size={19} /> : <Moon size={19} />}</button>
         <div className="manager-profile" ref={profileRef}>
-          <button type="button" className="manager-profile-trigger" ref={profileButton} aria-label="Menu tài khoản" aria-expanded={profileOpen} aria-controls="manager-profile-menu" onClick={() => setProfileOpen(!profileOpen)}>
+          <button type="button" className="manager-profile-trigger" ref={profileButton} aria-label={tUi("header.accountMenu")} aria-expanded={profileOpen} aria-controls="manager-profile-menu" onClick={() => setProfileOpen(!profileOpen)}>
             <span className="manager-avatar">{initials}</span><span className="manager-profile-copy"><strong>{user?.name || roleName}</strong><small>{roleName}</small></span><ChevronDown size={15} aria-hidden="true" />
           </button>
           {profileOpen && <div id="manager-profile-menu" className="manager-profile-menu">
             <div className="manager-profile-identity"><strong>{user?.name}</strong><span>{user?.email}</span><small>{roleName}</small></div>
-            <Link to="/manager/profile" onClick={() => setProfileOpen(false)}><UserRound size={17} />Hồ sơ cá nhân</Link>
-            <Link to="/id/dashboard" onClick={() => setProfileOpen(false)}><ExternalLink size={17} />Mở ứng dụng PMS</Link>
-            <button type="button" onClick={signOut} disabled={signingOut}><LogOut size={17} />{signingOut ? 'Đang đăng xuất…' : 'Đăng xuất'}</button>
+            <Link to="/manager/profile" onClick={() => setProfileOpen(false)}><UserRound size={17} />{tUi("nav.profile")}</Link>
+            <Link to="/id/dashboard" onClick={() => setProfileOpen(false)}><ExternalLink size={17} />{tUi("manager.openPms")}</Link>
+            <button type="button" onClick={signOut} disabled={signingOut}><LogOut size={17} />{signingOut ? tUi("header.loggingOut") : tUi("header.logout")}</button>
           </div>}
         </div>
       </div>

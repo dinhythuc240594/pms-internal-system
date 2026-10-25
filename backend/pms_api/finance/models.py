@@ -118,6 +118,9 @@ class CashDocument(MoneySnapshot, db.Model):
     currency = db.Column(db.String(3), nullable=False)
     description = db.Column(db.String(500), nullable=False)
     effective_date = db.Column(db.Date, nullable=False)
+    category_id = db.Column(db.String(40))
+    category_name = db.Column(db.String(160))
+    category_type = db.Column(db.String(7))
     reversal_of_id = db.Column(db.String(40))
     user_id = db.Column(db.String(40), db.ForeignKey("users.id"), nullable=False)
     created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utcnow)
@@ -126,6 +129,7 @@ class CashDocument(MoneySnapshot, db.Model):
         UniqueConstraint("tenant_id", "reversal_of_id", name="uq_cash_documents_reversal"),
         ForeignKeyConstraint(["tenant_id", "fund_id"], ["masters.tenant_id", "masters.id"]),
         ForeignKeyConstraint(["tenant_id", "to_fund_id"], ["masters.tenant_id", "masters.id"]),
+        ForeignKeyConstraint(["tenant_id", "category_id"], ["masters.tenant_id", "masters.id"]),
         ForeignKeyConstraint(
             ["tenant_id", "reversal_of_id"], ["cash_documents.tenant_id", "cash_documents.id"]
         ),
@@ -138,5 +142,67 @@ class CashDocument(MoneySnapshot, db.Model):
             "(kind = 'transfer' AND to_fund_id IS NOT NULL AND to_fund_id != fund_id) "
             "OR kind != 'transfer'",
             name="transfer_funds",
+        ),
+        CheckConstraint(
+            "(category_id IS NULL AND category_name IS NULL AND category_type IS NULL) OR "
+            "(category_id IS NOT NULL AND category_name IS NOT NULL "
+            "AND length(btrim(category_name)) > 0 AND category_type IS NOT NULL AND "
+            "((kind = 'receipt' AND category_type = 'INCOME') "
+            "OR (kind = 'expense' AND category_type = 'EXPENSE') "
+            "OR (kind = 'reversal' AND category_type IN ('INCOME','EXPENSE'))))",
+            name="category_snapshot",
+        ),
+    )
+
+
+class CommissionSettlement(MoneySnapshot, db.Model):
+    __tablename__ = "commission_settlements"
+    id = db.Column(db.String(40), primary_key=True, default=uid)
+    tenant_id = db.Column(db.String(40), db.ForeignKey("tenants.id"), nullable=False)
+    reservation_id = db.Column(db.String(40), nullable=False)
+    source_id = db.Column(db.String(40))
+    source_name = db.Column(db.String(160), nullable=False)
+    percent = db.Column(db.Numeric(7, 4), nullable=False)
+    room_net = db.Column(db.Numeric(19, 4), nullable=False)
+    base_room_net = db.Column(db.Numeric(19, 4), nullable=False)
+    amount = db.Column(db.Numeric(19, 4), nullable=False)
+    currency = db.Column(db.String(3), nullable=False)
+    business_date = db.Column(db.Date, nullable=False)
+    user_id = db.Column(db.String(40), db.ForeignKey("users.id"), nullable=False)
+    created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utcnow)
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "id"),
+        UniqueConstraint("tenant_id", "reservation_id"),
+        ForeignKeyConstraint(
+            ["tenant_id", "reservation_id"], ["reservations.tenant_id", "reservations.id"]
+        ),
+        CheckConstraint("percent BETWEEN 0 AND 100", name="percent"),
+        CheckConstraint(
+            "room_net >= 0 AND base_room_net >= 0 AND amount >= 0 AND base_amount >= 0",
+            name="nonnegative_amounts",
+        ),
+        CheckConstraint(
+            "currency IN ('VND','USD') AND base_currency IN ('VND','USD') AND exchange_rate > 0",
+            name="currency_snapshot",
+        ),
+    )
+
+
+class CommissionPayout(db.Model):
+    __tablename__ = "commission_payouts"
+    id = db.Column(db.String(40), primary_key=True, default=uid)
+    tenant_id = db.Column(db.String(40), db.ForeignKey("tenants.id"), nullable=False)
+    commission_id = db.Column(db.String(40), nullable=False)
+    cash_document_id = db.Column(db.String(40), nullable=False)
+    created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utcnow)
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "id"),
+        UniqueConstraint("tenant_id", "cash_document_id"),
+        ForeignKeyConstraint(
+            ["tenant_id", "commission_id"],
+            ["commission_settlements.tenant_id", "commission_settlements.id"],
+        ),
+        ForeignKeyConstraint(
+            ["tenant_id", "cash_document_id"], ["cash_documents.tenant_id", "cash_documents.id"]
         ),
     )

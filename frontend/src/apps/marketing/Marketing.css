@@ -9,8 +9,10 @@
 .loha-price-cycle { display: flex; padding: 4px; border: 1px solid var(--loha-line); border-radius: 6px; background: var(--loha-soft); gap: 4px; }
 .loha-price-cycle button { border: 0; min-height: 44px; padding: 8px 20px; background: transparent; border-radius: 4px; color: var(--loha-muted); font-size: 13px; font-weight: 600; cursor: pointer; }
 .loha-price-cycle button[aria-pressed="true"] { background: var(--loha-ink); color: #fff; }
-.loha-price-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
-.loha-price-card { border: 1px solid var(--loha-line); border-radius: 8px; padding: 36px; display: flex; flex-direction: column; }
+.loha-price-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 24px; }
+.loha-price-card { min-width: 0; overflow-wrap: anywhere; border: 1px solid var(--loha-line); border-radius: 8px; padding: 36px; display: flex; flex-direction: column; }
+.loha-price-state { padding: 24px; border: 1px solid var(--loha-line); border-radius: 8px; color: var(--loha-muted); line-height: 1.8; overflow-wrap: anywhere; }
+.loha-price-state > button { margin-top: 16px; }
 .loha-price-card-pro { background: var(--loha-ink); color: #fff; border-color: var(--loha-ink); }
 .loha-price-card-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .loha-price-card-top > span { border: 1px solid var(--loha-line); padding: 4px 10px; border-radius: 4px; color: var(--loha-muted); font-size: 10px; font-weight: 600; }

@@ -92,7 +92,7 @@ class ManagerProfileTests(DomainTestCase):
                     return self.request(method, path, body, client=other, headers=csrf)
 
                 with patch(
-                    "pms_api.auth.routes.authenticate", side_effect=pause_authenticated_request
+                    "pms_api.auth.application.authenticate", side_effect=pause_authenticated_request
                 ):
                     with ThreadPoolExecutor(max_workers=1) as pool:
                         future = pool.submit(pending_request)

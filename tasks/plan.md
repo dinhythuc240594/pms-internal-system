@@ -10,11 +10,11 @@ Ngày lập: 03/10/2026. Phạm vi: triển khai nghiệp vụ backend và nối
 - FE-03/FE-04 còn thiếu chi tiết booking, sổ thanh toán, POS và thu chi thật. Không chuyển dữ liệu demo thành dữ liệu production tự động.
 - Hệ thống chỉ có **hai gói dịch vụ** theo yêu cầu người dùng. Tên, quyền từng gói và chính sách dùng thử cần chốt trước khi triển khai billing/gating; không sao chép danh sách gói mẫu trong tài liệu thành gói thực.
 
-Nguồn yêu cầu: [thiết kế cuối cùng](../pms_system_design_final.md), [báo cáo FE](../PMS_GAP_REPORT.md). Báo cáo FE có phần hiện trạng cũ; tình trạng backend ở trên đã được đối chiếu lại với source.
+Nguồn yêu cầu: [thiết kế cuối cùng](../pms_system_design_final.md), [báo cáo FE](../docs/reports/reviews/PMS_GAP_REPORT.md). Báo cáo FE có phần hiện trạng cũ; tình trạng backend ở trên đã được đối chiếu lại với source.
 
 ## Cập nhật triển khai ngày 03/10/2026
 
-BE-01 đến BE-05 đã có migration, API, kết nối frontend và kiểm thử PostgreSQL local. Login/session, danh mục, booking và tiền trong các luồng này dùng dữ liệu server; localStorage demo không còn là nguồn dữ liệu vận hành. Giữ bố cục Client hiện có. Xem [báo cáo triển khai](../BE01_05_IMPLEMENTATION_REPORT.md) và [todo.md](todo.md).
+BE-01 đến BE-05 đã có migration, API, kết nối frontend và kiểm thử PostgreSQL local. Login/session, danh mục, booking và tiền trong các luồng này dùng dữ liệu server; localStorage demo không còn là nguồn dữ liệu vận hành. Giữ bố cục Client hiện có. Xem [báo cáo triển khai](../docs/reports/backend/BE01_05_IMPLEMENTATION_REPORT.md) và [todo.md](todo.md).
 
 Chính sách đã chốt: **chặn checkout đến khi thanh toán đủ**; trả phòng chuyển phòng sang bẩn. BE-06 trở đi và triển khai Coolify vẫn là công việc tiếp theo.
 

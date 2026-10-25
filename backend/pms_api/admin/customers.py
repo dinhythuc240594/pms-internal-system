@@ -2,7 +2,8 @@ import re
 
 from sqlalchemy import func, select
 
-from ..auth.routes import tenant_json, validate_email
+from pms_api.auth.application import tenant_json, validate_email
+
 from ..catalog.models import PhysicalRoom
 from ..core_models import Tenant, TenantUser, User
 from ..extensions import db

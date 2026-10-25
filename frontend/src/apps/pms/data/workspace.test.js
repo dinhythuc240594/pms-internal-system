@@ -7,6 +7,21 @@ const session = userId => ({ userId, expiresAt: now + 3600000 });
 const actor = (userId = 'owner', tenantId = A) => ({ session: session(userId), tenantId, now });
 const booking = (id, checkIn = '2026-12-01', checkOut = '2026-12-02') => ({ type: 'booking.create', id, input: { guest: id, source: 'Direct', room: '101', checkIn, checkOut } });
 
+test('no-show requires arrival day, stays terminal and preserves the booking price', () => {
+  const original = seedWorkspace(null, now);
+  original.byTenant[A].bookings = [];
+  const due = applyCommand(original, booking('due', '2026-10-02', '2026-10-03'), actor());
+  const price = due.byTenant[A].bookings[0].total;
+  const closed = applyCommand(due, { type: 'booking.status', id: 'due', status: 'NO_SHOW' }, actor());
+  assert.equal(closed.byTenant[A].bookings[0].status, 'NO_SHOW');
+  assert.equal(closed.byTenant[A].bookings[0].total, price);
+  assert.equal(closed.byTenant[A].bookings[0].noShowAt, new Date(now).toISOString());
+  assert.throws(() => applyCommand(closed, { type: 'booking.status', id: 'due', status: 'IN_HOUSE' }, actor()));
+  assert.doesNotThrow(() => applyCommand(closed, booking('replacement', '2026-10-02', '2026-10-03'), actor()));
+  const future = applyCommand(original, booking('future'), actor());
+  assert.throws(() => applyCommand(future, { type: 'booking.status', id: 'future', status: 'NO_SHOW' }, actor()), /Chưa đến ngày/);
+});
+
 test('membership edits take effect immediately at one hotel and cannot change global identity', () => {
   const original = seedWorkspace(null, now);
   const person = original.users.find(u => u.id === 'frontdesk');

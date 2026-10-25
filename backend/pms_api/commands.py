@@ -14,7 +14,7 @@ from werkzeug.security import generate_password_hash
 from .config import BACKEND_DIR
 from .core_models import Tenant, TenantUser, User
 from .extensions import db
-from .security import set_context
+from .security import GLOBAL_ROLES, ApiError, set_context
 
 
 @click.command("init-admin")
@@ -23,7 +23,7 @@ from .security import set_context
 @click.option("--password", prompt=True, hide_input=True, confirmation_prompt=True)
 @with_appcontext
 def init_admin(email, name, password):
-    from .auth.routes import validate_email, validate_password
+    from pms_api.auth.application import validate_email, validate_password
 
     email = validate_email(email)
     validate_password(password)
@@ -128,12 +128,13 @@ def register_commands(app):
     app.cli.add_command(init_admin)
     app.cli.add_command(seed_local)
     app.cli.add_command(process_channel_jobs)
+    app.cli.add_command(process_housekeeping_plans)
 
 
 @click.command("db-check")
 @with_appcontext
 def database_check():
-    from .health import database_status
+    from pms_api.health_application import database_status
 
     status = database_status()
     if status["status"] != "ok":
@@ -153,6 +154,7 @@ def process_channel_jobs(tenant, limit, watch, interval):
     from .channels.models import ChannelConnection, ChannelJob
     from .channels.service import process_jobs
 
+    current_app.logger.setLevel("INFO")
     while True:
         try:
             set_context(is_system=True)
@@ -180,6 +182,61 @@ def process_channel_jobs(tenant, limit, watch, interval):
             if not watch:
                 raise click.ClickException("Channel worker database is unavailable.") from None
             click.echo("Channel worker database unavailable; waiting to retry.", err=True)
+        if not watch:
+            return
+        time.sleep(interval)
+
+
+@click.command("process-housekeeping-plans")
+@click.option(
+    "--actor-email",
+    required=True,
+    help="Existing active SYSTEM_MANAGER or SUPER_ADMIN; used for work-log attribution.",
+)
+@click.option("--tenant", help="Limit generation to one hotel; omit for all active hotels.")
+@click.option("--watch", is_flag=True, help="Keep polling; run as a separate worker service.")
+@click.option("--interval", type=click.IntRange(5, 86400), default=900, show_default=True)
+@with_appcontext
+def process_housekeeping_plans(actor_email, tenant, watch, interval):
+    """Generate each hotel's current local-day plan. Default: one polling pass.
+
+    Trusted operator command; it creates no account and does not authenticate by password.
+    Polls reuse task intents, including work already created by checkout or the API.
+    """
+    from .housekeeping.service import process_day_plan
+
+    while True:
+        try:
+            actor = db.session.scalar(
+                select(User).where(
+                    User.email == actor_email.strip().lower(),
+                    User.active.is_(True),
+                    User.global_role.in_(GLOBAL_ROLES),
+                )
+            )
+            if actor is None:
+                db.session.rollback()
+                raise click.ClickException(
+                    "Actor must be an existing active SYSTEM_MANAGER or SUPER_ADMIN."
+                )
+            actor_id = actor.id
+            set_context(actor_id, is_system=True)
+            statement = select(Tenant.id).where(Tenant.status == "active").order_by(Tenant.id)
+            if tenant:
+                statement = statement.where(Tenant.id == tenant)
+            tenant_ids = db.session.scalars(statement).all()
+            db.session.rollback()
+            count = sum(process_day_plan(tenant_id, actor_id) for tenant_id in tenant_ids)
+            if count or not watch:
+                click.echo(f"Created {count} housekeeping tasks.")
+        except ApiError:
+            db.session.rollback()
+            raise click.ClickException("Housekeeping worker actor is unavailable.") from None
+        except DBAPIError:
+            db.session.rollback()
+            if not watch:
+                raise click.ClickException("Housekeeping worker database is unavailable.") from None
+            click.echo("Housekeeping worker database unavailable; waiting to retry.", err=True)
         if not watch:
             return
         time.sleep(interval)

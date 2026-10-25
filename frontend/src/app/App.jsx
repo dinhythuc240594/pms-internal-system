@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 
 // ==========================================
 // THƯ MỤC LAYOUTS
@@ -12,6 +12,7 @@ import ManagerLayout from '../apps/manager/layouts/ManagerLayout';
 import { RouteGuard, LayoutGuard, AccessDialog } from '../shared/components/AccessControl';
 import LohaErrorPage from '../shared/components/LohaErrorPage';
 import RouteErrorBoundary from '../shared/components/RouteErrorBoundary';
+import LegacyI18nBridge from '../shared/i18n/LegacyI18nBridge';
 
 // ==========================================
 // THƯ MỤC PAGES / MARKETING
@@ -32,11 +33,11 @@ import ARI from '../apps/pms/rates-inventory/pages/ARI';
 import RoomDiagram from '../apps/pms/rooms/pages/RoomDiagram';
 import Reservations from '../apps/pms/reservations/pages/Reservations';
 import Rooms from '../apps/pms/rooms/pages/Rooms';
-import Guests from '../apps/pms/rooms/pages/Guests';
 import Settings from '../apps/pms/settings/pages/Settings';
 import Profile from '../apps/pms/profile/pages/Profile';
 import MatrixRate from '../apps/pms/rates-inventory/pages/MatrixRate';
 import Cashflow from '../apps/pms/finance/pages/Cashflow';
+import Commissions from '../apps/pms/finance/pages/Commissions';
 import Rates from '../apps/pms/rates-inventory/pages/Rates';
 import Vouchers from '../apps/pms/rates-inventory/pages/Vouchers';
 import RatesARI from '../apps/pms/rates-inventory/pages/RatesARI';
@@ -52,8 +53,7 @@ import InventoryCheck from '../apps/pms/inventory/pages/InventoryCheck';
 import InventoryStock from '../apps/pms/inventory/pages/InventoryStock';
 import Sales from '../apps/pms/finance/pages/Sales';
 import UserManagement from '../apps/pms/user-management/pages/UserManagement';
-import OTA from '../apps/pms/channel-manager/pages/OTA';
-import OTAHistory from '../apps/pms/channel-manager/pages/OTAHistory';
+import { clientOtaSettingsPath } from '../apps/pms/channel-manager/clientChannelOperations';
 import Reports from '../apps/pms/reports/pages/Reports';
 import { PmsProvider } from '../apps/pms/data/PmsProvider';
 
@@ -62,6 +62,8 @@ import { PmsProvider } from '../apps/pms/data/PmsProvider';
 // ==========================================
 import AdminDashboard from '../apps/manager/dashboard/pages/AdminDashboard';
 import AdminTenants from '../apps/manager/tenants/pages/AdminTenants';
+import ManagerOTA from '../apps/manager/tenants/pages/ManagerOTA';
+import ManagerChannex from '../apps/manager/channex/pages/ManagerChannex';
 import AdminBilling from '../apps/manager/billing/pages/AdminBilling';
 import AdminFeatures from '../apps/manager/features/pages/AdminFeatures';
 import AdminUsers from '../apps/manager/users/pages/AdminUsers';
@@ -75,6 +77,11 @@ import AdminProfile from '../apps/manager/profile/pages/AdminProfile';
  * - Nhánh `/` dành cho Marketing Site.
  * - Nhánh `/id/` mô phỏng Subdomain cho App (id.domain).
  */
+function OtaSettingsRedirect({ history = false }) {
+  const { search } = useLocation();
+  return <Navigate to={clientOtaSettingsPath(search, history ? 'history' : 'channels')} replace />;
+}
+
 function App() {
   return (
     <PmsProvider><BrowserRouter>
@@ -108,13 +115,13 @@ function App() {
           <Route path="room-diagram" element={<RoomDiagram />} />
           <Route path="ari" element={<ARI />} />
           <Route path="rooms" element={<Rooms />} />
-          <Route path="guests" element={<Guests />} />
           <Route path="reservations" element={<Reservations />} />
           <Route path="settings" element={<Settings />} />
           <Route path="profile" element={<Profile />} />
           <Route path="matrix-rate" element={<MatrixRate />} />
           <Route path="cashflow" element={<Cashflow />} />
           <Route path="cashflow/:tab" element={<Cashflow />} />
+          <Route path="commissions" element={<Commissions />} />
           <Route path="gia" element={<Rates />} />
           <Route path="gia/vouchers" element={<Vouchers />} />
           <Route path="gia/ari" element={<RatesARI />} />
@@ -134,11 +141,12 @@ function App() {
           <Route path="inventory/stock" element={<InventoryStock />} />
           <Route path="sales" element={<Sales />} />
           <Route path="users" element={<UserManagement />} />
-          <Route path="ota" element={<OTA />} />
-          <Route path="ota-history" element={<OTAHistory />} />
+          <Route path="ota" element={<OtaSettingsRedirect />} />
+          <Route path="ota-history" element={<OtaSettingsRedirect history />} />
           <Route path="reports" element={<Reports />} />
           <Route path="reports/revenue" element={<Reports />} />
           <Route path="reports/occupancy" element={<Reports />} />
+          {['source', 'room', 'roomType', 'cancellations', 'nationality', 'discounts'].map(report => <Route key={report} path={`reports/${report}`} element={<Reports />} />)}
           
           {/* Tự động chuyển hướng (Redirect) nếu user truy cập thẳng `/id` */}
           <Route index element={<Navigate to="/id/dashboard" replace />} />
@@ -154,6 +162,9 @@ function App() {
           <Route element={<RouteGuard />}>
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="tenants" element={<AdminTenants />} />
+          <Route path="channex" element={<ManagerChannex />} />
+          <Route path="tenants/:tenantId/ota" element={<ManagerOTA />} />
+          <Route path="tenants/:tenantId/ota-history" element={<ManagerOTA history />} />
           <Route path="billing" element={<AdminBilling />} />
           <Route path="features" element={<AdminFeatures />} />
           <Route path="users" element={<AdminUsers />} />
@@ -171,6 +182,7 @@ function App() {
         <Route path="*" element={<LohaErrorPage status={404} fullPage />} />
       </Routes></RouteErrorBoundary>
       <AccessDialog />
+      <LegacyI18nBridge />
     </BrowserRouter></PmsProvider>
   );
 }

@@ -36,3 +36,6 @@ __pycache__/
 .ruff_cache/
 .local-postgres/
 /.tools/
+/.agents
+*.md
+/backend/tests

@@ -1,0 +1,5 @@
+backend/pms_api/inventory/application.py
+backend/pms_api/inventory/domain.py
+frontend/src/apps/pms/reservations/components/BookingDetailPanel.css
+frontend/src/apps/pms/reservations/components/BookingDetailPanel.jsx
+frontend/src/apps/pms/reservations/components/BookingDetailPanel.test.js

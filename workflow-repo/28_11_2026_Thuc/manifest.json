@@ -1,0 +1,85 @@
+{
+  "date": "2026-11-28",
+  "pusher": "Thuc",
+  "folder": "28_11_2026_Thuc",
+  "title": "Thuê bao, billing và hạn mức phòng + Quản trị tenant, tài khoản, tính năng và nhật ký",
+  "branch": "work/2026-11-28-thuc-fullstack-21",
+  "backend_topic": "Thuê bao, billing và hạn mức phòng",
+  "frontend_topic": "Quản trị tenant, tài khoản, tính năng và nhật ký",
+  "backend_count": 3,
+  "frontend_count": 9,
+  "commit_message": "feat(fullstack): ban giao 28/11/2026 - Thuc",
+  "depends_on": [
+    "27_11_2026_Loc",
+    "27_11_2026_Thuc"
+  ],
+  "source_commit": "902a01f1ddfaca73a7466a3c5a3a06ddfbf84bb6",
+  "created_at": "2026-11-08T06:03:33+00:00",
+  "status": "prepared_not_pushed",
+  "file_count": 12,
+  "bytes": 148905,
+  "operation": "upsert_only",
+  "deletions": [],
+  "files": [
+    {
+      "path": "backend/pms_api/subscriptions.py",
+      "sha256": "d494f15a07b84c3dc4df0f1f4c64099d82b2cef1724e943ba2e3c22e8e36656f",
+      "size": 15842
+    },
+    {
+      "path": "backend/tests/test_manager_billing.py",
+      "sha256": "5bb5f307b7c41d99677835ee6823eebe083dcbb2b53262ef3a0432a192db9c6e",
+      "size": 26290
+    },
+    {
+      "path": "backend/tests/test_plan_room_limits.py",
+      "sha256": "d03d56b30cf037a1f73c8ea3a001cbc725eac22ae3b11c28afcfe2c7354b05bc",
+      "size": 17704
+    },
+    {
+      "path": "frontend/src/apps/manager/features/pages/featureOverride.js",
+      "sha256": "f597101018918e9dcda0c48dfba815193a8fcf0e0d50605d81248b7365f1ca61",
+      "size": 865
+    },
+    {
+      "path": "frontend/src/apps/manager/features/pages/featureOverride.test.js",
+      "sha256": "149c76b117160b062c321cce552555743f7691dda3a3d96a77e7aa20c8fd8663",
+      "size": 1583
+    },
+    {
+      "path": "frontend/src/apps/manager/tenants/pages/AdminTenants.css",
+      "sha256": "1d39d54c4c71979d592bc3329a026690380589ff3c3bd1cc1960462b725c7896",
+      "size": 11194
+    },
+    {
+      "path": "frontend/src/apps/manager/tenants/pages/AdminTenants.jsx",
+      "sha256": "7375ecbabfb2aab77be41cb4caee46108869320096a29a783485b3474af519a4",
+      "size": 27853
+    },
+    {
+      "path": "frontend/src/apps/manager/tenants/pages/AdminTenants.test.js",
+      "sha256": "76ceb8f12061a6e95960d920da14cacfc76c83c7ecb205e5b96424cd6254d6be",
+      "size": 19297
+    },
+    {
+      "path": "frontend/src/apps/manager/users/pages/AdminUsers.css",
+      "sha256": "fb801c8a462ca1d64334e7375142c31c7cc34a6f5c0a48f428e3249053de40f7",
+      "size": 2537
+    },
+    {
+      "path": "frontend/src/apps/manager/users/pages/AdminUsers.jsx",
+      "sha256": "b8ac6b3863ee86a16494ba8484b2049c7edd55f1f8bfa51f231e1d40f5105e58",
+      "size": 22190
+    },
+    {
+      "path": "frontend/src/apps/manager/users/pages/systemUserForm.js",
+      "sha256": "763424d77776cd244e8af4af18b932133201aa2bba7292616dd155d36058a332",
+      "size": 921
+    },
+    {
+      "path": "frontend/src/apps/manager/users/pages/systemUserForm.test.js",
+      "sha256": "8260d748fcbaccb63700cf6d5431e446e1c470b0df12bca1819aa58e355b6667",
+      "size": 2629
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "date": "2026-11-27",
+  "pusher": "Thuc",
+  "folder": "27_11_2026_Thuc",
+  "title": "Thông báo và sự kiện trong ứng dụng + Layout và Dashboard quản trị nền tảng",
+  "branch": "work/2026-11-27-thuc-fullstack-20",
+  "backend_topic": "Thông báo và sự kiện trong ứng dụng",
+  "frontend_topic": "Layout và Dashboard quản trị nền tảng",
+  "backend_count": 2,
+  "frontend_count": 6,
+  "commit_message": "feat(fullstack): ban giao 27/11/2026 - Thuc",
+  "depends_on": [
+    "26_11_2026_Loc",
+    "26_11_2026_Thuc"
+  ],
+  "source_commit": "902a01f1ddfaca73a7466a3c5a3a06ddfbf84bb6",
+  "created_at": "2026-11-08T06:03:33+00:00",
+  "status": "prepared_not_pushed",
+  "file_count": 8,
+  "bytes": 51349,
+  "operation": "upsert_only",
+  "deletions": [],
+  "files": [
+    {
+      "path": "backend/pms_api/notifications_application.py",
+      "sha256": "9889851fa38b183898eb418798a6942f5e07975b642fff6d2b9730ebd7fa5310",
+      "size": 9834
+    },
+    {
+      "path": "backend/tests/test_channel_notifications.py",
+      "sha256": "cbe53dd60df1c1a6df6bafd7401a24671ef97f84ef929ade78b30b501d457aef",
+      "size": 2863
+    },
+    {
+      "path": "frontend/src/apps/manager/components/ManagerHeader.jsx",
+      "sha256": "2120990a680d7f20b0946654d6c7a3d604a46ce827d4a439a3f50ce48b3dc5f0",
+      "size": 5707
+    },
+    {
+      "path": "frontend/src/apps/manager/dashboard/OperationsPanel.css",
+      "sha256": "14b6cf582ccaf49d03ae8438a22be4d969d88c400c4c3c4dac807d5218f0348b",
+      "size": 1946
+    },
+    {
+      "path": "frontend/src/apps/manager/dashboard/OperationsPanel.jsx",
+      "sha256": "2b49945386234633ede978f77262d2efadba067e1b758093cbbb1a9d03c992b5",
+      "size": 4164
+    },
+    {
+      "path": "frontend/src/apps/manager/dashboard/pages/AdminDashboard.css",
+      "sha256": "b64d32572ac024553672681a87a019cd0a64350c719d5c51e02726f572d80026",
+      "size": 11512
+    },
+    {
+      "path": "frontend/src/apps/manager/dashboard/pages/AdminDashboard.jsx",
+      "sha256": "6eb7d69fa02937e8571c6a7c2efc4427e096f37990efe68183c666d6e94d2bb9",
+      "size": 13459
+    },
+    {
+      "path": "frontend/src/apps/manager/theme.js",
+      "sha256": "8529856316a43b75b34788b6a92c42a2fafca09eb8f7510213b603c1f2c9057e",
+      "size": 1864
+    }
+  ]
+}

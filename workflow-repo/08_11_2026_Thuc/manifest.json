@@ -1,0 +1,52 @@
+{
+  "date": "2026-11-08",
+  "pusher": "Thuc",
+  "folder": "08_11_2026_Thuc",
+  "title": "Nền tảng backend, cấu hình và khởi động + Nền tảng React, router, dependency và build",
+  "branch": "work/2026-11-08-thuc-fullstack-01",
+  "backend_topic": "Nền tảng backend, cấu hình và khởi động",
+  "frontend_topic": "Nền tảng React, router, dependency và build",
+  "backend_count": 2,
+  "frontend_count": 4,
+  "commit_message": "feat(fullstack): ban giao 08/11/2026 - Thuc",
+  "depends_on": [],
+  "source_commit": "902a01f1ddfaca73a7466a3c5a3a06ddfbf84bb6",
+  "created_at": "2026-11-08T06:03:33+00:00",
+  "status": "prepared_not_pushed",
+  "file_count": 6,
+  "bytes": 135402,
+  "operation": "upsert_only",
+  "deletions": [],
+  "files": [
+    {
+      "path": "backend/patch.py",
+      "sha256": "65cb6c3d16b6675a2b363347d62e225fd9595a035c3dde7cbd0481f296ac15e4",
+      "size": 1778
+    },
+    {
+      "path": "backend/requirements.txt",
+      "sha256": "dfa24de8cf4cee00c8a6edc227b945d9eaa71f284c5fe7bfb9e25196b19520b2",
+      "size": 45802
+    },
+    {
+      "path": "frontend/.npmrc",
+      "sha256": "9f8200a55db29549d542fc59ee9fc509cfbf95d56e631257b2d2d1ee22d3cc90",
+      "size": 21
+    },
+    {
+      "path": "frontend/package-lock.json",
+      "sha256": "b80b14459d116d28712108a3ae80490b370bb4b3e630a6ef5cc83e7579873312",
+      "size": 86180
+    },
+    {
+      "path": "frontend/package.json",
+      "sha256": "3332669ed500aafdbe3e71983f705602639a81f800d5bdac09b4ba4b008b1207",
+      "size": 1094
+    },
+    {
+      "path": "frontend/vite.config.js",
+      "sha256": "875494f30b760f1e86ad4f4a042197e487ab3122e5f960b7e81cef2a929a3a60",
+      "size": 527
+    }
+  ]
+}

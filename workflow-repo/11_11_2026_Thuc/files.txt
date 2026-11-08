@@ -1,0 +1,10 @@
+backend/pms_api/catalog/__init__.py
+backend/pms_api/catalog/application.py
+backend/pms_api/catalog/domain.py
+backend/tests/test_catalog_validation.py
+backend/tests/test_client_settings.py
+frontend/src/shared/i18n/core.js
+frontend/src/shared/i18n/core.test.js
+frontend/src/shared/i18n/locales/legacy-zh-CN.json
+frontend/src/shared/i18n/locales/vi.json
+frontend/src/shared/i18n/locales/zh-CN.json

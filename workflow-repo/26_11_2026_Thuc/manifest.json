@@ -1,0 +1,85 @@
+{
+  "date": "2026-11-26",
+  "pusher": "Thuc",
+  "folder": "26_11_2026_Thuc",
+  "title": "Quản trị kênh, Airbnb và thống kê nhà cung cấp + Màn hình mapping, onboarding và lịch sử OTA",
+  "branch": "work/2026-11-26-thuc-fullstack-19",
+  "backend_topic": "Quản trị kênh, Airbnb và thống kê nhà cung cấp",
+  "frontend_topic": "Màn hình mapping, onboarding và lịch sử OTA",
+  "backend_count": 5,
+  "frontend_count": 7,
+  "commit_message": "feat(fullstack): ban giao 26/11/2026 - Thuc",
+  "depends_on": [
+    "25_11_2026_Loc",
+    "25_11_2026_Thuc"
+  ],
+  "source_commit": "902a01f1ddfaca73a7466a3c5a3a06ddfbf84bb6",
+  "created_at": "2026-11-08T06:03:33+00:00",
+  "status": "prepared_not_pushed",
+  "file_count": 12,
+  "bytes": 126286,
+  "operation": "upsert_only",
+  "deletions": [],
+  "files": [
+    {
+      "path": "backend/pms_api/admin/channex_airbnb_application.py",
+      "sha256": "ded4c741c8655c0a29c953b345410dbb430576ab9b9753c1bd08e012ebe3a593",
+      "size": 17092
+    },
+    {
+      "path": "backend/pms_api/admin/channex_channels.py",
+      "sha256": "467538fadb27499c51e1522e89ead17ae9bac9027b33bcbde8f3cf60acdd22e4",
+      "size": 1385
+    },
+    {
+      "path": "backend/pms_api/admin/channex_insights.py",
+      "sha256": "b39c30f1d217a9b529cabebcd7fa61ed171d85053f6fd13d670a5f32f51e33b1",
+      "size": 878
+    },
+    {
+      "path": "backend/tests/test_channex_channels.py",
+      "sha256": "e010fe62f6e012965778629b0371cbf97fb226c47f793170acd18f08bbf4af4e",
+      "size": 37229
+    },
+    {
+      "path": "backend/tests/test_channex_insights.py",
+      "sha256": "88cc74808f970f1293436902cc2bde2a345a663bff8c86b949c777518b686e39",
+      "size": 12106
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/pages/AriPreview.jsx",
+      "sha256": "c8aa5d32727349552e53710ead8f0af4bab66430b380036e4481ac5cb3c007f8",
+      "size": 3672
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/pages/AriPreview.test.js",
+      "sha256": "ab07b8788ad884554a61e9cc91243fa207062e0affb93056f48fcd61813a1802",
+      "size": 3456
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/pages/BookingOnboarding.jsx",
+      "sha256": "94ab1d36d97a13a209835d6689a0151017b27916ef8291ae447249f7c5c487f7",
+      "size": 4216
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/pages/OTAExceptions.css",
+      "sha256": "8ffece8d6f7edf94ebe883edf24fac452253ccb29585a10a11024273967b477e",
+      "size": 2050
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/pages/OTAExceptions.jsx",
+      "sha256": "778e3b624323622c2a699ac83a8e6f1d8a0599806b1d33a9908dbb2e7505e996",
+      "size": 12724
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/pages/OTAExceptions.test.js",
+      "sha256": "905de26e5c5a62768d93f638b6ef24273c62a69ba04e4f9d647350f082727400",
+      "size": 6181
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/pages/OTAHistory.jsx",
+      "sha256": "cb7477c75521811f08870f3d0b95a928b69c06b61e2c62193a71afa85e9e03f9",
+      "size": 25297
+    }
+  ]
+}

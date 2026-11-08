@@ -1,0 +1,6 @@
+backend/patch.py
+backend/requirements.txt
+frontend/.npmrc
+frontend/package-lock.json
+frontend/package.json
+frontend/vite.config.js

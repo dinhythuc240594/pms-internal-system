@@ -1,0 +1,90 @@
+{
+  "date": "2026-11-15",
+  "pusher": "Loc",
+  "folder": "15_11_2026_Loc",
+  "title": "Buồng phòng, lịch và phân công công việc + Dashboard, phòng và sơ đồ phòng",
+  "branch": "work/2026-11-15-loc-fullstack-08",
+  "backend_topic": "Buồng phòng, lịch và phân công công việc",
+  "frontend_topic": "Dashboard, phòng và sơ đồ phòng",
+  "backend_count": 9,
+  "frontend_count": 4,
+  "commit_message": "feat(fullstack): ban giao 15/11/2026 - Loc",
+  "depends_on": [
+    "14_11_2026_Loc",
+    "14_11_2026_Thuc"
+  ],
+  "source_commit": "902a01f1ddfaca73a7466a3c5a3a06ddfbf84bb6",
+  "created_at": "2026-11-08T06:03:33+00:00",
+  "status": "prepared_not_pushed",
+  "file_count": 13,
+  "bytes": 101686,
+  "operation": "upsert_only",
+  "deletions": [],
+  "files": [
+    {
+      "path": "backend/pms_api/housekeeping/domain.py",
+      "sha256": "330a4c829bd72fe53fe911500414db26a1c5415942f95d799e38a61b28320b9d",
+      "size": 4628
+    },
+    {
+      "path": "backend/pms_api/housekeeping/models.py",
+      "sha256": "6c743cba87c20e96ccb2cf5ed621c4acc5a3552a86675c252d60d5d95f1501a0",
+      "size": 5188
+    },
+    {
+      "path": "backend/pms_api/housekeeping/routes.py",
+      "sha256": "eea0ccb2da7e9fb82a8e70a8c95c3c96e39d2904d977c84563880124065d5848",
+      "size": 2769
+    },
+    {
+      "path": "backend/pms_api/housekeeping/service.py",
+      "sha256": "ac5940d75b247e8a781cfb4c65669472fc53b6b506e53030d78bdc4e9edb417a",
+      "size": 10125
+    },
+    {
+      "path": "backend/pms_api/housekeeping/urls.py",
+      "sha256": "fb5aed60f1035dafc087861a8ab92664ca65ab5d34460f594e95f76d60fa70f1",
+      "size": 2529
+    },
+    {
+      "path": "backend/tests/test_housekeeping_calendar.py",
+      "sha256": "4d5ff159cc52e697e18e2dd415dbace5400a7efca0918391d8b8304e5384bb27",
+      "size": 7486
+    },
+    {
+      "path": "backend/tests/test_housekeeping_integration.py",
+      "sha256": "be3401dde8f70eb2e5837b64f144ea249d5867034431f0c9bc15830ef2fa6aa2",
+      "size": 19168
+    },
+    {
+      "path": "backend/tests/test_housekeeping_shift_creation.py",
+      "sha256": "11eb3a458e63d003673721b924c912cc9701e4d8803fa5e9b99ba1ca9fea35f8",
+      "size": 4320
+    },
+    {
+      "path": "backend/tests/test_housekeeping_worker.py",
+      "sha256": "7344223a06dee8a90aa77e7109570462d7801fa9d429e3d6109146377dd9da55",
+      "size": 12319
+    },
+    {
+      "path": "frontend/src/apps/pms/dashboard/pages/Dashboard.css",
+      "sha256": "be869a70200c8db07a013e24f9d97094bf668717622a2b4f63ccc658e36393c9",
+      "size": 14912
+    },
+    {
+      "path": "frontend/src/apps/pms/dashboard/pages/Dashboard.jsx",
+      "sha256": "2f383d61327a4ec8b5bff6b98e73a9914e40b6590f7c83fb1843dac000812f87",
+      "size": 12199
+    },
+    {
+      "path": "frontend/src/apps/pms/rooms/roomLocations.js",
+      "sha256": "8098e178bcecf340522a0c311bc3e3caaa083ccea5146d28711d52673777c562",
+      "size": 1910
+    },
+    {
+      "path": "frontend/src/apps/pms/rooms/roomLocations.test.js",
+      "sha256": "c4c8ce17c26388a3d9d182d67ac4a36ee3babd91d61819d3b0274148cd550f3d",
+      "size": 4133
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+backend/pms_api/bookings/domain.py
+backend/pms_api/bookings/ports.py
+backend/pms_api/bookings/repository.py
+backend/tests/test_booking_values.py
+frontend/src/apps/marketing/Blog.css
+frontend/src/apps/marketing/Blog.jsx
+frontend/src/apps/marketing/Contact.css
+frontend/src/apps/marketing/Contact.jsx
+frontend/src/apps/marketing/Marketing.css
+frontend/src/apps/marketing/layouts/MarketingLayout.css
+frontend/src/apps/marketing/layouts/MarketingLayout.jsx

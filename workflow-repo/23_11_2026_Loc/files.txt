@@ -1,0 +1,14 @@
+backend/pms_api/admin/__init__.py
+backend/pms_api/admin/routes.py
+backend/pms_api/admin/urls.py
+backend/tests/test_manager_customers.py
+backend/tests/test_manager_profile.py
+backend/tests/test_manager_users.py
+frontend/src/apps/pms/settings/pages/BusinessSettings.css
+frontend/src/apps/pms/settings/pages/BusinessSettings.jsx
+frontend/src/apps/pms/settings/pages/InventorySettingsShell.css
+frontend/src/apps/pms/settings/pages/Settings.css
+frontend/src/apps/pms/settings/pages/Settings.jsx
+frontend/src/apps/pms/settings/pages/businessProfileForm.js
+frontend/src/apps/pms/settings/pages/businessProfileForm.test.js
+frontend/src/apps/pms/settings/pages/clientFormats.test.js

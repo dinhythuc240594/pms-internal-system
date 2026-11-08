@@ -1,0 +1,75 @@
+{
+  "date": "2026-11-25",
+  "pusher": "Loc",
+  "folder": "25_11_2026_Loc",
+  "title": "Cấu hình Channex và công cụ quản trị từ xa + Logic và trình bày tích hợp OTA",
+  "branch": "work/2026-11-25-loc-fullstack-18",
+  "backend_topic": "Cấu hình Channex và công cụ quản trị từ xa",
+  "frontend_topic": "Logic và trình bày tích hợp OTA",
+  "backend_count": 4,
+  "frontend_count": 6,
+  "commit_message": "feat(fullstack): ban giao 25/11/2026 - Loc",
+  "depends_on": [
+    "24_11_2026_Loc",
+    "24_11_2026_Thuc"
+  ],
+  "source_commit": "902a01f1ddfaca73a7466a3c5a3a06ddfbf84bb6",
+  "created_at": "2026-11-08T06:03:33+00:00",
+  "status": "prepared_not_pushed",
+  "file_count": 10,
+  "bytes": 83135,
+  "operation": "upsert_only",
+  "deletions": [],
+  "files": [
+    {
+      "path": "backend/pms_api/admin/channex.py",
+      "sha256": "9dc3aacdc9d092e9c9f9f894a90e8812c7ea514ac0bccdbceb15adce880a9860",
+      "size": 727
+    },
+    {
+      "path": "backend/pms_api/admin/channex_application.py",
+      "sha256": "aaf668d86a28262bb9d112b18dfa4d5f23b93e4c6db96397606f28b87ca25b4d",
+      "size": 4181
+    },
+    {
+      "path": "backend/pms_api/admin/channex_remote.py",
+      "sha256": "b9ba786a8c1062f882e8abcfb478bba7837ba506c6a4f15c01fe0adfeb7019ec",
+      "size": 1501
+    },
+    {
+      "path": "backend/tests/test_channex_remote.py",
+      "sha256": "d5b98f4432be376f8cdff25192381a1eaab87c4e64c4f6198ea20b1921156943",
+      "size": 38598
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/ChannelManager.css",
+      "sha256": "31c31206fad918ceaf4622a1984c9a9049964cb5715792ed0f2cad337cb551c1",
+      "size": 22356
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/IntegrationWorkspace.css",
+      "sha256": "d523590a17f3c58bb3493ead24383a3119add645594b31e63997c99d3e5a5515",
+      "size": 4135
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/catalog.js",
+      "sha256": "4ea551fc6daf4f3914aa8c436a66261d55a6baeb8c8795a7907c7bc27efd9285",
+      "size": 1964
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/catalog.test.js",
+      "sha256": "55867e1ae8e9f4cf95720d7d3fb0104159bd9f64c9c07db86224314316a3f0bc",
+      "size": 4282
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/clientChannelOperations.js",
+      "sha256": "f01b9f60b3d6ad1f36198ca65a2056fac8e6e890641dcbae83f34ab02199c8b5",
+      "size": 1817
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/clientChannelOperations.test.js",
+      "sha256": "af5a9a1189bec7f15d8a2fa25447fec4ddaea6685e2625f6ec7c8b674ba1dc6f",
+      "size": 3574
+    }
+  ]
+}

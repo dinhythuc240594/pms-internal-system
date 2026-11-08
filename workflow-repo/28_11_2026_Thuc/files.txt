@@ -1,0 +1,12 @@
+backend/pms_api/subscriptions.py
+backend/tests/test_manager_billing.py
+backend/tests/test_plan_room_limits.py
+frontend/src/apps/manager/features/pages/featureOverride.js
+frontend/src/apps/manager/features/pages/featureOverride.test.js
+frontend/src/apps/manager/tenants/pages/AdminTenants.css
+frontend/src/apps/manager/tenants/pages/AdminTenants.jsx
+frontend/src/apps/manager/tenants/pages/AdminTenants.test.js
+frontend/src/apps/manager/users/pages/AdminUsers.css
+frontend/src/apps/manager/users/pages/AdminUsers.jsx
+frontend/src/apps/manager/users/pages/systemUserForm.js
+frontend/src/apps/manager/users/pages/systemUserForm.test.js

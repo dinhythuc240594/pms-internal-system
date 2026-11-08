@@ -1,0 +1,130 @@
+{
+  "date": "2026-11-10",
+  "pusher": "Thuc",
+  "folder": "10_11_2026_Thuc",
+  "title": "Xác thực, vai trò, membership và cách ly khách sạn + Tiện ích dữ liệu, ngày, tiền và bản nháp",
+  "branch": "work/2026-11-10-thuc-fullstack-03",
+  "backend_topic": "Xác thực, vai trò, membership và cách ly khách sạn",
+  "frontend_topic": "Tiện ích dữ liệu, ngày, tiền và bản nháp",
+  "backend_count": 6,
+  "frontend_count": 15,
+  "commit_message": "feat(fullstack): ban giao 10/11/2026 - Thuc",
+  "depends_on": [
+    "09_11_2026_Loc",
+    "09_11_2026_Thuc"
+  ],
+  "source_commit": "902a01f1ddfaca73a7466a3c5a3a06ddfbf84bb6",
+  "created_at": "2026-11-08T06:03:33+00:00",
+  "status": "prepared_not_pushed",
+  "file_count": 21,
+  "bytes": 61042,
+  "operation": "upsert_only",
+  "deletions": [],
+  "files": [
+    {
+      "path": "backend/pms_api/auth/__init__.py",
+      "sha256": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6",
+      "size": 2
+    },
+    {
+      "path": "backend/pms_api/auth/application.py",
+      "sha256": "821a06fa4c99d2aaea8c63a39622e261c1ec41d0ff91c88233d43e4054ea2f64",
+      "size": 9068
+    },
+    {
+      "path": "backend/pms_api/auth/routes.py",
+      "sha256": "e48aa2df6a07e4ddb7a777c24498a15ab8a8cddd5fe584f6a4d7f617a8dd0c0e",
+      "size": 1399
+    },
+    {
+      "path": "backend/pms_api/auth/urls.py",
+      "sha256": "42b4522e3b4db5e0e26ed6e7a3125354093cd5dd1db38b4174e1e80efbdd2a7e",
+      "size": 1491
+    },
+    {
+      "path": "backend/pms_api/rls.py",
+      "sha256": "583a2263373ee0715c06fa22f9c14f00a62b838188b67681f520e74c513ded29",
+      "size": 2308
+    },
+    {
+      "path": "backend/tests/test_identity.py",
+      "sha256": "9868c0bc4d4248b712092d90f683d8e99ee62fa7acbb164baa5b462447d9600c",
+      "size": 9864
+    },
+    {
+      "path": "frontend/src/shared/drafts/DraftGuard.css",
+      "sha256": "e7eac3e614f26d8f773fba5837a8725976808aaf9ea341b502b29b090f585d3b",
+      "size": 1268
+    },
+    {
+      "path": "frontend/src/shared/drafts/guardManager.js",
+      "sha256": "e91bbdbeed7bbdecfe163d3ed3245b6e6546721e4630852c69c4496e181ec422",
+      "size": 3995
+    },
+    {
+      "path": "frontend/src/shared/drafts/guardManager.test.js",
+      "sha256": "b0242bdb98ae1f3411f64bcf06dfdbdd92e469aea92e705e61a59019c22f3c7b",
+      "size": 6382
+    },
+    {
+      "path": "frontend/src/shared/drafts/testDom.js",
+      "sha256": "83fdcd57a707ed609513015306f4369e3dda4fcc8b769afb01873c03d7186d20",
+      "size": 3223
+    },
+    {
+      "path": "frontend/src/shared/lib/chunkRecovery.js",
+      "sha256": "fc15dfb9b1d70cf22d588c56b0f53f3fe5057b4e74402a9259a94578fc0d8ca9",
+      "size": 2947
+    },
+    {
+      "path": "frontend/src/shared/lib/chunkRecovery.test.js",
+      "sha256": "797e774e45a1c4f3a767e46c919eb28bd9398aa336abb665d3247386d244b19e",
+      "size": 5802
+    },
+    {
+      "path": "frontend/src/shared/lib/date.js",
+      "sha256": "d61939085f278907e97a4f1758bad73f13651424be527c6d14b9dda8bdc7267e",
+      "size": 2295
+    },
+    {
+      "path": "frontend/src/shared/lib/date.test.js",
+      "sha256": "c5f0a520cf006b258c8a17690e67b91f3d91377b01166c13d716074b43b307a5",
+      "size": 2637
+    },
+    {
+      "path": "frontend/src/shared/lib/dateRangeQuery.js",
+      "sha256": "b65a8f1913e58b4c0a37eaabf79279c6ff32cf77b414e4264bf7a65b8ceda4cf",
+      "size": 587
+    },
+    {
+      "path": "frontend/src/shared/lib/dateRangeQuery.test.js",
+      "sha256": "491c011aee7f6faa278758da46845e2d45ec8b3d219a5f28835bf008eae62fe6",
+      "size": 2864
+    },
+    {
+      "path": "frontend/src/shared/lib/lazyRoute.js",
+      "sha256": "65134db5cc03169245e7abe9688b99d8e3156ee547e322300f84ac1fd0a2c5e5",
+      "size": 173
+    },
+    {
+      "path": "frontend/src/shared/lib/phone.js",
+      "sha256": "c4d88c4feb6a9b276a094c56f39aa1f1dec7d8c6f72ec0d21f49a73e6b7f3fcb",
+      "size": 574
+    },
+    {
+      "path": "frontend/src/shared/lib/phone.test.js",
+      "sha256": "1752d41c17bbd26defb79af9efd523365fe137e503facf957fea8c9d1b4c6024",
+      "size": 1260
+    },
+    {
+      "path": "frontend/src/shared/lib/vietnamProvinces.js",
+      "sha256": "e42ab6ed0295495f9d7245441cb86586e4f966d4260470b81430b04b8c4d4c88",
+      "size": 1846
+    },
+    {
+      "path": "frontend/src/shared/lib/vietnamProvinces.test.js",
+      "sha256": "6b2f23c6dc652a29c9a670ee2be9528c6efcb7109401aad600e0e38457ce6dc8",
+      "size": 1057
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+backend/pms_api/housekeeping/__init__.py
+backend/pms_api/housekeeping/application.py
+backend/tests/test_housekeeping_auto_assignment.py
+backend/tests/test_housekeeping_batch.py
+backend/tests/test_housekeeping_day_selection.py
+backend/tests/test_housekeeping_shift_batch.py
+backend/tests/test_housekeeping_values.py
+frontend/src/apps/pms/rooms/components/RoomLocationFilters.jsx
+frontend/src/apps/pms/rooms/pages/RoomDiagram.css
+frontend/src/apps/pms/rooms/pages/RoomDiagram.jsx
+frontend/src/apps/pms/rooms/pages/Rooms.jsx

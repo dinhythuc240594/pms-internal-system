@@ -1,0 +1,16 @@
+backend/pms_api/pricing/README.md
+backend/pms_api/pricing/__init__.py
+backend/pms_api/pricing/application.py
+backend/pms_api/pricing/domain.py
+backend/pms_api/pricing/strategies.py
+backend/pms_api/pricing/urls.py
+backend/tests/test_pricing_finance_snapshots.py
+backend/tests/test_pricing_reports.py
+frontend/src/apps/pms/rates-inventory/RatesInventory.css
+frontend/src/apps/pms/rates-inventory/pages/ARI.css
+frontend/src/apps/pms/rates-inventory/pages/ARI.jsx
+frontend/src/apps/pms/rates-inventory/pages/NightlyRates.jsx
+frontend/src/apps/pms/rates-inventory/pages/Promotions.jsx
+frontend/src/apps/pms/rates-inventory/pages/Rates.jsx
+frontend/src/apps/pms/rates-inventory/pages/RatesARI.jsx
+frontend/src/apps/pms/rates-inventory/pages/Vouchers.jsx

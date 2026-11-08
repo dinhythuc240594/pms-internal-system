@@ -1,0 +1,3750 @@
+{
+  "source_commit": "902a01f1ddfaca73a7466a3c5a3a06ddfbf84bb6",
+  "created_at": "2026-11-08T06:03:33+00:00",
+  "source_state": "tracked_paths_clean",
+  "description": "Existing workspace snapshot partitioned for planned handoff; not daily development history",
+  "selection_policy": "Tracked backend/frontend and selected documentation; explicit PMS-AI report files; runtime/private/generated artifacts excluded",
+  "file_count": 698,
+  "files": [
+    {
+      "path": ".gitignore",
+      "sha256": "ad4de47ae59ee1e9001b880153e78c19de0f667805c1106d5b46b0c7c8e80023",
+      "size": 499
+    },
+    {
+      "path": "BE01_05_IMPLEMENTATION_REPORT.md",
+      "sha256": "0c60f7711ff563c9c8083ee1a02e2ebe9bebe2e36d3aaf833d082811a92ff7e4",
+      "size": 8203
+    },
+    {
+      "path": "BE06_07_IMPLEMENTATION_REPORT.md",
+      "sha256": "2860d1eade72399d46d4d32b929170ecd68f18b1d6b02c34b46f5f9e9a356005",
+      "size": 7381
+    },
+    {
+      "path": "BE08_09_P1_FIX_REPORT.md",
+      "sha256": "378412f96f8a1bd51b5f4cfea2d3bb86e7b5536315eaa57eccb4fb16e748b796",
+      "size": 6334
+    },
+    {
+      "path": "BE08_09_TEST_REPORT.md",
+      "sha256": "5fed1bf77762168be7d36fd7541018e0b6aa78ad5916ce912461a5b91bff9406",
+      "size": 15151
+    },
+    {
+      "path": "BE10_11_IMPLEMENTATION_REPORT.md",
+      "sha256": "d979405868a3266778ef752d2e7bc038e90fc18ac4d42bad03d8c20cd6bbdb46",
+      "size": 10572
+    },
+    {
+      "path": "BE12_IMPLEMENTATION_REPORT.md",
+      "sha256": "b73b3721cf73493d373efca91f77fbfd07f28ed6287c3462593b9bea2061076f",
+      "size": 4342
+    },
+    {
+      "path": "BE_CLIENT_STATUS_PRIORITY_REPORT.md",
+      "sha256": "e2c8506f4ae84a8d073dca6f570740bcbe6c8721f335de539a46fd964c8e28bc",
+      "size": 14914
+    },
+    {
+      "path": "PMS_GAP_REPORT.md",
+      "sha256": "62389c758b70551eb3a76ea5157bbdc7df008b42b8697d26ed511a2d2866ee1a",
+      "size": 30132
+    },
+    {
+      "path": "PMS_PUBLIC_RELEASE_REVIEW_2026-10-03.md",
+      "sha256": "fd22fb0fe7d558c4f6dc6f9b56a6b4fb3aab4ae67777ac181304381aa3ded23c",
+      "size": 69646
+    },
+    {
+      "path": "backend/.dockerignore",
+      "sha256": "d285d68a8ed6eb3a7254164c2ae04b0332919320ebc0a3d91db781a5357ce7bd",
+      "size": 136
+    },
+    {
+      "path": "backend/.env.example",
+      "sha256": "18644eedfe1f50b29a6dec5dfbdd4b6732b9b1613a68764054df6fa94e33c95e",
+      "size": 1435
+    },
+    {
+      "path": "backend/API_CONTRACT.md",
+      "sha256": "60300beb2f52bd910bf6d95dbbe6eaa1f2212de0ed7e9a22e513d1fc8ed9dc23",
+      "size": 111096
+    },
+    {
+      "path": "backend/ARCHITECTURE.md",
+      "sha256": "6cf25f9297a6f2d4bf99a2ef3c6d5bdf896b68f67036f402c573123a450cec75",
+      "size": 9449
+    },
+    {
+      "path": "backend/Dockerfile",
+      "sha256": "1b4657aa357222f0d343de1e3504e36cf654d4ca7e4f99d9658a16aafebf78b8",
+      "size": 1042
+    },
+    {
+      "path": "backend/README.md",
+      "sha256": "03fcc73c1c4044d8549b7699f28edbc81670161f9f725ed1b86ece65d6a4de0b",
+      "size": 54767
+    },
+    {
+      "path": "backend/app.py",
+      "sha256": "f23ff4cd2b02a213b6cb10cdb45fb7a8a56a00cea792e9b6156523ae15af8d34",
+      "size": 155
+    },
+    {
+      "path": "backend/common/__init__.py",
+      "sha256": "d7c9912ccdf16cbc0191c1330931a8fd2d7bc44dbcc5051657056dd1a6360754",
+      "size": 283
+    },
+    {
+      "path": "backend/common/errors.py",
+      "sha256": "0ab35a0968380aecf32b92adfaa6a4cdc8c10a4e77f79a75dbe4192f50d0ee3d",
+      "size": 253
+    },
+    {
+      "path": "backend/common/http.py",
+      "sha256": "4efa59f9ecb1cc2a6065e03ffdda57a3ab3607f6c188aef42db2c0d4aaa4d7fb",
+      "size": 5562
+    },
+    {
+      "path": "backend/common/values.py",
+      "sha256": "362ba35fd00410edad33431677ec8ea7b0abb1ca0794994e89abd9971fb86f7e",
+      "size": 237
+    },
+    {
+      "path": "backend/gunicorn_conf.py",
+      "sha256": "e835eeb9e5e689d50ce0843eaddd5b94f4f768757f4c65f0f4534c97b94a2bb1",
+      "size": 192
+    },
+    {
+      "path": "backend/manage.py",
+      "sha256": "a8aa3b7be6b6a9ce2116a0a84aec9c15170ce728c9f865a7b20d5b23854d410f",
+      "size": 250
+    },
+    {
+      "path": "backend/migrations/alembic.ini",
+      "sha256": "530c623b8229418620efccd3c627840a0a1b4c63079db41a31c0a7137eb35edf",
+      "size": 599
+    },
+    {
+      "path": "backend/migrations/env.py",
+      "sha256": "12dda7c7aa39d084f81d558299efc030c98083e2c0ef6d7eb20f63da6b793c5d",
+      "size": 1371
+    },
+    {
+      "path": "backend/migrations/script.py.mako",
+      "sha256": "f1a9c69d7225d3aff051917fc9883b2bec72ebd350235b634c222dc37d8e86d9",
+      "size": 476
+    },
+    {
+      "path": "backend/migrations/versions/0001_backend_baseline.py",
+      "sha256": "6a4cac782999e3325033dd4cc70bb064ffa9215aeb633f725fb0720568e6c438",
+      "size": 396
+    },
+    {
+      "path": "backend/migrations/versions/0002_identity.py",
+      "sha256": "76955a1f801f9cde01825a0e4cce9bec7980ebe2f27c3cd720d1c8facc614d02",
+      "size": 4595
+    },
+    {
+      "path": "backend/migrations/versions/0003_catalog.py",
+      "sha256": "1da6199cd8f8577f2af7887f7bfe1b4b5d8f7b02355334e24d82290754ca9262",
+      "size": 4783
+    },
+    {
+      "path": "backend/migrations/versions/0004_booking.py",
+      "sha256": "f00006acca69ebde2aa91915ba30573eff4109746c5b6bb2c78b0bfaac1f771e",
+      "size": 10567
+    },
+    {
+      "path": "backend/migrations/versions/0005_finance.py",
+      "sha256": "4e395c400a73fbc6e0d0799b09f78d1f5fb536c8789033f48d646e532d3b011e",
+      "size": 10587
+    },
+    {
+      "path": "backend/migrations/versions/0006_housekeeping.py",
+      "sha256": "60f8d2b3c42f0e8124e4463fe93908dfd7dda938f7c2279a61b425373631c011",
+      "size": 6424
+    },
+    {
+      "path": "backend/migrations/versions/0007_subscription_controls.py",
+      "sha256": "93a2eb961cf83eaef67ed5d7ea012a59d5a96233f290cd9d5bbe09374e089f2f",
+      "size": 4938
+    },
+    {
+      "path": "backend/migrations/versions/0008_inventory.py",
+      "sha256": "f52f3da6bc512b451f2c77c8ba69735c337fa933677b56f80f2e2367d1e834b7",
+      "size": 7890
+    },
+    {
+      "path": "backend/migrations/versions/0009_pricing.py",
+      "sha256": "025edc57b6c2b0a02c298dcdcbc8831c8b6cf8b7f4c05a3d579b2f602564fa1a",
+      "size": 7990
+    },
+    {
+      "path": "backend/migrations/versions/0010_channels.py",
+      "sha256": "66254910cedcc5a61ce1f7de57aa787d36ef5dbf3af5bbafc7f59c72b6fec948",
+      "size": 4764
+    },
+    {
+      "path": "backend/migrations/versions/0011_notifications.py",
+      "sha256": "22b6529ba8c2290a855bd6792892437454cf56c2426012d55d3c0ac2981bbe59",
+      "size": 3251
+    },
+    {
+      "path": "backend/migrations/versions/0012_manager_features.py",
+      "sha256": "e5643dc03a35c85afe3b3f4dc1fb70edf329af61e3e76590d3abecd6e050e722",
+      "size": 3197
+    },
+    {
+      "path": "backend/migrations/versions/0013_channel_credentials.py",
+      "sha256": "7d6fc7480b223bdc1609c4894bad1e9bd17c7e5d13e597c61900574699420d70",
+      "size": 1670
+    },
+    {
+      "path": "backend/migrations/versions/0013_manager_billing.py",
+      "sha256": "9badf55926aa6202163307d87cb58a7edbfef4cf93360879be9073356341e8e3",
+      "size": 7029
+    },
+    {
+      "path": "backend/migrations/versions/0014_manager_customers.py",
+      "sha256": "9895811853328e210f8b854e5a4ccc2a664261917e6d4039faacfab1ee30d280",
+      "size": 1534
+    },
+    {
+      "path": "backend/migrations/versions/0015_merge_ota_manager.py",
+      "sha256": "ecb74943f69160ffd1795ceb90d48b4739e34447d225e620eae6b8439e851e4e",
+      "size": 299
+    },
+    {
+      "path": "backend/migrations/versions/0015_plan_room_limits.py",
+      "sha256": "6ef0afd5d0b86c208887a3c7efa0e65876e39b740a60b13d970f5451a82b828c",
+      "size": 2844
+    },
+    {
+      "path": "backend/migrations/versions/0016_room_type_codes.py",
+      "sha256": "1e78e9a6c51bbdca992309a59cbaae3d61591827640ce4746b573c7e861c3dae",
+      "size": 2510
+    },
+    {
+      "path": "backend/migrations/versions/0017_merge_catalog_channels.py",
+      "sha256": "48684b06e40410b80a956312cd9d01aca01d5a584d04ed9755f886911da288a5",
+      "size": 284
+    },
+    {
+      "path": "backend/migrations/versions/0018_channel_mapping_lifecycle.py",
+      "sha256": "b17fd1c334d4e52cdc034ac25daa46eefd503f9d35c0da20154a4c1bfa263111",
+      "size": 3599
+    },
+    {
+      "path": "backend/migrations/versions/0019_cash_categories.py",
+      "sha256": "ba68b9e2648aa7f88091a9ed960a40a1d848713e0afef2bae85bfb4e6b4f669d",
+      "size": 1943
+    },
+    {
+      "path": "backend/migrations/versions/0019_self_service_audit.py",
+      "sha256": "70cb12c99fdaeac7579d52264620d4c9ee2adba221ac68645fa81cae284b5d8e",
+      "size": 664
+    },
+    {
+      "path": "backend/migrations/versions/0020_no_show.py",
+      "sha256": "2c5c53f3e793789b9b928d2fd5d78b981a571d5034fe0805d6d442576cb2ef52",
+      "size": 1255
+    },
+    {
+      "path": "backend/migrations/versions/0021_booking_commissions.py",
+      "sha256": "09479256e0bf77b7d09bea83298b40b657b78fb3c3a9b3d59983573047d3c36c",
+      "size": 3409
+    },
+    {
+      "path": "backend/migrations/versions/0022_merge_client_settings.py",
+      "sha256": "c004adbc432dafb5d30311d0dcc67a4866e5400308bc287ed8a65793f438fca3",
+      "size": 293
+    },
+    {
+      "path": "backend/migrations/versions/0023_channel_ari_pacing.py",
+      "sha256": "b7419a0ff596548de2f656b73447fb3a0da86faa6b195f0c64370905ec366ee6",
+      "size": 460
+    },
+    {
+      "path": "backend/migrations/versions/0024_channel_booking_reviews.py",
+      "sha256": "f1b8066796d8cf11b724637737e47bd95e255e5e7b800208fb35af11ca0e47b4",
+      "size": 4391
+    },
+    {
+      "path": "backend/migrations/versions/0025_channel_cancellation_verification.py",
+      "sha256": "ac752267a866f4888db43c30faf1df94bb6d1da8504dc507e73d5db35c266b19",
+      "size": 806
+    },
+    {
+      "path": "backend/migrations/versions/0026_booking_versions.py",
+      "sha256": "67a02f493c7ea8be0d0121bdabb4ff753dda3e726be667e645e62930f96a9a12",
+      "size": 2035
+    },
+    {
+      "path": "backend/migrations/versions/0027_worker_health.py",
+      "sha256": "cc9c01401f1010507c3dc2a2d726741e4728e9b420c9b482789b74bb728443f3",
+      "size": 1243
+    },
+    {
+      "path": "backend/migrations/versions/0028_day_reconciliation.py",
+      "sha256": "173a1bad4031fc6ee99d900980be363b067a6c8850ac8da77f1fef4beeb9dd52",
+      "size": 1734
+    },
+    {
+      "path": "backend/migrations/versions/0029_channel_dirty_ari.py",
+      "sha256": "75afe79e871f1087cd687e591298e9543c5b8fecfe9f2e2cd9c9152fb0b97560",
+      "size": 1442
+    },
+    {
+      "path": "backend/migrations/versions/0030_stay_changes.py",
+      "sha256": "17ab8c5e6cc60e09c753e3fe606d3001a864ec82363a2445af7ddf4d0a4e4a65",
+      "size": 1614
+    },
+    {
+      "path": "backend/migrations/versions/0031_channel_onboarding.py",
+      "sha256": "9b5df6a793ef3213120fafa8e3f6ba6a3381aa45460dba53a1daacc32a465a13",
+      "size": 1611
+    },
+    {
+      "path": "backend/migrations/versions/0032_channel_job_history.py",
+      "sha256": "7e55f8247322bc9047b4a876f959aac0e9dc309e6c239a0dc2f940bd35ae3573",
+      "size": 704
+    },
+    {
+      "path": "backend/migrations/versions/0032_room_locations.py",
+      "sha256": "b0fd5477f86e4178f9342a22186edd6f88423d50bca88791bcc3e9e951893356",
+      "size": 1160
+    },
+    {
+      "path": "backend/migrations/versions/0033_merge_room_history.py",
+      "sha256": "08813ecfcad37322de96b8b23645e48559d0ffc1d77c03038d68f79b2ae64df3",
+      "size": 283
+    },
+    {
+      "path": "backend/migrations/versions/0034_pms_tenant_authorization.py",
+      "sha256": "0b824df3f6ff59cbac1faff9d40c18439a71a2b41a0f531cfdc1f902b6ae2451",
+      "size": 8520
+    },
+    {
+      "path": "backend/migrations/versions/0035_owner_saas_billing.py",
+      "sha256": "aebef77f21c2458688fe2085595b128b532ef507775230a0b60908c4f290e292",
+      "size": 1162
+    },
+    {
+      "path": "backend/migrations/versions/0036_channel_support.py",
+      "sha256": "e31737a5b5da8bb76c1426340808374d0bbb7a0c0a1d02db484c6dbf095bf389",
+      "size": 1463
+    },
+    {
+      "path": "backend/migrations/versions/0037_channel_rate_safety.py",
+      "sha256": "3f2fa8ec4fa0ba5cc98ebb00ce864d3d934d77fba4cba968d1d0d207e96bcf1d",
+      "size": 1794
+    },
+    {
+      "path": "backend/migrations/versions/0038_commission_review.py",
+      "sha256": "d6f515a8c22ab4de7a975fabdf801ce93a0f7ec149fdf2a1996d196d745ed7dd",
+      "size": 3780
+    },
+    {
+      "path": "backend/migrations/versions/0039_saas_recovery.py",
+      "sha256": "0c2749ef99f820679a8feb6ace3470589cd111715c310f68bef8e542b61b5555",
+      "size": 10086
+    },
+    {
+      "path": "backend/migrations/versions/0040_channel_exceptions.py",
+      "sha256": "02aca945948a26af3bc13bc191f4f8ea7948a9c15ea33ad0f3ed975adae62bb4",
+      "size": 5142
+    },
+    {
+      "path": "backend/migrations/versions/0041_operational_days.py",
+      "sha256": "829f482e6182b339f79bcfd4ca03bf663e0aeab937f15b8e26326fe64987a3bf",
+      "size": 4978
+    },
+    {
+      "path": "backend/migrations/versions/0042_hotel_currencies.py",
+      "sha256": "7ce573731161c5053f4adfdcc98f7c19021d9467afee02578ac9288349508e8b",
+      "size": 3022
+    },
+    {
+      "path": "backend/migrations/versions/0043_plan_room_pricing.py",
+      "sha256": "01ea31e54bb9d0641e926e9d34ca811f71b77f6ab7250575986e1d29a47389c4",
+      "size": 931
+    },
+    {
+      "path": "backend/migrations/versions/cdb4bc7d62d0_add_plan_and_subscription_models.py",
+      "sha256": "ba52de602c18bff6cdfe2e7b641a815751e2f4457bfa08b6b23382d5ff2bb50f",
+      "size": 3776
+    },
+    {
+      "path": "backend/patch.py",
+      "sha256": "65cb6c3d16b6675a2b363347d62e225fd9595a035c3dde7cbd0481f296ac15e4",
+      "size": 1778
+    },
+    {
+      "path": "backend/pms_api/__init__.py",
+      "sha256": "d2961f27e7514ae3d3995d05e3dc57c6c37f7881bf7962e1f4d6afe8243f4dd9",
+      "size": 2999
+    },
+    {
+      "path": "backend/pms_api/adapters/__init__.py",
+      "sha256": "df9603fd29e7f31ac2936c1450d9209d9251bdb43e0d477236181f6297bfdf9d",
+      "size": 57
+    },
+    {
+      "path": "backend/pms_api/adapters/flask_runtime.py",
+      "sha256": "e622acef20986718c2f8740d9cea013751c7943f58312cb987452df56a823008",
+      "size": 1294
+    },
+    {
+      "path": "backend/pms_api/admin/__init__.py",
+      "sha256": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6",
+      "size": 2
+    },
+    {
+      "path": "backend/pms_api/admin/application.py",
+      "sha256": "d29f4e36fb388c826fb80dab38ded5627a43caada2323ac17178f7727c70019d",
+      "size": 34061
+    },
+    {
+      "path": "backend/pms_api/admin/channex.py",
+      "sha256": "9dc3aacdc9d092e9c9f9f894a90e8812c7ea514ac0bccdbceb15adce880a9860",
+      "size": 727
+    },
+    {
+      "path": "backend/pms_api/admin/channex_airbnb.py",
+      "sha256": "156cd847a0b73aa32967738e8af7a35bbae696379731d4a2c184e45d8dbdcb82",
+      "size": 1133
+    },
+    {
+      "path": "backend/pms_api/admin/channex_airbnb_application.py",
+      "sha256": "ded4c741c8655c0a29c953b345410dbb430576ab9b9753c1bd08e012ebe3a593",
+      "size": 17092
+    },
+    {
+      "path": "backend/pms_api/admin/channex_application.py",
+      "sha256": "aaf668d86a28262bb9d112b18dfa4d5f23b93e4c6db96397606f28b87ca25b4d",
+      "size": 4181
+    },
+    {
+      "path": "backend/pms_api/admin/channex_channels.py",
+      "sha256": "467538fadb27499c51e1522e89ead17ae9bac9027b33bcbde8f3cf60acdd22e4",
+      "size": 1385
+    },
+    {
+      "path": "backend/pms_api/admin/channex_channels_application.py",
+      "sha256": "8f07b354a201cdd629df1fc8c727ffd7fb2c7f23cb685fb8a88e904a46a263e3",
+      "size": 35105
+    },
+    {
+      "path": "backend/pms_api/admin/channex_insights.py",
+      "sha256": "b39c30f1d217a9b529cabebcd7fa61ed171d85053f6fd13d670a5f32f51e33b1",
+      "size": 878
+    },
+    {
+      "path": "backend/pms_api/admin/channex_insights_application.py",
+      "sha256": "36d2a6790fa0af659a9e29fc381ba311cded8e2a67af57e9e8c696ec320dcf94",
+      "size": 13381
+    },
+    {
+      "path": "backend/pms_api/admin/channex_remote.py",
+      "sha256": "b9ba786a8c1062f882e8abcfb478bba7837ba506c6a4f15c01fe0adfeb7019ec",
+      "size": 1501
+    },
+    {
+      "path": "backend/pms_api/admin/channex_remote_application.py",
+      "sha256": "ce711b092f0ca6c678fec569de9496cd08c08a5d27db58291010f51e91917c10",
+      "size": 27946
+    },
+    {
+      "path": "backend/pms_api/admin/client_models.py",
+      "sha256": "4947195ac93bc9ae8a329a9b4866c23b40264f823919601f4898045efd2dffdb",
+      "size": 794
+    },
+    {
+      "path": "backend/pms_api/admin/customers.py",
+      "sha256": "d858ebad071d6207c970630e1fc54d865e0442ff89526bacde4f777da5b7c96f",
+      "size": 4911
+    },
+    {
+      "path": "backend/pms_api/admin/feature_models.py",
+      "sha256": "7efabdb6be9c5aa1540540f3a35d47b3ddcae81fcacb6fc18ef27526e0507dfd",
+      "size": 1903
+    },
+    {
+      "path": "backend/pms_api/admin/features.py",
+      "sha256": "fcdb03da6d08a3114028b7e7f66b0ba1515a8da7ba2d8f01dd59758438161211",
+      "size": 1470
+    },
+    {
+      "path": "backend/pms_api/admin/features_application.py",
+      "sha256": "1ded2acc6f17490d0fadda8468f1f40ce9532e6fc4bce0bee5224628feaa0753",
+      "size": 5412
+    },
+    {
+      "path": "backend/pms_api/admin/features_urls.py",
+      "sha256": "c693848ddc2593f12a13d296d23a42900c21a20d66604985cda8301d92b98ac6",
+      "size": 1412
+    },
+    {
+      "path": "backend/pms_api/admin/routes.py",
+      "sha256": "7b05412227521b6f0f662f2265891d768de6ce7e028432d0b014aed541d107b5",
+      "size": 4391
+    },
+    {
+      "path": "backend/pms_api/admin/urls.py",
+      "sha256": "28dd9187962c444d103e40fe268233f962b868ceb10248e95cd84b25fc1d79d4",
+      "size": 10800
+    },
+    {
+      "path": "backend/pms_api/auth/__init__.py",
+      "sha256": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6",
+      "size": 2
+    },
+    {
+      "path": "backend/pms_api/auth/application.py",
+      "sha256": "821a06fa4c99d2aaea8c63a39622e261c1ec41d0ff91c88233d43e4054ea2f64",
+      "size": 9068
+    },
+    {
+      "path": "backend/pms_api/auth/routes.py",
+      "sha256": "e48aa2df6a07e4ddb7a777c24498a15ab8a8cddd5fe584f6a4d7f617a8dd0c0e",
+      "size": 1399
+    },
+    {
+      "path": "backend/pms_api/auth/urls.py",
+      "sha256": "42b4522e3b4db5e0e26ed6e7a3125354093cd5dd1db38b4174e1e80efbdd2a7e",
+      "size": 1491
+    },
+    {
+      "path": "backend/pms_api/bookings/__init__.py",
+      "sha256": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6",
+      "size": 2
+    },
+    {
+      "path": "backend/pms_api/bookings/application.py",
+      "sha256": "16e7f5dd60e31246510bb3d20bf6066b018cce1b34196a39a8eaf3eef43b597e",
+      "size": 54906
+    },
+    {
+      "path": "backend/pms_api/bookings/domain.py",
+      "sha256": "68dbd3185c36aab1d7c99938c1ada2fe8ba23a2731550cbb253045ccc2bbcc8a",
+      "size": 2187
+    },
+    {
+      "path": "backend/pms_api/bookings/models.py",
+      "sha256": "ff4bb859b6aeb8661e6e199d8cf443ad7063b155aa86326cd93c95765789402d",
+      "size": 14615
+    },
+    {
+      "path": "backend/pms_api/bookings/ports.py",
+      "sha256": "cd1ae7e1a193def27d7488f0671c00dbef47f592d49bea2dadf2bf04307effb1",
+      "size": 425
+    },
+    {
+      "path": "backend/pms_api/bookings/repository.py",
+      "sha256": "e4212e1f6936a704c6724710f9f806323d5e325055737eadcb1c38df5dad1534",
+      "size": 4125
+    },
+    {
+      "path": "backend/pms_api/bookings/room_stays.py",
+      "sha256": "72d76f317794dd2d47f61371f073bf33957fe4158c5aadac7ac35f4d0cb9910e",
+      "size": 1072
+    },
+    {
+      "path": "backend/pms_api/bookings/routes.py",
+      "sha256": "feeb271aeeb5b2870c5212aded10232aee0b5f3a9f3003b86e6d85d7d3dc7a9a",
+      "size": 3006
+    },
+    {
+      "path": "backend/pms_api/bookings/stay_changes.py",
+      "sha256": "88af2718bde9cfa6e853a91663e7e9749e712c87c815e54e9f54f95928b48575",
+      "size": 787
+    },
+    {
+      "path": "backend/pms_api/bookings/stay_changes_application.py",
+      "sha256": "b714ca5d417162dd1393b10bcacbea62e7a27f03449396a792bed613f27042eb",
+      "size": 13989
+    },
+    {
+      "path": "backend/pms_api/bookings/urls.py",
+      "sha256": "e25bad2163c4f440cc22802e90a064d8770c796c7ca642c9eeb75bcd77fa8910",
+      "size": 3453
+    },
+    {
+      "path": "backend/pms_api/catalog/__init__.py",
+      "sha256": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6",
+      "size": 2
+    },
+    {
+      "path": "backend/pms_api/catalog/application.py",
+      "sha256": "5c833e81d40a41bc798d3dc7611e9626708e756e5c83b20bd513e31d9bd7ef77",
+      "size": 40309
+    },
+    {
+      "path": "backend/pms_api/catalog/domain.py",
+      "sha256": "53d9c11d5493d63a717afc7ee9dd588ff98fb0bb9487445c3fe414bc9ec2ae1e",
+      "size": 2017
+    },
+    {
+      "path": "backend/pms_api/catalog/models.py",
+      "sha256": "0b56d0dab24462fb21ab835f992dbcf60a247f3dc0cc895ee864ff5ef4623a41",
+      "size": 7056
+    },
+    {
+      "path": "backend/pms_api/catalog/routes.py",
+      "sha256": "6bfaefd543f0c6aa802d04daa303e22223d44bac4455524776983755cf163c88",
+      "size": 2543
+    },
+    {
+      "path": "backend/pms_api/catalog/urls.py",
+      "sha256": "9f2e2dee55572ed4baa877c9aece70c5eb9d58f772192c84b846fe583f228a59",
+      "size": 2603
+    },
+    {
+      "path": "backend/pms_api/channels/__init__.py",
+      "sha256": "b542c0d361abd882b906956f33c3ced3557e48b1b1aadee916f4028314535662",
+      "size": 88
+    },
+    {
+      "path": "backend/pms_api/channels/access.py",
+      "sha256": "41d6993494efed90e21923a69b2ba6c2f84ae4fb9c482202089e1ff9f3304f7c",
+      "size": 1584
+    },
+    {
+      "path": "backend/pms_api/channels/application.py",
+      "sha256": "eda36314a19d7436287833a0325ff922900c10470f549453a25f1585eefe4929",
+      "size": 27868
+    },
+    {
+      "path": "backend/pms_api/channels/client.py",
+      "sha256": "201e2db753042cf9e4bbf31c70fbea9162d6137cc2ef0141cb4ea2625b4e65a3",
+      "size": 16335
+    },
+    {
+      "path": "backend/pms_api/channels/credentials.py",
+      "sha256": "b7992652077f6f1fc4f8ab3338ebb2cde9c9e47cf9a65b443782a6ec1dfc7a9e",
+      "size": 2834
+    },
+    {
+      "path": "backend/pms_api/channels/domain.py",
+      "sha256": "6004c23744a772ecdffac3a73e15443928b927a720c55ad699679b0d9328ee03",
+      "size": 11073
+    },
+    {
+      "path": "backend/pms_api/channels/errors.py",
+      "sha256": "64473a5981a54265a8a553c9c7a409a573d27d2bfcda4368cb1b2e1dd00d63c6",
+      "size": 344
+    },
+    {
+      "path": "backend/pms_api/channels/exceptions.py",
+      "sha256": "3cbe74051df96907c308fbcb2eeccd4a5f92c8809cd761671b6c38bc8121c5cc",
+      "size": 1015
+    },
+    {
+      "path": "backend/pms_api/channels/exceptions_application.py",
+      "sha256": "72fa98d0141accb5c7c32e08d6e41e829da7baca276cb799bc65a000ca7502c2",
+      "size": 19029
+    },
+    {
+      "path": "backend/pms_api/channels/factory.py",
+      "sha256": "f7637d15f185c1e6b4238dbd1b8301b1dd37ba11121c88dcb751c068490d5e45",
+      "size": 913
+    },
+    {
+      "path": "backend/pms_api/channels/history.py",
+      "sha256": "aea0f877c9f018bc84f4e21fa59886dfd0f2e76bffa944086512246298e89cf3",
+      "size": 700
+    },
+    {
+      "path": "backend/pms_api/channels/history_application.py",
+      "sha256": "172912bcae689fd54cdf69995c3d3b029a59bea3a4e7e1224043e8b3b6b3f2ff",
+      "size": 7818
+    },
+    {
+      "path": "backend/pms_api/channels/identifiers.py",
+      "sha256": "9b2e16dab5791786c87a565340c64926a35ea6d198bd8b58a32cdab2a4a0b6db",
+      "size": 404
+    },
+    {
+      "path": "backend/pms_api/channels/importer.py",
+      "sha256": "61d80a9276ed50efb7510d29f7bb8d532af55a4446007fd03263723d9c123eb7",
+      "size": 23133
+    },
+    {
+      "path": "backend/pms_api/channels/models.py",
+      "sha256": "a3075b57bc16ff443edfca0785bc0e06c237d8e91133046862fa74b01b76ae83",
+      "size": 11024
+    },
+    {
+      "path": "backend/pms_api/channels/onboarding.py",
+      "sha256": "5fea54f0cbed85241b6b23e404c643802d77610b44faa3cb82f8f9599fc62e07",
+      "size": 7772
+    },
+    {
+      "path": "backend/pms_api/channels/policies.py",
+      "sha256": "f5c5c4b00cd343c5f91acde25cb6b8c82f7882f551294aee4cfd99b1edb56188",
+      "size": 556
+    },
+    {
+      "path": "backend/pms_api/channels/ports.py",
+      "sha256": "79a975490c06a897d0c5121a71ac1aa6045a4971c12b9ef1a31d429a29d82483",
+      "size": 850
+    },
+    {
+      "path": "backend/pms_api/channels/preview.py",
+      "sha256": "eac9a7d4890e6b52579b985c8df2495860605039b037b71d6cb77eafbe29a083",
+      "size": 493
+    },
+    {
+      "path": "backend/pms_api/channels/preview_application.py",
+      "sha256": "cc9ba01a9e920325a76a96ea311cf6dfd61c11cad10e188f1e8b17082a5473db",
+      "size": 4166
+    },
+    {
+      "path": "backend/pms_api/channels/publication.py",
+      "sha256": "111e4fdb5bf5e5d24084cf1145956952f74f16399f44e9ed263aad74fd9a313f",
+      "size": 7907
+    },
+    {
+      "path": "backend/pms_api/channels/remote.py",
+      "sha256": "4e15b4828bec0bcb5c04cbc61cf836be793d7a76b06f8193ad58dbbf4b8bc07c",
+      "size": 2703
+    },
+    {
+      "path": "backend/pms_api/channels/remote_application.py",
+      "sha256": "12ac44ac9362c77247213cb8e19d90c9c1ff6195687a797066b6cfea4c284806",
+      "size": 4892
+    },
+    {
+      "path": "backend/pms_api/channels/repository.py",
+      "sha256": "0c06128a7c6b5eb60526e32ae5c97fa782feca142f512b889b62588391fa5236",
+      "size": 897
+    },
+    {
+      "path": "backend/pms_api/channels/routes.py",
+      "sha256": "b24d7a13b4dd1ec31c1e1e33d0523732e64427701db47ba056ede44f2f02617c",
+      "size": 2260
+    },
+    {
+      "path": "backend/pms_api/channels/service.py",
+      "sha256": "cfb84679cd9bf0c65e221d4b697ae363f374ec88879c8206a7346cfef6da1758",
+      "size": 51947
+    },
+    {
+      "path": "backend/pms_api/channels/urls.py",
+      "sha256": "2d44e28e6cee6ec16c77fc5f63e17981d4a5d64b2cad10072ae500159a614e18",
+      "size": 8029
+    },
+    {
+      "path": "backend/pms_api/channels/workflows.py",
+      "sha256": "dddf30d9c61ad85842c7cf87972c34409351499032628a53401b58f965c20814",
+      "size": 1548
+    },
+    {
+      "path": "backend/pms_api/commands.py",
+      "sha256": "ccab169e58762964d7065f08835fbba25d8b1f2c69653552defb6ff7425526a9",
+      "size": 10732
+    },
+    {
+      "path": "backend/pms_api/composition.py",
+      "sha256": "88c8ded4c6225c23d7dc0d089d402e86d8aa7b063e41b3577fefcc3fadda93da",
+      "size": 2002
+    },
+    {
+      "path": "backend/pms_api/config.py",
+      "sha256": "bb010f7af790d6f0cf435f846b857b4df6aa10279114586ffa80ecf151603b3f",
+      "size": 5255
+    },
+    {
+      "path": "backend/pms_api/core_models.py",
+      "sha256": "e320d30624cc716b2b88ecad09b8eeda2defb8023a2726158eb090d25fa86500",
+      "size": 6696
+    },
+    {
+      "path": "backend/pms_api/currencies.py",
+      "sha256": "f142275ffcc0c761d1a234995d76f073f97ba85384a90faca04427483f423ffb",
+      "size": 848
+    },
+    {
+      "path": "backend/pms_api/events.py",
+      "sha256": "6be0627477c7bddd9bbb93b84674e457b17f3773f525d04a7531908d3f60c8c3",
+      "size": 642
+    },
+    {
+      "path": "backend/pms_api/extensions.py",
+      "sha256": "8b8263d6d186a3221ab050303fcee77c225ba6b1caf2572d64efa5fed37cacc7",
+      "size": 622
+    },
+    {
+      "path": "backend/pms_api/finance/__init__.py",
+      "sha256": "1e9358f6e763560979426d7e71ed690b671bb07945f2bbd0a9f9b39552d6a8dc",
+      "size": 49
+    },
+    {
+      "path": "backend/pms_api/finance/application.py",
+      "sha256": "bd98bae3b2d9ae264aa7464ab312a7ba8abaed130ca46820b0ef035957d2f491",
+      "size": 45234
+    },
+    {
+      "path": "backend/pms_api/finance/commissions.py",
+      "sha256": "df2723e845c025de3ef1cf58553df6d568362cb44eaaf78c74b5bc3414eca6b1",
+      "size": 1679
+    },
+    {
+      "path": "backend/pms_api/finance/commissions_application.py",
+      "sha256": "78679d50272d65fff88c08205a833f9ce4fa8eb6fb337318ba6c4bbb44fe0106",
+      "size": 31487
+    },
+    {
+      "path": "backend/pms_api/finance/domain.py",
+      "sha256": "31fcda88818f32a65914b8622f5004770294f9fc45468a5e985350408bf2d658",
+      "size": 530
+    },
+    {
+      "path": "backend/pms_api/finance/models.py",
+      "sha256": "d20c20efe35846093af91bc112a2030f70159b204e142d007b39e3836966d28f",
+      "size": 12800
+    },
+    {
+      "path": "backend/pms_api/finance/routes.py",
+      "sha256": "04374a04b2a4d12b3625996dc9dd377c7aa6781f0df59ee5362664dfe1c46faf",
+      "size": 2816
+    },
+    {
+      "path": "backend/pms_api/finance/urls.py",
+      "sha256": "27d1472954fecf38fe7c0c13f0445b2c7a434a56f79af1c90388912d7e6ebc5e",
+      "size": 4064
+    },
+    {
+      "path": "backend/pms_api/health.py",
+      "sha256": "0d476794f3779f1c6d6b14f01535f4786e0da70c90fe9ce42de22da326f9bc25",
+      "size": 989
+    },
+    {
+      "path": "backend/pms_api/health_application.py",
+      "sha256": "392b910ce6631886d69e44b7709f47ce1e5763890ea4388907114a2526e743cf",
+      "size": 1640
+    },
+    {
+      "path": "backend/pms_api/health_urls.py",
+      "sha256": "2b7f69b1f8452daa34a5f4f7d9f363201b85476630a5540c73df795ce01aafca",
+      "size": 666
+    },
+    {
+      "path": "backend/pms_api/housekeeping/__init__.py",
+      "sha256": "045de064de0511c9d9b42d98d7013b4507ab8cb81aae2ee8fe6a020ea9ac85fe",
+      "size": 70
+    },
+    {
+      "path": "backend/pms_api/housekeeping/application.py",
+      "sha256": "8e085512cb1fe4e43d3ee71dbe8f00c84a70459ff76f85dadc15224a0405fa6c",
+      "size": 33913
+    },
+    {
+      "path": "backend/pms_api/housekeeping/domain.py",
+      "sha256": "330a4c829bd72fe53fe911500414db26a1c5415942f95d799e38a61b28320b9d",
+      "size": 4628
+    },
+    {
+      "path": "backend/pms_api/housekeeping/models.py",
+      "sha256": "6c743cba87c20e96ccb2cf5ed621c4acc5a3552a86675c252d60d5d95f1501a0",
+      "size": 5188
+    },
+    {
+      "path": "backend/pms_api/housekeeping/routes.py",
+      "sha256": "eea0ccb2da7e9fb82a8e70a8c95c3c96e39d2904d977c84563880124065d5848",
+      "size": 2769
+    },
+    {
+      "path": "backend/pms_api/housekeeping/service.py",
+      "sha256": "ac5940d75b247e8a781cfb4c65669472fc53b6b506e53030d78bdc4e9edb417a",
+      "size": 10125
+    },
+    {
+      "path": "backend/pms_api/housekeeping/urls.py",
+      "sha256": "fb5aed60f1035dafc087861a8ab92664ca65ab5d34460f594e95f76d60fa70f1",
+      "size": 2529
+    },
+    {
+      "path": "backend/pms_api/inventory/__init__.py",
+      "sha256": "82ff51579ae35fdeae1c6664a17b75f13280a40df104a8f165d63c1d23e10753",
+      "size": 57
+    },
+    {
+      "path": "backend/pms_api/inventory/application.py",
+      "sha256": "31205bfc29e8d1d071412bfba1d6c3dbb6a76c14f1afa041090f9cd3c93d528d",
+      "size": 43261
+    },
+    {
+      "path": "backend/pms_api/inventory/domain.py",
+      "sha256": "7150b68165befd01f3a64e24657ba7a8a4c85f3fff3291c4a035471c76d0109f",
+      "size": 1014
+    },
+    {
+      "path": "backend/pms_api/inventory/models.py",
+      "sha256": "9851739f1cea99409ee21d35079a1e47b014eb77d6a4f6a09503e9cfada18f58",
+      "size": 7695
+    },
+    {
+      "path": "backend/pms_api/inventory/routes.py",
+      "sha256": "0529186d971aa7cdb8ee9b52444caacb5facff78cca0cbe42b2fdb24c9cc76ed",
+      "size": 2342
+    },
+    {
+      "path": "backend/pms_api/inventory/urls.py",
+      "sha256": "d5fc3257dc382b309f2b6303ed13a05f7356196a592aadde94cd4767e38f9799",
+      "size": 2080
+    },
+    {
+      "path": "backend/pms_api/model_registry.py",
+      "sha256": "b46e0eb774bad24bb93d9a1c62848e4b219edb8a958f3b734a97d5183af3b357",
+      "size": 619
+    },
+    {
+      "path": "backend/pms_api/notification_models.py",
+      "sha256": "ccfe8c60fe7093bcd12eae0e97d17ab36f284bd80bd2a563fe79149e22121a8a",
+      "size": 1808
+    },
+    {
+      "path": "backend/pms_api/notifications.py",
+      "sha256": "1273e7938b99a11ebe96abdfd5a6df792b4df0018edf6cbc86482db71cd3b953",
+      "size": 1522
+    },
+    {
+      "path": "backend/pms_api/notifications_application.py",
+      "sha256": "9889851fa38b183898eb418798a6942f5e07975b642fff6d2b9730ebd7fa5310",
+      "size": 9834
+    },
+    {
+      "path": "backend/pms_api/notifications_urls.py",
+      "sha256": "7bfb80c80fa7865b80a5eb271429795d1185952e463beb09bc6d9cf9cc0763f9",
+      "size": 1374
+    },
+    {
+      "path": "backend/pms_api/plan_pricing.py",
+      "sha256": "03a67ba8d34bd45d2d9bad9a1a0f5e3f792ebf81fbda3de6a9a695f5c4d1df08",
+      "size": 3828
+    },
+    {
+      "path": "backend/pms_api/ports.py",
+      "sha256": "05680370fe928fe264526c49eb735979375a76adc8ed46e2eee7b6f26b9ebcab",
+      "size": 1827
+    },
+    {
+      "path": "backend/pms_api/pricing/README.md",
+      "sha256": "90426550e0f5a630dcd82e28d1bfd8666fa1eb513146e16cde34d0eff8b27a0c",
+      "size": 3324
+    },
+    {
+      "path": "backend/pms_api/pricing/__init__.py",
+      "sha256": "da484e6e436f2ad3f8c251cf7710c6a3a8a4b413fab93f7a5303dd3e6be26aed",
+      "size": 84
+    },
+    {
+      "path": "backend/pms_api/pricing/application.py",
+      "sha256": "a8034fca143a01cf13a88b78e1609081336ecce9a4cb4d6797b53303daa6c421",
+      "size": 11927
+    },
+    {
+      "path": "backend/pms_api/pricing/domain.py",
+      "sha256": "2715707603ae02bb0322c901daf1071a42060e210e5f6801f6567641f0c39436",
+      "size": 2069
+    },
+    {
+      "path": "backend/pms_api/pricing/engine.py",
+      "sha256": "db2e1c0d4c3863a568fcaac7407228e76955e4b1b4e85be1c4cf95127f713fd7",
+      "size": 9724
+    },
+    {
+      "path": "backend/pms_api/pricing/models.py",
+      "sha256": "bb86f210e27c43bf3d52249f0bae47d786920a64cdca68dab25e6e396e69ebcf",
+      "size": 5191
+    },
+    {
+      "path": "backend/pms_api/pricing/ports.py",
+      "sha256": "35757f280d52402949a4b5828083e9c994f28c6d7339a66906ba83ace088a863",
+      "size": 631
+    },
+    {
+      "path": "backend/pms_api/pricing/repository.py",
+      "sha256": "0f73b97cf51f89cd6481c4a283c897a36e30c66d9d142aa2473756c7f058e073",
+      "size": 2149
+    },
+    {
+      "path": "backend/pms_api/pricing/routes.py",
+      "sha256": "4ec529e93b2ad2cc244767a763d3103026e9f58547610b395bb8f46dfe233a91",
+      "size": 2052
+    },
+    {
+      "path": "backend/pms_api/pricing/strategies.py",
+      "sha256": "4802613970e423be71e9cd6da0527973c8c2dc0a9ec5bc6fcbcc13efe49f716b",
+      "size": 1221
+    },
+    {
+      "path": "backend/pms_api/pricing/urls.py",
+      "sha256": "26867181bda42aad042078f55033443f3c7a9bdee28e5c13323ee64d4431e054",
+      "size": 1815
+    },
+    {
+      "path": "backend/pms_api/reconciliation/__init__.py",
+      "sha256": "e9fd66da46d7acc823bddd202fa0f486b6529f427d314915e89e4e8f23418be0",
+      "size": 86
+    },
+    {
+      "path": "backend/pms_api/reconciliation/application.py",
+      "sha256": "32d114c980f0e0249c9f92e5ea45fde20c392804e9a54ae66b8803b931efdc00",
+      "size": 7656
+    },
+    {
+      "path": "backend/pms_api/reconciliation/business_days.py",
+      "sha256": "64692547084c017ba244195b9ec7653f9df4a1f352f5337727c518adf2552e8b",
+      "size": 8638
+    },
+    {
+      "path": "backend/pms_api/reconciliation/models.py",
+      "sha256": "e2b11e6f3c0725d920203f5b2ab6fb857b156690d03d62e6533f0f555be82726",
+      "size": 2881
+    },
+    {
+      "path": "backend/pms_api/reconciliation/night_audit.py",
+      "sha256": "d5d45901664523b77d2a28ccb026e4ac312d68cf54753989ea66d2c0ebdb35bb",
+      "size": 723
+    },
+    {
+      "path": "backend/pms_api/reconciliation/night_audit_application.py",
+      "sha256": "5f30afb42d1832f6a987138e6c64c6e9f78209552b08aa386a6a549780b32052",
+      "size": 3162
+    },
+    {
+      "path": "backend/pms_api/reconciliation/routes.py",
+      "sha256": "735fdd9d0e7fa935f1844b61055823396db1f41ecfe2eee42663150ef1a02ec0",
+      "size": 868
+    },
+    {
+      "path": "backend/pms_api/reconciliation/service.py",
+      "sha256": "7d192d42bc80811e6544396444abc79794c0c3732e382aeccb637ac52730ea76",
+      "size": 1074
+    },
+    {
+      "path": "backend/pms_api/reconciliation/urls.py",
+      "sha256": "aa20bca87238a716e62157ae6671e4a70cb5a039942cbae64de762deb9c514c7",
+      "size": 1135
+    },
+    {
+      "path": "backend/pms_api/reports/__init__.py",
+      "sha256": "58bd39b47abbd6b89a9a996a68616b943fba7ac3fbb720a0e825608b3abac79e",
+      "size": 38
+    },
+    {
+      "path": "backend/pms_api/reports/application.py",
+      "sha256": "38363c1489c3b20ee4a19da00e04d387fd37c11f441a8bd6b264b097a627bcb7",
+      "size": 30804
+    },
+    {
+      "path": "backend/pms_api/reports/routes.py",
+      "sha256": "c75658ce849647ffc2c34287249cda92261299f5bf1fc923d9dbba7fb4158c91",
+      "size": 1244
+    },
+    {
+      "path": "backend/pms_api/reports/urls.py",
+      "sha256": "b87c5dd6f731f9cbad6d67d961764eb87209b6763abf053a48832d7e3e60d69d",
+      "size": 1037
+    },
+    {
+      "path": "backend/pms_api/rls.py",
+      "sha256": "583a2263373ee0715c06fa22f9c14f00a62b838188b67681f520e74c513ded29",
+      "size": 2308
+    },
+    {
+      "path": "backend/pms_api/saas_billing/__init__.py",
+      "sha256": "99ea6b91d179b067b49aa4f9715e7cba05f079e466f75ce2a4760d489722bb80",
+      "size": 76
+    },
+    {
+      "path": "backend/pms_api/saas_billing/application.py",
+      "sha256": "b5ff03ebb559cc2e6e48a98883841f1c2126b98efe543dd028ab5dde38c099d1",
+      "size": 23826
+    },
+    {
+      "path": "backend/pms_api/saas_billing/models.py",
+      "sha256": "72cb5d1574cb5928eb9efb44f9e9a322929ad77507632a132afd4ceea0280ae6",
+      "size": 6039
+    },
+    {
+      "path": "backend/pms_api/saas_billing/routes.py",
+      "sha256": "35fc6ddf23091d14b1f8bea5b454b23f7c0f7a3ed82cfb2e033da0cb1cf1b129",
+      "size": 2653
+    },
+    {
+      "path": "backend/pms_api/saas_billing/urls.py",
+      "sha256": "03857923b95a5765c3e5928c1a15755c8ab02880e9fdc598eb026d05dead1a3c",
+      "size": 2753
+    },
+    {
+      "path": "backend/pms_api/security.py",
+      "sha256": "f0bbf7f9d561f61254df948c6e152796e532c47f91315f186b76a13920dbc83e",
+      "size": 11737
+    },
+    {
+      "path": "backend/pms_api/subscriptions.py",
+      "sha256": "d494f15a07b84c3dc4df0f1f4c64099d82b2cef1724e943ba2e3c22e8e36656f",
+      "size": 15842
+    },
+    {
+      "path": "backend/pms_api/validation.py",
+      "sha256": "756cc274241828223d9f7fe3d251fb407479ebec7e0f492a0c44002fbfc19adb",
+      "size": 823
+    },
+    {
+      "path": "backend/pms_api/worker_health.py",
+      "sha256": "e1950fa6a88fbe32897fd113014b365838e242fdc1e212d0d37333d4187a8301",
+      "size": 4649
+    },
+    {
+      "path": "backend/pms_api/workspace.py",
+      "sha256": "e565ce8ca372aed947d35460d82263c43c4d11538a0847844948c2a6efb8ff5f",
+      "size": 479
+    },
+    {
+      "path": "backend/pms_api/workspace_application.py",
+      "sha256": "86fcde8db6ade2e2a0ce17b88c823e168cef3d1f96e4eb993a99211b26a5d14f",
+      "size": 1895
+    },
+    {
+      "path": "backend/pms_api/workspace_urls.py",
+      "sha256": "eb47864acc14c9544638ee4ec1c1a7df9956a0dae4f63676f2acf779304dc139",
+      "size": 196
+    },
+    {
+      "path": "backend/pyproject.toml",
+      "sha256": "76e1b3826776e52b6c55bf8b7e9aec74f5ff6f54cb097c6c2c3b46ede6a13909",
+      "size": 157
+    },
+    {
+      "path": "backend/requirements-audit.txt",
+      "sha256": "d83f35b1dff6d2618ffb4f3bcd81a6b4410e09505e8f2d42634969faec4bb7e4",
+      "size": 30709
+    },
+    {
+      "path": "backend/requirements-dev.txt",
+      "sha256": "92e958c340a07985c595ad29f7d3a2bf04e3933ba76117d279124e88125c4447",
+      "size": 1617
+    },
+    {
+      "path": "backend/requirements-installer.txt",
+      "sha256": "ea114286b410264d55ff95580652fe64af5eee120c1cffb9eb3b4a2823ba720a",
+      "size": 218
+    },
+    {
+      "path": "backend/requirements.txt",
+      "sha256": "dfa24de8cf4cee00c8a6edc227b945d9eaa71f284c5fe7bfb9e25196b19520b2",
+      "size": 45802
+    },
+    {
+      "path": "backend/scripts/ci_database.py",
+      "sha256": "1ddd852ccc2299aa0471b71b9b91bab6ec09b5bca0bf2b227043f8158af9db82",
+      "size": 5523
+    },
+    {
+      "path": "backend/scripts/hash_requirements.py",
+      "sha256": "f5642599506657a29fceb3072cc10ab8f0ed0cb9763919932f59cbf6b133a012",
+      "size": 3297
+    },
+    {
+      "path": "backend/scripts/local_postgres.py",
+      "sha256": "f9dffc6d3fe200cda394afdc0cb05d41ccec1d12cba228705fc7935753a73b4b",
+      "size": 13077
+    },
+    {
+      "path": "backend/scripts/run_ci_tests.py",
+      "sha256": "234947de9db0901725965be62b9badc6c00fd822d168d0bc20ae445e1b9526cf",
+      "size": 1297
+    },
+    {
+      "path": "backend/scripts/run_domain_tests.py",
+      "sha256": "e4ca1eae69023c62f7272d9c6be03b24f4bb219c9000bd02c23290a3752c8b05",
+      "size": 2818
+    },
+    {
+      "path": "backend/scripts/verify_restore.py",
+      "sha256": "3245bbbdfe704f0e25dad5314d2639768604b1d2f81555701dd19efd190b3f16",
+      "size": 6263
+    },
+    {
+      "path": "backend/tests/domain_fixture.py",
+      "sha256": "df1a0c561ea1e4bb36921d5b9b03a388bbfbaa061ed1874fc6693a9e8cc2339c",
+      "size": 8555
+    },
+    {
+      "path": "backend/tests/fixtures/api_routes.json",
+      "sha256": "ed258b6d3dc06dc2a873001c6823623cc624db2ab9d6d426497b2c063e52e155",
+      "size": 23311
+    },
+    {
+      "path": "backend/tests/test_architecture.py",
+      "sha256": "6dbce46cd7cbd9eff859603d25d35fbba229ed424086eed6b7f1b418ef22ca1c",
+      "size": 7007
+    },
+    {
+      "path": "backend/tests/test_audit_filters.py",
+      "sha256": "654ed28626d9f20c76d44f0dcfcd210181a8084c091c5febc875c8dc6787307f",
+      "size": 4629
+    },
+    {
+      "path": "backend/tests/test_booking_client_acceptance.py",
+      "sha256": "b1c68222fbacb3ee7f358d176b3180d5d7c85da91b1a58b29f778633d0f35b48",
+      "size": 10704
+    },
+    {
+      "path": "backend/tests/test_booking_integration.py",
+      "sha256": "b92a2db635fea980967ac74ab15b3b601f6509f67ded0d9438897b51c9305152",
+      "size": 22711
+    },
+    {
+      "path": "backend/tests/test_booking_no_show.py",
+      "sha256": "605b3a3fdd7cb29fcb120b8a0826f403358087aad5277d8c131a431b256a14f6",
+      "size": 9962
+    },
+    {
+      "path": "backend/tests/test_booking_values.py",
+      "sha256": "5c1a871ebd79ba6b1e6323e4679d4368987685977b59c5bc2904789cd101129f",
+      "size": 1372
+    },
+    {
+      "path": "backend/tests/test_cashbook_categories.py",
+      "sha256": "9f839877db19cdd2034d8088dec3f0a4c8fc95b9880d84471d062f58c3b95f8a",
+      "size": 9050
+    },
+    {
+      "path": "backend/tests/test_catalog_postgres.py",
+      "sha256": "9fbe1e6f6fe1a3b79b147cd0426c9e0b59b6404c523bca12f1eba8f6694d75a5",
+      "size": 21126
+    },
+    {
+      "path": "backend/tests/test_catalog_validation.py",
+      "sha256": "dba733198b03f9e40768fd7e9ee0ecca710dc1345224b4dac60d6a943aeddf66",
+      "size": 4547
+    },
+    {
+      "path": "backend/tests/test_channel_catalog.py",
+      "sha256": "68529f1d6e243ee11ad3fe4f92b409494aa24b81146bbe9da188e1ec575bcffc",
+      "size": 16142
+    },
+    {
+      "path": "backend/tests/test_channel_credentials.py",
+      "sha256": "7970ef23623c63a71d2e3ffb2120165f38e5a5450e7849d6c8530f4f6de2c67b",
+      "size": 29352
+    },
+    {
+      "path": "backend/tests/test_channel_mapping_lifecycle.py",
+      "sha256": "c3cb75370ee1dabcc8974279afc5cb5c2426fff1052ad49ca74bfe4586dbd391",
+      "size": 13600
+    },
+    {
+      "path": "backend/tests/test_channel_notifications.py",
+      "sha256": "cbe53dd60df1c1a6df6bafd7401a24671ef97f84ef929ade78b30b501d457aef",
+      "size": 2863
+    },
+    {
+      "path": "backend/tests/test_channel_pacing.py",
+      "sha256": "7a8cdc284b8183223b6fb8d69e7553266fb6e5e52238d0555a400119fcfc9847",
+      "size": 12931
+    },
+    {
+      "path": "backend/tests/test_channel_source.py",
+      "sha256": "bf0f353226925206002d34b34b3bfc96b5102e61d09aa72aec091e6c3bc08382",
+      "size": 6647
+    },
+    {
+      "path": "backend/tests/test_channel_webhooks.py",
+      "sha256": "e581a25177898902dfa7477b12f2d7941df6d4c9ca12799d217a37dc03e7225c",
+      "size": 9207
+    },
+    {
+      "path": "backend/tests/test_channels_client.py",
+      "sha256": "1905a8981e4a360248cb8e57d5e3b5f25525899aeb6a9607dc4bc2c3db90ea5b",
+      "size": 23560
+    },
+    {
+      "path": "backend/tests/test_channels_integration.py",
+      "sha256": "75d7648bcb626a02197ef4a867f6d9a9a79ba03c373a28e611be61d656b39f27",
+      "size": 47327
+    },
+    {
+      "path": "backend/tests/test_channex_airbnb.py",
+      "sha256": "2f3b4b9126849623970fa72dece7f7fcd41eddfb79215fef49b54fdb1016e337",
+      "size": 18570
+    },
+    {
+      "path": "backend/tests/test_channex_channels.py",
+      "sha256": "e010fe62f6e012965778629b0371cbf97fb226c47f793170acd18f08bbf4af4e",
+      "size": 37229
+    },
+    {
+      "path": "backend/tests/test_channex_insights.py",
+      "sha256": "88cc74808f970f1293436902cc2bde2a345a663bff8c86b949c777518b686e39",
+      "size": 12106
+    },
+    {
+      "path": "backend/tests/test_channex_remote.py",
+      "sha256": "d5b98f4432be376f8cdff25192381a1eaab87c4e64c4f6198ea20b1921156943",
+      "size": 38598
+    },
+    {
+      "path": "backend/tests/test_client_profile.py",
+      "sha256": "adbb5d11e422f13e4e588439901d371b15752c032c4c588fefeed775992dfddd",
+      "size": 6566
+    },
+    {
+      "path": "backend/tests/test_client_settings.py",
+      "sha256": "3f70350eabd859bea0e253262f5d8522d666e749cc55e4403f1643c010422354",
+      "size": 6870
+    },
+    {
+      "path": "backend/tests/test_closed_finance.py",
+      "sha256": "e222fb166139be50661e86a661dd2f6e411bc1447bcb7b29604087bfe2a973e5",
+      "size": 5814
+    },
+    {
+      "path": "backend/tests/test_commissions.py",
+      "sha256": "c2afe801b8037ac8f6448f3e38ed653116525bf3ab95670252bc04a9b7d2c473",
+      "size": 28072
+    },
+    {
+      "path": "backend/tests/test_common_app.py",
+      "sha256": "9818a9ed549fb81b87febff0153f6fb8a977ed81e2281d1341b60f75ebfdcee0",
+      "size": 3779
+    },
+    {
+      "path": "backend/tests/test_common_http.py",
+      "sha256": "bf96976dc7e37be036d043c12513df45f7a7b417e2a0869b16288bf728c81249",
+      "size": 5351
+    },
+    {
+      "path": "backend/tests/test_config.py",
+      "sha256": "d90f2973f07b310a9a05916cb6578734602c5a404511d69903b32110806a5845",
+      "size": 7356
+    },
+    {
+      "path": "backend/tests/test_design_patterns.py",
+      "sha256": "3d11781c3a8b17fa28d3b98679a6b16428d032fbe2265d34e52f5000e6255844",
+      "size": 10635
+    },
+    {
+      "path": "backend/tests/test_finance_integration.py",
+      "sha256": "bcb0417e798a7b0621044440d1fd221b08bee83e8606fca1deaac354da1f53e3",
+      "size": 26472
+    },
+    {
+      "path": "backend/tests/test_finance_values.py",
+      "sha256": "2f35d0e20704b8b10be1787d2ec054937ac5cb03045b27afa6cca4f15405ba69",
+      "size": 714
+    },
+    {
+      "path": "backend/tests/test_health.py",
+      "sha256": "cd0db7ddb208c3816ab4cdfc6ab4c1ed564965a5588414eb4de96e1efcc60113",
+      "size": 1943
+    },
+    {
+      "path": "backend/tests/test_housekeeping_auto_assignment.py",
+      "sha256": "4cf6140ed545ad7d6aec79a819d6b049ae06b4e55c86ff09156fe84938f0e7f3",
+      "size": 7002
+    },
+    {
+      "path": "backend/tests/test_housekeeping_batch.py",
+      "sha256": "0f9b23470b82f8c1d8654b6edebe6209074890aedc8953257df12c6ddfd72cd2",
+      "size": 11980
+    },
+    {
+      "path": "backend/tests/test_housekeeping_calendar.py",
+      "sha256": "4d5ff159cc52e697e18e2dd415dbace5400a7efca0918391d8b8304e5384bb27",
+      "size": 7486
+    },
+    {
+      "path": "backend/tests/test_housekeeping_day_selection.py",
+      "sha256": "6751ecad70e8d021ef87cc847f55e233777bab1ea1fb1654b05ac37938fc224e",
+      "size": 4577
+    },
+    {
+      "path": "backend/tests/test_housekeeping_integration.py",
+      "sha256": "be3401dde8f70eb2e5837b64f144ea249d5867034431f0c9bc15830ef2fa6aa2",
+      "size": 19168
+    },
+    {
+      "path": "backend/tests/test_housekeeping_shift_batch.py",
+      "sha256": "d014199b36e8ad4992ed7882addaa214b25f95e704e49c81640c8dcb1c4c3dc3",
+      "size": 4657
+    },
+    {
+      "path": "backend/tests/test_housekeeping_shift_creation.py",
+      "sha256": "11eb3a458e63d003673721b924c912cc9701e4d8803fa5e9b99ba1ca9fea35f8",
+      "size": 4320
+    },
+    {
+      "path": "backend/tests/test_housekeeping_values.py",
+      "sha256": "84880c35c2b480a1ea6096c50dabc4807ce7727c44a098f8f5e11a59822b55a7",
+      "size": 4315
+    },
+    {
+      "path": "backend/tests/test_housekeeping_worker.py",
+      "sha256": "7344223a06dee8a90aa77e7109570462d7801fa9d429e3d6109146377dd9da55",
+      "size": 12319
+    },
+    {
+      "path": "backend/tests/test_identity.py",
+      "sha256": "9868c0bc4d4248b712092d90f683d8e99ee62fa7acbb164baa5b462447d9600c",
+      "size": 9864
+    },
+    {
+      "path": "backend/tests/test_inventory_integration.py",
+      "sha256": "531764a2260e8236350a0f95368dc265e43f9d91336399a247896f8699f51eb5",
+      "size": 30204
+    },
+    {
+      "path": "backend/tests/test_inventory_values.py",
+      "sha256": "76afca6af4650302d226e05e95b7faa812cbb8f35a824aa84c992f1d07595298",
+      "size": 1294
+    },
+    {
+      "path": "backend/tests/test_lazy_http.py",
+      "sha256": "9759cccb7fb120a1cae7c8dc9f667af34a8b252a435296d020ae8d96d40e556a",
+      "size": 6501
+    },
+    {
+      "path": "backend/tests/test_local_postgres.py",
+      "sha256": "b532d3af5b18b11f9548280905b16933bb8b2c1914b6a3f9175d1358b1d5b166",
+      "size": 6502
+    },
+    {
+      "path": "backend/tests/test_manager_billing.py",
+      "sha256": "5bb5f307b7c41d99677835ee6823eebe083dcbb2b53262ef3a0432a192db9c6e",
+      "size": 26290
+    },
+    {
+      "path": "backend/tests/test_manager_customers.py",
+      "sha256": "cdf02ec024d73ae0c794ece561c5af13a6651fc575178e17e62fa83d83be3376",
+      "size": 9621
+    },
+    {
+      "path": "backend/tests/test_manager_features.py",
+      "sha256": "0f9d8da372f78e8a124535804bc5ca81bbc86fbffbe8e8c004e39ff7680d490f",
+      "size": 23614
+    },
+    {
+      "path": "backend/tests/test_manager_profile.py",
+      "sha256": "e9b157163305c5f765533fc502c71e923fe92e9827799993c1dc92f81f4a53b0",
+      "size": 5303
+    },
+    {
+      "path": "backend/tests/test_manager_users.py",
+      "sha256": "21806a7117df1621421cf20c10726698d925a65428c5be748a1defa356da742f",
+      "size": 9237
+    },
+    {
+      "path": "backend/tests/test_notifications.py",
+      "sha256": "a1ebd64a97ebff1904460b0b9d67ffb0f6ef085e787ea5d01bda6863471d6181",
+      "size": 9311
+    },
+    {
+      "path": "backend/tests/test_plan_room_limits.py",
+      "sha256": "d03d56b30cf037a1f73c8ea3a001cbc725eac22ae3b11c28afcfe2c7354b05bc",
+      "size": 17704
+    },
+    {
+      "path": "backend/tests/test_pms_workflows.py",
+      "sha256": "b1d2262ebad32f9d7c0de4463f8cb025380276964051870b9c38be2239a9ca4f",
+      "size": 15760
+    },
+    {
+      "path": "backend/tests/test_postgres_integration.py",
+      "sha256": "ac4b44cd2b22b6780e9251e04ab5bb600cdf5c56dd0ef898298335e66f8ba1bc",
+      "size": 6065
+    },
+    {
+      "path": "backend/tests/test_pricing_finance_snapshots.py",
+      "sha256": "2951382113dffc9925a81beb839c5871cda8c186faca27749fb1893e88751a05",
+      "size": 5976
+    },
+    {
+      "path": "backend/tests/test_pricing_integration.py",
+      "sha256": "719c8b7832e80808fe2ac3b8e57a1ad272d36c1af1d2c49010908ed2ac3678a6",
+      "size": 17458
+    },
+    {
+      "path": "backend/tests/test_pricing_reports.py",
+      "sha256": "a48870edba84c268b37da0a515e4325862419c2271db03cbf7f686934de7276b",
+      "size": 12000
+    },
+    {
+      "path": "backend/tests/test_pricing_values.py",
+      "sha256": "d956f40abba6b0c0501cc544feba991282f2355a7cb991a6ddb8f2bc15562c04",
+      "size": 1240
+    },
+    {
+      "path": "backend/tests/test_reports_acceptance.py",
+      "sha256": "faa18a1eef994828dd80e181e6965d3aee23ed338b61d087f079f2bf5db6ab39",
+      "size": 10392
+    },
+    {
+      "path": "backend/tests/test_reports_business.py",
+      "sha256": "97990127a1a1afc70b5c8fd16ff90e9a7ae0fe2c325f3bff34a8ac04da8d8819",
+      "size": 13240
+    },
+    {
+      "path": "backend/tests/test_reports_financial.py",
+      "sha256": "bcaafedd4a755f60862a2212dd735789ced02dfc40018852874f3f2ea21bc5b5",
+      "size": 17677
+    },
+    {
+      "path": "backend/tests/test_room_guest_acceptance.py",
+      "sha256": "5566bff688e1fd2fafb937df93244aa8209429f0d939f52b127d8fbc7305fefe",
+      "size": 19192
+    },
+    {
+      "path": "backend/tests/test_subscription_acceptance.py",
+      "sha256": "8764ad95ba310e59298391611034be9f18a3240fae75fda26ed1149abb675fcc",
+      "size": 19911
+    },
+    {
+      "path": "backend/tests/test_tenant_remote_channels.py",
+      "sha256": "c77cb118f3f801c24c5b00cd8302a288305c3e7c8de78564ff650f4cce5245c4",
+      "size": 19508
+    },
+    {
+      "path": "docs/ARCHITECTURE.md",
+      "sha256": "24206f8d5c681b941fb83d33a70832dfbc7f516d4c78e1690549176fdf9fbf26",
+      "size": 6609
+    },
+    {
+      "path": "docs/PMS_9luong_UseCase_Activity_Sequence_Class.drawio.xml",
+      "sha256": "df485d037391fd8b8a47a77813500d3c267ca928a4354b3a0d8bec414ccb56fa",
+      "size": 309054
+    },
+    {
+      "path": "docs/bao-cao-chuc-nang-con-thieu-2026-10-10.md",
+      "sha256": "8932499a32468639ae2ac536f39b0035f9876cc3d27dd782589ef406a1f14647",
+      "size": 16456
+    },
+    {
+      "path": "docs/bao-cao-hoc-phan/Bao_cao_QLDA_LOHA_PMS_Nhom_2.md",
+      "sha256": "2c074108ca46b33ef185a693ba209b3c0ad8a3bc47f70364abe8786d9400fe28",
+      "size": 45825
+    },
+    {
+      "path": "docs/bao-cao-tien-do/Bao_cao_tuan_03-09_10_2026_Le_Tran_Xuan_Loc.md",
+      "sha256": "0399d31b80f1df39128389dee86452b873ed9d9ab560b6af2104a1631bf94a58",
+      "size": 15197
+    },
+    {
+      "path": "docs/bao-cao-tien-do/pms-ai/01_Muc_tieu_de_tai_PMS_AI.docx",
+      "sha256": "8592749a9346b7fb5a9ede7280a4c5149199748381403fdaed7e940319d956d5",
+      "size": 7797
+    },
+    {
+      "path": "docs/bao-cao-tien-do/pms-ai/01_Muc_tieu_de_tai_PMS_AI.md",
+      "sha256": "4c4f217b8bd11d958a9322e94b855c1abea2355986e5a8d0fdb3cc55b7421e7c",
+      "size": 11859
+    },
+    {
+      "path": "docs/bao-cao-tien-do/pms-ai/02_Pham_vi_de_tai_PMS_AI.docx",
+      "sha256": "69303781f34b98c5e59bd3e3cd8b6e1b3e42abcc3ae9d39a200cb42195d3d3c1",
+      "size": 11292
+    },
+    {
+      "path": "docs/bao-cao-tien-do/pms-ai/02_Pham_vi_de_tai_PMS_AI.md",
+      "sha256": "4631f88f5381c05394cf73259e82ce80ecb646a3d96a2d6eee62178711bd4693",
+      "size": 21851
+    },
+    {
+      "path": "docs/bao-cao-tien-do/pms-ai/03_Tai_lieu_SRS_PMS_AI.docx",
+      "sha256": "f6e84f19eb5260c9d7704b34051fec418ea48f2f1d2a7d4734b78ce3282b96b5",
+      "size": 275626
+    },
+    {
+      "path": "docs/bao-cao-tien-do/pms-ai/03_Tai_lieu_SRS_PMS_AI.md",
+      "sha256": "6994741fbd28fbaeacff6528a44f9ad1a533f4921061878e709244cb1e890e75",
+      "size": 75662
+    },
+    {
+      "path": "docs/bao-cao-tien-do/pms-ai/README.md",
+      "sha256": "f74142d94b31c77de22ef1448303cb2a9716eff14daf0f1e6d3a443c19585be5",
+      "size": 3136
+    },
+    {
+      "path": "docs/bao-cao-tien-do/pms-ai/assets/kien-truc-he-thong.png",
+      "sha256": "610fdec7895818197aeec4a2b80a1dd830fee20b59cd99d5a2678af9990439b6",
+      "size": 103268
+    },
+    {
+      "path": "docs/bao-cao-tien-do/pms-ai/assets/luong-tro-ly-ai.png",
+      "sha256": "b761ffc6fc836d9c1a221648d0691ac726f3387a64a9aac83ea8eac9bebe5ceb",
+      "size": 111086
+    },
+    {
+      "path": "docs/bao-cao-tien-do/pms-ai/assets/tao_so_do.ps1",
+      "sha256": "7f1ca56373752edf94ffd0c72bb575c04f006e464fa9314de98ef2a55d33d616",
+      "size": 7054
+    },
+    {
+      "path": "docs/bao-cao-tien-do/pms-ai/assets/trang-thai-nghiep-vu.png",
+      "sha256": "bfb693a99d8a379fae166ca3863c6a776a71dbee20037fcd39e5795d21947345",
+      "size": 65494
+    },
+    {
+      "path": "docs/bao-cao-tien-do/pms-ai/xuat_word.py",
+      "sha256": "51d258a7900cca035a3625e613f94c1865cd2533398a0aed758d51d9a3d37c91",
+      "size": 18886
+    },
+    {
+      "path": "docs/huong-dan-channex-staging-loha.md",
+      "sha256": "f7f128307891c473e6cf1618dc0366437167a65c7ed2a8490246eb35642abe02",
+      "size": 28209
+    },
+    {
+      "path": "docs/reports/README.md",
+      "sha256": "66a5a8733e723b6c2eb72c8adf21c96ac5b7aa323ff024abd04379cf60c07988",
+      "size": 2037
+    },
+    {
+      "path": "docs/reports/backend/BE01_05_IMPLEMENTATION_REPORT.md",
+      "sha256": "73b851f26911ac2993f8a33273c28121e16bec7efa455c1470fb27d35524e846",
+      "size": 8221
+    },
+    {
+      "path": "docs/reports/backend/BE06_07_IMPLEMENTATION_REPORT.md",
+      "sha256": "4fb6557bcbcea756db9b168a3cc7510942b0328a98792a0f69208eca00343176",
+      "size": 7399
+    },
+    {
+      "path": "docs/reports/backend/BE08_09_P1_FIX_REPORT.md",
+      "sha256": "3ba17004f3f0fa8117fec0ba27f075c9402cf4068b7e5780585f28e985b3a41a",
+      "size": 6345
+    },
+    {
+      "path": "docs/reports/backend/BE10_11_IMPLEMENTATION_REPORT.md",
+      "sha256": "6b00e21a0bc69a114d847df291b18893ce0217a45b40499472f843079fc336a3",
+      "size": 10599
+    },
+    {
+      "path": "docs/reports/backend/BE12_IMPLEMENTATION_REPORT.md",
+      "sha256": "07876257986e63e2e396116e619cab72dc27ce9924b8fdf9d8d3d0f23a5738a8",
+      "size": 4369
+    },
+    {
+      "path": "docs/reports/backend/PMS_BOOKING_ROOM_GUEST_TEST_REPORT_2026-10-14.md",
+      "sha256": "aed9681df8f80af22967c4ffd85be7f5ccfb8595ece0e9795cef3f55a7679f7e",
+      "size": 6231
+    },
+    {
+      "path": "docs/reports/backend/api-standardization.md",
+      "sha256": "1494c57a79dc6ea35f0bee296fe3858f2d7acd83567048794c0d19f5818a0d54",
+      "size": 3146
+    },
+    {
+      "path": "docs/reports/frontend/BE_CLIENT_STATUS_PRIORITY_REPORT.md",
+      "sha256": "a50768eb6d5c30386331fda117401b5d69cadc824dc3404b4baa52160d1af033",
+      "size": 15113
+    },
+    {
+      "path": "docs/reports/frontend/CLIENT_UI_UX_REVIEW_2026-10-15.md",
+      "sha256": "50a021b40b4ec8a2f8f54ee9833a0823dce480a64a46e11bce33e5e681c37c14",
+      "size": 28487
+    },
+    {
+      "path": "docs/reports/frontend/client-frontend-test-and-gaps-2026-10-15.md",
+      "sha256": "4ddcb2eb5630de3b0577793049b8ce12d48ba219d22ef444cddd9835c7837c65",
+      "size": 23798
+    },
+    {
+      "path": "docs/reports/frontend/error-pages.md",
+      "sha256": "3302ec83cf33e52c1850a4e08c8d02b8848b8e15065d838e3abe75f6211961a6",
+      "size": 2610
+    },
+    {
+      "path": "docs/reports/frontend/housekeeping-auto-plan-2026-10-17.md",
+      "sha256": "bf818872ca790595550d991d3e3a3a0b3e75ac7b8bc9da27501c654f1e4d13cf",
+      "size": 5350
+    },
+    {
+      "path": "docs/reports/frontend/housekeeping-shift-period-2026-10-17.md",
+      "sha256": "34f85f0af9a95895b0115c6fe83283ada2880f9f6658ebd735ebde476f6e048c",
+      "size": 2428
+    },
+    {
+      "path": "docs/reports/frontend/manual-refresh-2026-10-17.md",
+      "sha256": "d82250b9829b2af0ce7079ec82c96819adc79275f857e29680437a708be77280",
+      "size": 3641
+    },
+    {
+      "path": "docs/reports/manager/manager-completion.md",
+      "sha256": "20698bac3e437eeedb71da36428e8e75f7df4e02d7119541c4449591106829a2",
+      "size": 7401
+    },
+    {
+      "path": "docs/reports/manager/manager-owner.md",
+      "sha256": "10a49d09a162b3c50a503e5ff3ba77bc846e1734a0afe1a99fa91cc15b07f4ac",
+      "size": 3696
+    },
+    {
+      "path": "docs/reports/reviews/BE08_09_TEST_REPORT.md",
+      "sha256": "100760f4cce087609442edb34ce273d2dd5e161332c426d8135b4d06dc73fab5",
+      "size": 15351
+    },
+    {
+      "path": "docs/reports/reviews/PMS_GAP_REPORT.md",
+      "sha256": "31974cd1070bb8fd6a012685266e8d0b027d8e12fe6dd9e0e5d05edc09c565ac",
+      "size": 29935
+    },
+    {
+      "path": "docs/reports/reviews/PMS_PUBLIC_RELEASE_REVIEW_2026-10-03.md",
+      "sha256": "b11de16ccfd69d2529535f5188ebdf445b86f1303cc11aaad0f65f0285902c04",
+      "size": 68740
+    },
+    {
+      "path": "docs/reports/reviews/channex-adapter-fix-2026-10-14.md",
+      "sha256": "67117ff8bfeef88c2cb0946c70a72e22e74618311ebf8278252a7e468d3bda6b",
+      "size": 5530
+    },
+    {
+      "path": "docs/reports/reviews/pms-nine-workflows-2026-10-25.md",
+      "sha256": "3ede0b6f89edce38c33dfb5736b444cc053e6df8c9330f58bd7423def7af0ebc",
+      "size": 12560
+    },
+    {
+      "path": "docs/reports/reviews/remaining-functions-2026-10-14.md",
+      "sha256": "2057fbeb295402efda1419aa366be46f7c715e044ae26bfe77a12e4fb1948a59",
+      "size": 12561
+    },
+    {
+      "path": "frontend/.npmrc",
+      "sha256": "9f8200a55db29549d542fc59ee9fc509cfbf95d56e631257b2d2d1ee22d3cc90",
+      "size": 21
+    },
+    {
+      "path": "frontend/.oxlintrc.json",
+      "sha256": "14930c372bd68868c533fa67b5b1e035907bda85b816bc523012d3ffcb8aa9ef",
+      "size": 449
+    },
+    {
+      "path": "frontend/README.md",
+      "sha256": "938dbb66d6915eb985ff5b122a00171e7822df76df0e382753377a63a38ee84e",
+      "size": 12093
+    },
+    {
+      "path": "frontend/index.html",
+      "sha256": "12acf49970218090a2909280019f2f1615452c9f8a4422ecddec705de58b6062",
+      "size": 404
+    },
+    {
+      "path": "frontend/nixpacks.toml",
+      "sha256": "a09627c87056b9b16c80359d55e85128f48f396ce8738473f7771fc87e99afaf",
+      "size": 112
+    },
+    {
+      "path": "frontend/package-lock.json",
+      "sha256": "b80b14459d116d28712108a3ae80490b370bb4b3e630a6ef5cc83e7579873312",
+      "size": 86180
+    },
+    {
+      "path": "frontend/package.json",
+      "sha256": "3332669ed500aafdbe3e71983f705602639a81f800d5bdac09b4ba4b008b1207",
+      "size": 1094
+    },
+    {
+      "path": "frontend/public/404.html",
+      "sha256": "eee85cdbef85c61be3c6180759e9ef32bda772eb089a745cb6f58a61cd28d03a",
+      "size": 5018
+    },
+    {
+      "path": "frontend/public/50x.html",
+      "sha256": "ffa6c0108cf036c3c6061ac10d9f431c2b52bdcba5928dc26362479061c130df",
+      "size": 4935
+    },
+    {
+      "path": "frontend/public/favicon.svg",
+      "sha256": "be103fb3af6e43b57355f3e562373aa3f2c7624e762cc38e8e5ac628b8cf1b06",
+      "size": 312
+    },
+    {
+      "path": "frontend/public/icons.svg",
+      "sha256": "7ca2d67c9c3aebf50cdc8709ee8aacf8cdb8cc7ea6325ea94939caef5da1c53d",
+      "size": 5055
+    },
+    {
+      "path": "frontend/scripts/audit-i18n.mjs",
+      "sha256": "bf7b3f8f84bc4148120d6e61477cd193e0518d9af24bb93bb7a951f9dac563a8",
+      "size": 3395
+    },
+    {
+      "path": "frontend/scripts/bundle-manifest.mjs",
+      "sha256": "1c3bfabbb7b6283f2afdf53ca2b4110d0069ad3c3599531999e546ff0ff8520a",
+      "size": 857
+    },
+    {
+      "path": "frontend/scripts/generate-legacy-translations.mjs",
+      "sha256": "db013468b93bee44cdd9600a5792466c76ff6c2567b73c518c057062b17ada67",
+      "size": 2562
+    },
+    {
+      "path": "frontend/scripts/measure-bundle.mjs",
+      "sha256": "b3fb025b9ec13bd3b2b2eb1b7c9bf160b9c8dcd507309bb00a7ade67b2421b6a",
+      "size": 8039
+    },
+    {
+      "path": "frontend/src/app/App.jsx",
+      "sha256": "8f0d24dc2aea4373464a4224f3b8fe1c1a91ba56385ff4e25601a677df638288",
+      "size": 13216
+    },
+    {
+      "path": "frontend/src/app/App.test.js",
+      "sha256": "9776b7b1bdf5d35d204259e530a0791e89aca7e36a1912d94a6d896b62cf5da8",
+      "size": 14904
+    },
+    {
+      "path": "frontend/src/apps/manager/billing/pages/AdminBilling.css",
+      "sha256": "e55a9d9c175fe740ff021a6002e4b01aba03a09d0388b991aea6a30a8c525544",
+      "size": 16097
+    },
+    {
+      "path": "frontend/src/apps/manager/billing/pages/AdminBilling.jsx",
+      "sha256": "587044363ea6e7836636415fcafa5be0b9985ec365b25b9d474d7188f414248d",
+      "size": 57074
+    },
+    {
+      "path": "frontend/src/apps/manager/billing/pages/AdminBillingFormats.test.js",
+      "sha256": "ef865c02f607a4b86e253ac1bbeeff718fe8e24daddaf9b45a54931be520f2eb",
+      "size": 3762
+    },
+    {
+      "path": "frontend/src/apps/manager/billing/pages/OperationalAccess.jsx",
+      "sha256": "9402910cbdfb7838dfc59ada39719cd8df1dd06d49958834a5a4123fd8f594bb",
+      "size": 5004
+    },
+    {
+      "path": "frontend/src/apps/manager/billing/pages/PlanPricingModal.jsx",
+      "sha256": "71e2aa81ffe903fef0300d978eada5d9659be4d78bbbaef74700294f8cb620c5",
+      "size": 6941
+    },
+    {
+      "path": "frontend/src/apps/manager/billing/pages/planForm.js",
+      "sha256": "0956a7d02285dac8ad057b4766770371fd193daa0b59726a73a734b3b5cd8366",
+      "size": 2425
+    },
+    {
+      "path": "frontend/src/apps/manager/billing/pages/planForm.test.js",
+      "sha256": "37102c8679bf92f4000000907a464b848cbc149a054a99945f85bd234bec6fda",
+      "size": 4799
+    },
+    {
+      "path": "frontend/src/apps/manager/billing/pages/saasBillingForm.js",
+      "sha256": "46b5bb135517d704cdedbce85eda6f086171157e1d9a4ba0538af7169d1b3605",
+      "size": 1436
+    },
+    {
+      "path": "frontend/src/apps/manager/billing/pages/saasBillingForm.test.js",
+      "sha256": "d6bfdddac2593edbe7a78fbd6c7e0cf0b6fcd59784afdc46a6041dc7e4b20ba9",
+      "size": 2223
+    },
+    {
+      "path": "frontend/src/apps/manager/billing/pages/saasRecovery.test.js",
+      "sha256": "1af6b2553b253323d7ca951cc121d33ff85ba411a64aadc86ca094af3d4fb2a3",
+      "size": 5187
+    },
+    {
+      "path": "frontend/src/apps/manager/billing/subscriptionStatus.js",
+      "sha256": "a7e6759dcb134fbbd2d56edca591122702f56d748da59b0b59ef34178d1bd6bb",
+      "size": 1058
+    },
+    {
+      "path": "frontend/src/apps/manager/billing/subscriptionStatus.test.js",
+      "sha256": "666a1b4f697ac417c5113988be4784e476007592061cc826ac962dd4e79f2d13",
+      "size": 2608
+    },
+    {
+      "path": "frontend/src/apps/manager/channex/ChannexSurface.css",
+      "sha256": "31d90ee8a2b3b9948da9043984e07cfcd82a4f22216e3f1083e917e50ac34bf0",
+      "size": 5597
+    },
+    {
+      "path": "frontend/src/apps/manager/channex/airbnbReturn.js",
+      "sha256": "12f7bed83498c74a952cc5741b041da9cfa056d69ecdb26a96467832c8c9ab64",
+      "size": 1430
+    },
+    {
+      "path": "frontend/src/apps/manager/channex/airbnbReturn.test.js",
+      "sha256": "dd52b8657094e4db7377e1ada2f2611fad7f0491b20e95e04fce3f2e93ee4b60",
+      "size": 1701
+    },
+    {
+      "path": "frontend/src/apps/manager/channex/channelForms.js",
+      "sha256": "838455eac500f9b2e3fa89a74be89b86de08171264ecf91114bade3cbe4d76ac",
+      "size": 3354
+    },
+    {
+      "path": "frontend/src/apps/manager/channex/channelForms.test.js",
+      "sha256": "ff3a461f667c0efb67827fe1838d01ccc8d31d2727a2352cad41b15e56395afb",
+      "size": 6337
+    },
+    {
+      "path": "frontend/src/apps/manager/channex/components/CatalogEditor.jsx",
+      "sha256": "4d6c4e8ce7f80d7c3e2be86e5a29db34953ae4abe64af0572b85db52f679f38d",
+      "size": 7016
+    },
+    {
+      "path": "frontend/src/apps/manager/channex/components/ChannelAirbnb.jsx",
+      "sha256": "9cdff5efa2d0cfcf4065cd41e7ddd5d2cab150d20964a29a61736cb6db7cd9a8",
+      "size": 8258
+    },
+    {
+      "path": "frontend/src/apps/manager/channex/components/ChannelEditor.jsx",
+      "sha256": "89ff44efaef862a4853e6b1ad6d227b4ddbd019c82379745cf1f78bde647b075",
+      "size": 2182
+    },
+    {
+      "path": "frontend/src/apps/manager/channex/components/ChannelFields.jsx",
+      "sha256": "40e7fba32fb037a174dec4bc944187c0e2e9f3ba5eb8e67f6145126e7458973b",
+      "size": 4857
+    },
+    {
+      "path": "frontend/src/apps/manager/channex/components/ChannelForm.jsx",
+      "sha256": "2a6a6fd9d5faa18e79a797706cbc4da429d05ac6b47d243e9059b81cea4ef7d9",
+      "size": 10349
+    },
+    {
+      "path": "frontend/src/apps/manager/channex/components/ChannelLifecycle.jsx",
+      "sha256": "57723fe5c600de02bccf288c7f86605a73a7ecb1b1c5cd3620dd8c48c3c0fa4b",
+      "size": 6950
+    },
+    {
+      "path": "frontend/src/apps/manager/channex/components/ChannelsView.jsx",
+      "sha256": "c7de8edb1a50f8cf778799495a4391b3f4cf61f14d7aba64d78a58609328b126",
+      "size": 5255
+    },
+    {
+      "path": "frontend/src/apps/manager/channex/components/CreatePropertyEditor.jsx",
+      "sha256": "4ed18769f42759d1468965d85685e0dbb2f4e10777f8737f2c8ad98b724cc52e",
+      "size": 6768
+    },
+    {
+      "path": "frontend/src/apps/manager/channex/components/LinkedChannexTools.jsx",
+      "sha256": "06cd8b417a887e8ce79ef12da293923127af32d5bf878fa199e343b7c568afd2",
+      "size": 1638
+    },
+    {
+      "path": "frontend/src/apps/manager/channex/components/LinkedChannexTools.test.js",
+      "sha256": "838daa1d123a0ef7364eed6c6a241baeb522eff3f9f178d89010e4a9587d14fb",
+      "size": 2295
+    },
+    {
+      "path": "frontend/src/apps/manager/channex/components/ManagerIntegrationHome.jsx",
+      "sha256": "3ba7eeb88a31331742de73ce0efff52deea577c8212847ce8e6636b64ce67b77",
+      "size": 3637
+    },
+    {
+      "path": "frontend/src/apps/manager/channex/components/PropertyViews.jsx",
+      "sha256": "6106f171906f8b94e1a744941562381cb2136e2f299b0d90c4f8fdb6768bef91",
+      "size": 12644
+    },
+    {
+      "path": "frontend/src/apps/manager/channex/components/RemoteData.jsx",
+      "sha256": "f597885e58e27c13a05bbc10e68df0e22fccb5bc81133b35d44756262a0adcf4",
+      "size": 3263
+    },
+    {
+      "path": "frontend/src/apps/manager/channex/components/formFormats.test.js",
+      "sha256": "322ceb2ff424bb850fa96e45aa563f35a4e371084c89572c9ab213a94b692844",
+      "size": 5426
+    },
+    {
+      "path": "frontend/src/apps/manager/channex/pages/ManagerChannex.css",
+      "sha256": "1dcb732d9331b27e7eb7f2ac12c8d8b0f7631d6548bb6eb3255007c856880f1b",
+      "size": 24195
+    },
+    {
+      "path": "frontend/src/apps/manager/channex/pages/ManagerChannex.jsx",
+      "sha256": "195f661af2298a171ef42e1cb18b0be071d27fac35ae90bbb5105495be4c09c7",
+      "size": 3243
+    },
+    {
+      "path": "frontend/src/apps/manager/channex/presentation.js",
+      "sha256": "d90eb4fa2560345be0806d309d5e480bdf322fdebc007a10bd7b28b0a9394345",
+      "size": 2679
+    },
+    {
+      "path": "frontend/src/apps/manager/channex/presentation.test.js",
+      "sha256": "c16e11fb8c01a5944194ce0b7f43da1747993074ea675fcbdfac36875abc09e8",
+      "size": 4234
+    },
+    {
+      "path": "frontend/src/apps/manager/channex/propertyForm.js",
+      "sha256": "7b6aae9ac026975f60d8813085aa994313826c38b5f686ac49dfce24b94bccb2",
+      "size": 2726
+    },
+    {
+      "path": "frontend/src/apps/manager/channex/propertyForm.test.js",
+      "sha256": "ae9dd59e0006be4a2cc040262c9144b6bcefaf5cd7ab6d1821ed03fac193244a",
+      "size": 6171
+    },
+    {
+      "path": "frontend/src/apps/manager/channex/useChannexQuery.js",
+      "sha256": "35df0f0b4ac713abeaa867fc43d2029fa4db1083207a0fb88b61ec2e63a3f421",
+      "size": 909
+    },
+    {
+      "path": "frontend/src/apps/manager/components/ManagerHeader.jsx",
+      "sha256": "2120990a680d7f20b0946654d6c7a3d604a46ce827d4a439a3f50ce48b3dc5f0",
+      "size": 5707
+    },
+    {
+      "path": "frontend/src/apps/manager/components/ManagerSidebar.jsx",
+      "sha256": "aac86c5a9bbc9fbfb6f175065a37d128a96c5817233440984210d75fe3c73b6d",
+      "size": 3703
+    },
+    {
+      "path": "frontend/src/apps/manager/dashboard/OperationsPanel.css",
+      "sha256": "14b6cf582ccaf49d03ae8438a22be4d969d88c400c4c3c4dac807d5218f0348b",
+      "size": 1946
+    },
+    {
+      "path": "frontend/src/apps/manager/dashboard/OperationsPanel.jsx",
+      "sha256": "2b49945386234633ede978f77262d2efadba067e1b758093cbbb1a9d03c992b5",
+      "size": 4164
+    },
+    {
+      "path": "frontend/src/apps/manager/dashboard/operationsPresentation.js",
+      "sha256": "22ac0a5148abdf551b663dc3d6ca7a3b081f314b66d4a5ad1a341ca66a8d4fc4",
+      "size": 895
+    },
+    {
+      "path": "frontend/src/apps/manager/dashboard/operationsPresentation.test.js",
+      "sha256": "a9f7dc00532674a4956b33701a78ff8fc81e8c0c39f80c7711752c86433af3e2",
+      "size": 1070
+    },
+    {
+      "path": "frontend/src/apps/manager/dashboard/pages/AdminDashboard.css",
+      "sha256": "b64d32572ac024553672681a87a019cd0a64350c719d5c51e02726f572d80026",
+      "size": 11512
+    },
+    {
+      "path": "frontend/src/apps/manager/dashboard/pages/AdminDashboard.jsx",
+      "sha256": "6eb7d69fa02937e8571c6a7c2efc4427e096f37990efe68183c666d6e94d2bb9",
+      "size": 13459
+    },
+    {
+      "path": "frontend/src/apps/manager/features/pages/AdminFeatures.css",
+      "sha256": "df45fc0f5da60701d48f2dec2af702c4394e469b9602a5afc99a6bd1c1674540",
+      "size": 6676
+    },
+    {
+      "path": "frontend/src/apps/manager/features/pages/AdminFeatures.jsx",
+      "sha256": "dafd182d633f5a350b42d17cabad71d8e94ddd68e791fd6632921fa32a044d4d",
+      "size": 53152
+    },
+    {
+      "path": "frontend/src/apps/manager/features/pages/featureOverride.js",
+      "sha256": "f597101018918e9dcda0c48dfba815193a8fcf0e0d50605d81248b7365f1ca61",
+      "size": 865
+    },
+    {
+      "path": "frontend/src/apps/manager/features/pages/featureOverride.test.js",
+      "sha256": "149c76b117160b062c321cce552555743f7691dda3a3d96a77e7aa20c8fd8663",
+      "size": 1583
+    },
+    {
+      "path": "frontend/src/apps/manager/layouts/ManagerLayout.css",
+      "sha256": "b27d93f957268bce1205feb3645d6285c364f57cce7b5ea3f545c0af81a0ebf2",
+      "size": 13370
+    },
+    {
+      "path": "frontend/src/apps/manager/layouts/ManagerLayout.jsx",
+      "sha256": "e88fc71d8d78c6232c79d309edf8d1121535c3e263ebcec2c0fb2143156b1fdc",
+      "size": 3626
+    },
+    {
+      "path": "frontend/src/apps/manager/mockData.js",
+      "sha256": "d43ff562145e212dcb00461eec77a73458890d37e826ccd81cc8af63d3edca0d",
+      "size": 15651
+    },
+    {
+      "path": "frontend/src/apps/manager/profile/pages/AdminProfile.css",
+      "sha256": "136f7b20506c7a9b8e10217f92e6886fbe17c8c56adff42ce7b13ee152208af8",
+      "size": 5035
+    },
+    {
+      "path": "frontend/src/apps/manager/profile/pages/AdminProfile.jsx",
+      "sha256": "a2797ba882e154786ce88b326b982f8793dcdce46c49ad9e8671a2f03afaae47",
+      "size": 9759
+    },
+    {
+      "path": "frontend/src/apps/manager/profile/pages/AdminProfile.test.js",
+      "sha256": "b5abb28bdf62d7b3b69885cf6ab7dce143a7ddc0b270c625ad083cc5694b2b51",
+      "size": 7237
+    },
+    {
+      "path": "frontend/src/apps/manager/tenants/pages/AdminTenants.css",
+      "sha256": "1d39d54c4c71979d592bc3329a026690380589ff3c3bd1cc1960462b725c7896",
+      "size": 11194
+    },
+    {
+      "path": "frontend/src/apps/manager/tenants/pages/AdminTenants.jsx",
+      "sha256": "7375ecbabfb2aab77be41cb4caee46108869320096a29a783485b3474af519a4",
+      "size": 27853
+    },
+    {
+      "path": "frontend/src/apps/manager/tenants/pages/AdminTenants.test.js",
+      "sha256": "76ceb8f12061a6e95960d920da14cacfc76c83c7ecb205e5b96424cd6254d6be",
+      "size": 19297
+    },
+    {
+      "path": "frontend/src/apps/manager/tenants/pages/ManagerOTA.css",
+      "sha256": "66447956f22e7a013e8afdd3b27adb80bad03e5a6dea6a3e0a527c3639c0711c",
+      "size": 3364
+    },
+    {
+      "path": "frontend/src/apps/manager/tenants/pages/ManagerOTA.jsx",
+      "sha256": "71d5866f35f8f0890a8b1f352df7ec545e16727ef61dcd38385cdaf3eb4d83f0",
+      "size": 3816
+    },
+    {
+      "path": "frontend/src/apps/manager/tenants/pages/ManagerOTA.test.js",
+      "sha256": "16476dea72c05625f67bf4abb710eef1db5bd110acbc3c4519a1866d187762e1",
+      "size": 2327
+    },
+    {
+      "path": "frontend/src/apps/manager/theme.js",
+      "sha256": "8529856316a43b75b34788b6a92c42a2fafca09eb8f7510213b603c1f2c9057e",
+      "size": 1864
+    },
+    {
+      "path": "frontend/src/apps/manager/users/pages/AdminUsers.css",
+      "sha256": "fb801c8a462ca1d64334e7375142c31c7cc34a6f5c0a48f428e3249053de40f7",
+      "size": 2537
+    },
+    {
+      "path": "frontend/src/apps/manager/users/pages/AdminUsers.jsx",
+      "sha256": "b8ac6b3863ee86a16494ba8484b2049c7edd55f1f8bfa51f231e1d40f5105e58",
+      "size": 22190
+    },
+    {
+      "path": "frontend/src/apps/manager/users/pages/systemUserForm.js",
+      "sha256": "763424d77776cd244e8af4af18b932133201aa2bba7292616dd155d36058a332",
+      "size": 921
+    },
+    {
+      "path": "frontend/src/apps/manager/users/pages/systemUserForm.test.js",
+      "sha256": "8260d748fcbaccb63700cf6d5431e446e1c470b0df12bca1819aa58e355b6667",
+      "size": 2629
+    },
+    {
+      "path": "frontend/src/apps/marketing/Blog.css",
+      "sha256": "2271c7bbf362588c1b2ba98a011ffb23d10473e30c821364b7d5a35c811c0132",
+      "size": 4130
+    },
+    {
+      "path": "frontend/src/apps/marketing/Blog.jsx",
+      "sha256": "c313c2330d5f2e98056db3bccbb51fb7cc25edcef9a6ec35e9f0ff447a5329ed",
+      "size": 8454
+    },
+    {
+      "path": "frontend/src/apps/marketing/Contact.css",
+      "sha256": "98525857069351a5cf09aca09690a22c48ac795cc4a31de1922920c79081e4ad",
+      "size": 4350
+    },
+    {
+      "path": "frontend/src/apps/marketing/Contact.jsx",
+      "sha256": "4325b30c63339887955e59da3e05c1ac82251aed6c5baa2c928ec51be583835c",
+      "size": 8204
+    },
+    {
+      "path": "frontend/src/apps/marketing/Home.css",
+      "sha256": "b20a566557fc732764cabb818e8ef2bb6167c330d7c05d11abaa41ea33fffa00",
+      "size": 18502
+    },
+    {
+      "path": "frontend/src/apps/marketing/Home.jsx",
+      "sha256": "a91af590f4a694eed3e0fc94b7d3e2100fb387214f4577e32e66ab91d4071fdf",
+      "size": 13727
+    },
+    {
+      "path": "frontend/src/apps/marketing/Marketing.css",
+      "sha256": "2b9c903a1f461057a34b0449a1770e619cac0d05ac619468464bb98ae20a914f",
+      "size": 5091
+    },
+    {
+      "path": "frontend/src/apps/marketing/Pricing.jsx",
+      "sha256": "1a8323731fd23e452aeef1e00f56860e4bcaf4ac9add9c354606e130ca55b517",
+      "size": 7775
+    },
+    {
+      "path": "frontend/src/apps/marketing/layouts/MarketingLayout.css",
+      "sha256": "9d3849f9bd251342e6c315193bc36d31a3599825183f68212b47e64b6ede0eff",
+      "size": 4559
+    },
+    {
+      "path": "frontend/src/apps/marketing/layouts/MarketingLayout.jsx",
+      "sha256": "7c4be2ffd1e00a09a0865f5ca4474def8eeade88fb258d8e1e29de3d7f9aa504",
+      "size": 4884
+    },
+    {
+      "path": "frontend/src/apps/pms/auth/layouts/AuthLayout.css",
+      "sha256": "9cf2672bbf4f2582978a596764d4f59cec61590433c856c22fcb0be30d133a81",
+      "size": 6549
+    },
+    {
+      "path": "frontend/src/apps/pms/auth/layouts/AuthLayout.jsx",
+      "sha256": "77f92db7ed81e84648c5523d5db827b389bb3fd67da92abb6a6f75ecdde9dc16",
+      "size": 2000
+    },
+    {
+      "path": "frontend/src/apps/pms/auth/pages/Login.jsx",
+      "sha256": "3e1cc3bfdfce7482062d30348a5be8e4fb2e7c7c757ef04e8ebede8da62c2cdb",
+      "size": 4517
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/ChannelManager.css",
+      "sha256": "31c31206fad918ceaf4622a1984c9a9049964cb5715792ed0f2cad337cb551c1",
+      "size": 22356
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/IntegrationWorkspace.css",
+      "sha256": "d523590a17f3c58bb3493ead24383a3119add645594b31e63997c99d3e5a5515",
+      "size": 4135
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/catalog.js",
+      "sha256": "4ea551fc6daf4f3914aa8c436a66261d55a6baeb8c8795a7907c7bc27efd9285",
+      "size": 1964
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/catalog.test.js",
+      "sha256": "55867e1ae8e9f4cf95720d7d3fb0104159bd9f64c9c07db86224314316a3f0bc",
+      "size": 4282
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/clientChannelOperations.js",
+      "sha256": "f01b9f60b3d6ad1f36198ca65a2056fac8e6e890641dcbae83f34ab02199c8b5",
+      "size": 1817
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/clientChannelOperations.test.js",
+      "sha256": "af5a9a1189bec7f15d8a2fa25447fec4ddaea6685e2625f6ec7c8b674ba1dc6f",
+      "size": 3574
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/integration.js",
+      "sha256": "e3fbce187b3a741befecb25ddc9e441952721303d2f9cde1d0e0be3522649ac8",
+      "size": 1912
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/integration.test.js",
+      "sha256": "c8100bafd51e0aa4b7b35ab7ecb590b74e12e7b7452eccca9a711920863f37fd",
+      "size": 3827
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/jobHistory.js",
+      "sha256": "d04877c3ad6543f559e8441a17c8ca87c4c00e2303e1ea6233c7e8137d0c2557",
+      "size": 1498
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/jobHistory.test.js",
+      "sha256": "dd8b6ece3587f93d2d2c8d8db5ed17941c71223f3a8a6bfd4575eef2b8509a30",
+      "size": 3213
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/pages/AriPreview.jsx",
+      "sha256": "c8aa5d32727349552e53710ead8f0af4bab66430b380036e4481ac5cb3c007f8",
+      "size": 3672
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/pages/AriPreview.test.js",
+      "sha256": "ab07b8788ad884554a61e9cc91243fa207062e0affb93056f48fcd61813a1802",
+      "size": 3456
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/pages/BookingOnboarding.jsx",
+      "sha256": "94ab1d36d97a13a209835d6689a0151017b27916ef8291ae447249f7c5c487f7",
+      "size": 4216
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/pages/ChannexSourcePicker.jsx",
+      "sha256": "5d746647757fc1d5a1653839f29cbfc638aed9c2c07398118bd4b44c84657c7e",
+      "size": 6715
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/pages/ClientChannels.css",
+      "sha256": "719f25906ccede21b0884c43ecd5679d800d48cccb41e876b2b3d00713a3016a",
+      "size": 1766
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/pages/ClientChannels.jsx",
+      "sha256": "e5c9f9d604f08e6cec126f023c7ad819c11100b501779129a942783644817658",
+      "size": 7253
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/pages/IntegrationWorkspace.jsx",
+      "sha256": "00f22a28a6501982865e1d9773b8cfe399b8f7caaaf9d340545e3a9f18f2087d",
+      "size": 9544
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/pages/OTA.jsx",
+      "sha256": "00b9a7727cdc726e804ba2a6c8b2177e7064c768c894767159231234bfcca846",
+      "size": 31526
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/pages/OTAExceptions.css",
+      "sha256": "8ffece8d6f7edf94ebe883edf24fac452253ccb29585a10a11024273967b477e",
+      "size": 2050
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/pages/OTAExceptions.jsx",
+      "sha256": "778e3b624323622c2a699ac83a8e6f1d8a0599806b1d33a9908dbb2e7505e996",
+      "size": 12724
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/pages/OTAExceptions.test.js",
+      "sha256": "905de26e5c5a62768d93f638b6ef24273c62a69ba04e4f9d647350f082727400",
+      "size": 6181
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/pages/OTAHistory.jsx",
+      "sha256": "cb7477c75521811f08870f3d0b95a928b69c06b61e2c62193a71afa85e9e03f9",
+      "size": 25297
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/pages/mappingForm.test.js",
+      "sha256": "606476099aa7b35b0ce0d24a4f91dccb323f38f8d544d836058b703221636178",
+      "size": 2510
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/presentation.js",
+      "sha256": "468534d64143e06812421cfc0b229a7ed8974e1c186486b3321762d9de10f87d",
+      "size": 14039
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/presentation.test.js",
+      "sha256": "3f925f493063144b68067125c79ac3337b466d2fc100770b57f885b1be9abed3",
+      "size": 13062
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/useChannels.js",
+      "sha256": "2ab268cf2e47893f1e2c2d70d05bc9aa715e0852d0251beb73bc8767393c88f8",
+      "size": 1405
+    },
+    {
+      "path": "frontend/src/apps/pms/components/DomainForms.css",
+      "sha256": "f4fbe6a61715119d966881b86614fa015502c9bf6aaaa66664d591a0a850e321",
+      "size": 3211
+    },
+    {
+      "path": "frontend/src/apps/pms/components/FormDialog.css",
+      "sha256": "929baecff5a64cccc8126c0d39eb174ae54e467197a0cd1ad4bd264fe5c54463",
+      "size": 1718
+    },
+    {
+      "path": "frontend/src/apps/pms/components/FormDialog.jsx",
+      "sha256": "c0adde99d31837d036d893f224b6c27183254baf478abc4ceae014ae3da22e9e",
+      "size": 1363
+    },
+    {
+      "path": "frontend/src/apps/pms/components/Header.jsx",
+      "sha256": "ab1b000773e0b9ee55e188757fc4202c5cb0fe6f68c9fd0adee7d0eb2bba0cad",
+      "size": 5260
+    },
+    {
+      "path": "frontend/src/apps/pms/components/LegacyOverlay.jsx",
+      "sha256": "0373e206095abb20784b32384b891675c2368fce35fac3a8ac95c309dcb33f6c",
+      "size": 2985
+    },
+    {
+      "path": "frontend/src/apps/pms/components/NotificationBell.css",
+      "sha256": "98d42558732372a4be290d96f761033fd9a84ed88bdba7c3dc0ee965e1d98952",
+      "size": 16562
+    },
+    {
+      "path": "frontend/src/apps/pms/components/NotificationBell.jsx",
+      "sha256": "f245ccbbd83fb40fbbbe30d85dd23db9f4b7ccf02e0745ef09862a2b32123977",
+      "size": 15200
+    },
+    {
+      "path": "frontend/src/apps/pms/components/NotificationBell.test.js",
+      "sha256": "7ba02dca5974c40464d31b560cc1ad8bb936bcb6489ffbcb21d51138d16ed275",
+      "size": 17006
+    },
+    {
+      "path": "frontend/src/apps/pms/components/PmsControls.css",
+      "sha256": "ec8c90fda0534db879db04539000b7e682e53a4c6fdbb662b921991aff3ca408",
+      "size": 2310
+    },
+    {
+      "path": "frontend/src/apps/pms/components/Sidebar.jsx",
+      "sha256": "9aeb256da61b28c019c8c6f74c5fed5d87c2b4823b32f944ec85c2667df02838",
+      "size": 7541
+    },
+    {
+      "path": "frontend/src/apps/pms/components/UsageInfoModal.jsx",
+      "sha256": "c7f110a53ea1f7e7e41697522c34aca1493d58ed017642938fd2dcd9ede58a24",
+      "size": 2744
+    },
+    {
+      "path": "frontend/src/apps/pms/components/useRevealActive.js",
+      "sha256": "b8d1a2abc61c653207b360e84afc1b0b5e001143f23001316b50ad42142b04dd",
+      "size": 1153
+    },
+    {
+      "path": "frontend/src/apps/pms/dashboard/pages/Dashboard.css",
+      "sha256": "be869a70200c8db07a013e24f9d97094bf668717622a2b4f63ccc658e36393c9",
+      "size": 14912
+    },
+    {
+      "path": "frontend/src/apps/pms/dashboard/pages/Dashboard.jsx",
+      "sha256": "2f383d61327a4ec8b5bff6b98e73a9914e40b6590f7c83fb1843dac000812f87",
+      "size": 12199
+    },
+    {
+      "path": "frontend/src/apps/pms/data/PmsProvider.jsx",
+      "sha256": "5bd932a0a16a321729beb6bbafa1f000db089ec9c950cc1bcc8bb66c3de70e00",
+      "size": 36325
+    },
+    {
+      "path": "frontend/src/apps/pms/data/PmsProvider.test.js",
+      "sha256": "8f8fdb50ebfda348f39f59d85f4ab88a8ee792fd8a8c74ea2544e4291dd0603a",
+      "size": 34903
+    },
+    {
+      "path": "frontend/src/apps/pms/data/access.js",
+      "sha256": "813d053e890ccd6d47d00c2a6dae7a946c01edb413bf65a06ff93cf2b7898b94",
+      "size": 3681
+    },
+    {
+      "path": "frontend/src/apps/pms/data/api.js",
+      "sha256": "7600092e48dfcc3b312257f0f7b44eee62be898fbef520f8e1dec3769252e686",
+      "size": 10941
+    },
+    {
+      "path": "frontend/src/apps/pms/data/api.test.js",
+      "sha256": "ab11fdd46b1730c7ec08d7e36c0d4a357b60fa8b8b57544c964875773bcf15b7",
+      "size": 32997
+    },
+    {
+      "path": "frontend/src/apps/pms/data/document.js",
+      "sha256": "b1222a3d413128b3b3a8178a1292824fdc8593d0c0e1306ea6f9229d8130f6df",
+      "size": 699
+    },
+    {
+      "path": "frontend/src/apps/pms/data/model.js",
+      "sha256": "45ea391eb439aa01ac431a32b7a4933172a3345ce70050c76e7ecada4b7e6f93",
+      "size": 4230
+    },
+    {
+      "path": "frontend/src/apps/pms/data/model.test.js",
+      "sha256": "ada148c203a27dc7175d238dcb026d136a0c5552b0f9b2630ad083d2cf54bdf1",
+      "size": 7558
+    },
+    {
+      "path": "frontend/src/apps/pms/data/presentation.js",
+      "sha256": "57c37bfc9f00e1a66d7b36dd5e281156fb353fe7c409fa13852bd4876533d6a7",
+      "size": 1713
+    },
+    {
+      "path": "frontend/src/apps/pms/data/presentation.test.js",
+      "sha256": "f81cd9f4fe264c4ee2afa52851937cbc094358bf916218aee3c2388c48873dea",
+      "size": 1644
+    },
+    {
+      "path": "frontend/src/apps/pms/data/tenantNavigation.js",
+      "sha256": "37c222f06ecef2977ce02f0e80bb56dac21a28f2c4a5677123ae4edd9be66cd2",
+      "size": 669
+    },
+    {
+      "path": "frontend/src/apps/pms/data/tenantNavigation.test.js",
+      "sha256": "5fee62311d0378a47f49abbe99931c17b884f7aea3cfb71f2bf28c701d3ba17c",
+      "size": 3022
+    },
+    {
+      "path": "frontend/src/apps/pms/data/usePms.js",
+      "sha256": "43e5a23742b89710c256be6ca4762b28ff71f8382ea65dfa9cf86ccbcdcecb8c",
+      "size": 153
+    },
+    {
+      "path": "frontend/src/apps/pms/data/workspace.js",
+      "sha256": "ea108120d0e2f3c12e1992aa2c25db251a2a73b799fe0088cae6e432b57190f6",
+      "size": 20374
+    },
+    {
+      "path": "frontend/src/apps/pms/data/workspace.test.js",
+      "sha256": "466521c86cbac0de970992f733804e0da1340164fa30d59f917e612bc30aef11",
+      "size": 14631
+    },
+    {
+      "path": "frontend/src/apps/pms/data/workspaceSync.js",
+      "sha256": "9c742f46b2fe4d4a48745a37b2006741349d22ec25a98f1b3871c0ee67d9a0c7",
+      "size": 1435
+    },
+    {
+      "path": "frontend/src/apps/pms/data/workspaceSync.test.js",
+      "sha256": "81a50be929bbb6761bd0325ae098f46c053bfadbdd5055f2b64771e6bd7905ee",
+      "size": 5151
+    },
+    {
+      "path": "frontend/src/apps/pms/finance/commissionPresentation.js",
+      "sha256": "41bdd16665274d0c9461fa03964db7a7d18ecb8e1324c175fbd3c64fd90b28dd",
+      "size": 259
+    },
+    {
+      "path": "frontend/src/apps/pms/finance/commissionPresentation.test.js",
+      "sha256": "01b1942492bc2dcf995a1d7fe594f48f039d724b19104cade8b39a602b2c4575",
+      "size": 738
+    },
+    {
+      "path": "frontend/src/apps/pms/finance/pages/Cashflow.css",
+      "sha256": "7464f4028075b2c40d9530c97ad74dd071b999d1f537d4c8dbf2b28b9038327d",
+      "size": 4730
+    },
+    {
+      "path": "frontend/src/apps/pms/finance/pages/Cashflow.jsx",
+      "sha256": "c8724366e758032b19642f503e945d87d596b1cb916e89f9dd8aaf7280c94e76",
+      "size": 21895
+    },
+    {
+      "path": "frontend/src/apps/pms/finance/pages/Commissions.jsx",
+      "sha256": "202507cc24dd370d42d3887055c7af5b4e3c205d947547cb7e6557eb85f447e5",
+      "size": 24638
+    },
+    {
+      "path": "frontend/src/apps/pms/finance/pages/Commissions.test.js",
+      "sha256": "f81ca508257ba3be41d896efe43cb1a2b126f4a78d28b4f511dc16259cc49a00",
+      "size": 5900
+    },
+    {
+      "path": "frontend/src/apps/pms/finance/pages/Sales.jsx",
+      "sha256": "c96d42eedca877defa17eaf6117c7ba1ff8fbb84a81e9a8f0aebe8bc790093c0",
+      "size": 13438
+    },
+    {
+      "path": "frontend/src/apps/pms/finance/pages/SalesFormats.test.js",
+      "sha256": "b8e7719673a10dcf18bb2b5bc560d52c8424e72dfc1603b9cb84fc48a36c2bdf",
+      "size": 2376
+    },
+    {
+      "path": "frontend/src/apps/pms/housekeeping/automaticPlan.js",
+      "sha256": "2948b2746bdff4338ed36c62482ac5d7753c9bc60c25eccf4451c53053e7f631",
+      "size": 1611
+    },
+    {
+      "path": "frontend/src/apps/pms/housekeeping/automaticPlan.test.js",
+      "sha256": "cc9770ac96ed1e057bfe55adddbdecad3ae6fab99eabac8a114887c33f09b6ed",
+      "size": 2896
+    },
+    {
+      "path": "frontend/src/apps/pms/housekeeping/components/AssignmentForm.jsx",
+      "sha256": "7dcdb5e6fb2be85ac0652687ccd718bc50f6e4ed2e757a0bef150d98dfcaa087",
+      "size": 3041
+    },
+    {
+      "path": "frontend/src/apps/pms/housekeeping/components/AutomaticDayPlan.jsx",
+      "sha256": "ca88d060a6cddcba349b91987f14205da7750e12884fcbdc7bf227b725e3727a",
+      "size": 3363
+    },
+    {
+      "path": "frontend/src/apps/pms/housekeeping/components/AutomaticPlanForm.jsx",
+      "sha256": "0198540355fbda4c141f05f18acb1d36d34eedd8b93e5f53daf35c82e587369c",
+      "size": 7194
+    },
+    {
+      "path": "frontend/src/apps/pms/housekeeping/components/ManualTaskForm.jsx",
+      "sha256": "e44f90c6ef0132c9c522a55d7ff9ec761d12748505eeef846d49adb16ade451c",
+      "size": 3901
+    },
+    {
+      "path": "frontend/src/apps/pms/housekeeping/components/PlanDialog.jsx",
+      "sha256": "6c39eb1d8ba39efb248b61abcf70c6199de4b77df05f0850c1c50e7817050a44",
+      "size": 1088
+    },
+    {
+      "path": "frontend/src/apps/pms/housekeeping/components/TaskDetail.jsx",
+      "sha256": "cfd8d7cf41bf9be8d9e2c153e924be37130e9e90843e438989552309637a5115",
+      "size": 4530
+    },
+    {
+      "path": "frontend/src/apps/pms/housekeeping/formats.test.js",
+      "sha256": "8908df6e843400a4cf59186c877f0e18abf966ff87f730bbbea75d5cb44f351e",
+      "size": 3597
+    },
+    {
+      "path": "frontend/src/apps/pms/housekeeping/pages/Housekeeping.css",
+      "sha256": "b9d5cb6fd618cf2486b1fb030a2aa8edf6fd029fa2b85a840365d6317c11879e",
+      "size": 990
+    },
+    {
+      "path": "frontend/src/apps/pms/housekeeping/pages/Housekeeping.jsx",
+      "sha256": "1aa9e925c517789842c85ba7a54948748d949c60f73e640fdc84e0051e515b29",
+      "size": 18758
+    },
+    {
+      "path": "frontend/src/apps/pms/housekeeping/pages/HousekeepingPlan.css",
+      "sha256": "b91518646530d85c79dbe9012c4c2d32e3d0bd67cea9d7077b48ce6f7a4f8de2",
+      "size": 13873
+    },
+    {
+      "path": "frontend/src/apps/pms/housekeeping/pages/HousekeepingPlan.jsx",
+      "sha256": "8312b3e081606d68e41c12a83ac5893a5e7ec8ae19897e28fd545779ded47c30",
+      "size": 15419
+    },
+    {
+      "path": "frontend/src/apps/pms/housekeeping/pages/HousekeepingStaff.css",
+      "sha256": "ae199c098d93d3f70dc0bdff038ef77c39842bdd8d45e78910058cd1e42cf17e",
+      "size": 9330
+    },
+    {
+      "path": "frontend/src/apps/pms/housekeeping/pages/HousekeepingStaff.jsx",
+      "sha256": "58e56fd0d66da7ee3cbea79fdf6ad6bbfc4db2d3b09fd7e9c8df52bc21de1c2b",
+      "size": 16671
+    },
+    {
+      "path": "frontend/src/apps/pms/housekeeping/planCalendar.js",
+      "sha256": "e105c1f9a92e209440636f74616fadd60e5b5273cf382bcfca9bbc7ead301c53",
+      "size": 978
+    },
+    {
+      "path": "frontend/src/apps/pms/housekeeping/shiftSchedule.js",
+      "sha256": "52689e3a121b3b1a1cdf84d996883ef2ed9df19e9886b2fafd0281b41f3c1168",
+      "size": 919
+    },
+    {
+      "path": "frontend/src/apps/pms/housekeeping/shiftSchedule.test.js",
+      "sha256": "21df95b2e8c50a2dda8057e293d105a3b6c40a56267992303024c817f3db576a",
+      "size": 1481
+    },
+    {
+      "path": "frontend/src/apps/pms/housekeeping/useAutomaticShifts.js",
+      "sha256": "4a857dd5e9f5e3368e5d68f3c16a01cb23657162c1c841b28eb09a4ff746b235",
+      "size": 1588
+    },
+    {
+      "path": "frontend/src/apps/pms/inventory/Inventory.css",
+      "sha256": "cda3c129f68ac004422db214543aea4e8945b181e75bbefbce91f8c000fd5d0d",
+      "size": 3609
+    },
+    {
+      "path": "frontend/src/apps/pms/inventory/InventoryDocuments.jsx",
+      "sha256": "2e7d139ff7a505808df1a0b28db4f6ad25f12faccb619b20ed9f61d7cd556ff7",
+      "size": 24024
+    },
+    {
+      "path": "frontend/src/apps/pms/inventory/InventoryFormats.test.js",
+      "sha256": "fccc09261fce6d49e4602ff4c7df1e658d3d0f8e7d543ccc1d39a8c87568d7a6",
+      "size": 4038
+    },
+    {
+      "path": "frontend/src/apps/pms/inventory/pages/InventoryCheck.jsx",
+      "sha256": "022d98a60c12d32deb507bd434a9fcc9b8ba2f301f4dd377aee811ab6b34d833",
+      "size": 153
+    },
+    {
+      "path": "frontend/src/apps/pms/inventory/pages/InventoryIn.jsx",
+      "sha256": "225afd495a182e139d4f4211d5855389d42e19fa6da7dba5f476114c66450856",
+      "size": 152
+    },
+    {
+      "path": "frontend/src/apps/pms/inventory/pages/InventoryOut.jsx",
+      "sha256": "66f3d20b5f766242e6cbe8347127094c944afe97a2800386c4f6991884574657",
+      "size": 151
+    },
+    {
+      "path": "frontend/src/apps/pms/inventory/pages/InventorySettings.css",
+      "sha256": "b8ee265de1b11e2db1bf65af6136559974ac3a5d239846f97a189b4d95c30e9a",
+      "size": 15735
+    },
+    {
+      "path": "frontend/src/apps/pms/inventory/pages/InventorySettings.jsx",
+      "sha256": "45eabf96d02aa106a9f9935f5caf49578055c3fda0a60eb41981625d1ce6f126",
+      "size": 25656
+    },
+    {
+      "path": "frontend/src/apps/pms/inventory/pages/InventoryStock.jsx",
+      "sha256": "a2d1b8d13a7baa6254ee444b304010137fa0e4008bdd4113e16d4ed9fd3e053e",
+      "size": 6006
+    },
+    {
+      "path": "frontend/src/apps/pms/inventory/pages/InventoryTransfer.jsx",
+      "sha256": "5e002bc6d38be71a7c4971605785db0332db238bc9d76fcae45459ace3e11435",
+      "size": 159
+    },
+    {
+      "path": "frontend/src/apps/pms/inventory/useInventoryQuery.js",
+      "sha256": "f552a1cc9c75d830ff5483e3b76a6b9d2357900bf05d3e82ce784f6e44b55f49",
+      "size": 1372
+    },
+    {
+      "path": "frontend/src/apps/pms/inventory/values.js",
+      "sha256": "c1c4b46db6589ce7e3bacec77b7840a84f101a9282f728a3170d42efc7c74a73",
+      "size": 530
+    },
+    {
+      "path": "frontend/src/apps/pms/inventory/values.test.js",
+      "sha256": "0097046121b40bd1ca21e58505d9e0fa477d22ad3f829d005ba6f002592f47b6",
+      "size": 597
+    },
+    {
+      "path": "frontend/src/apps/pms/layouts/PmsLayout.css",
+      "sha256": "8f0dfd2633482a1d551e957f109ca4aa87f3666669159f2042f40bcff2521360",
+      "size": 17220
+    },
+    {
+      "path": "frontend/src/apps/pms/layouts/PmsLayout.jsx",
+      "sha256": "8973925ecedd7074eb26dc447f5beabfc1d826b4044cdde26a4731b62a9c8b9e",
+      "size": 5028
+    },
+    {
+      "path": "frontend/src/apps/pms/profile/pages/OwnerBilling.css",
+      "sha256": "e634cee904c36e1617f83abeece568965362e244504cd2ad70c628b07b023b03",
+      "size": 5132
+    },
+    {
+      "path": "frontend/src/apps/pms/profile/pages/OwnerBilling.jsx",
+      "sha256": "77eeb644fb87ceda43b8b3c899b9f98a1bd174483915bd2116e688e2b2e3e9c2",
+      "size": 12922
+    },
+    {
+      "path": "frontend/src/apps/pms/profile/pages/OwnerBilling.test.js",
+      "sha256": "c52f731e70f59356f8679291fae56aa9984fb3b99e3df68bbbb9e4f2e4d04a5c",
+      "size": 8935
+    },
+    {
+      "path": "frontend/src/apps/pms/profile/pages/Profile.css",
+      "sha256": "a3cb13a022e945ed5c89570de18b925412c03ee97d3d328a103a466c8b8ce094",
+      "size": 3836
+    },
+    {
+      "path": "frontend/src/apps/pms/profile/pages/Profile.jsx",
+      "sha256": "0f36faca1c57d43fe787ea68167a07f5343f2c6abcacfc8130210867412a39c4",
+      "size": 9435
+    },
+    {
+      "path": "frontend/src/apps/pms/profile/pages/billingDisplay.js",
+      "sha256": "c7e52eedac4ea1f89515df8fdca49b5bcf28dc293a98f8218c38059ae54656b9",
+      "size": 1418
+    },
+    {
+      "path": "frontend/src/apps/pms/profile/pages/billingDisplay.test.js",
+      "sha256": "0de17af607aebf55d4e593d563adb21a7f7bdf3d75fd1f971bcb05567a93b7dc",
+      "size": 854
+    },
+    {
+      "path": "frontend/src/apps/pms/profile/pages/billingDocument.js",
+      "sha256": "3d5f602860fb71f6bd669d185b57b95074374548c8b3a6d72159a37f39c2a8e9",
+      "size": 4340
+    },
+    {
+      "path": "frontend/src/apps/pms/profile/pages/billingDocument.test.js",
+      "sha256": "c011e529823626258a57b73997ad8f8bea14f2cb68a7c6572a589b6f88741072",
+      "size": 4771
+    },
+    {
+      "path": "frontend/src/apps/pms/profile/pages/profileForm.js",
+      "sha256": "789553ed91c643f68faedf23bd6aea59a2835e7dee4464379e357b2303596fd2",
+      "size": 636
+    },
+    {
+      "path": "frontend/src/apps/pms/profile/pages/profileForm.test.js",
+      "sha256": "d7c92e9c946ce85f63951d85e655f457f422f1db40b1697ea21242a81747351b",
+      "size": 1606
+    },
+    {
+      "path": "frontend/src/apps/pms/rates-inventory/RatesInventory.css",
+      "sha256": "18516afb52b68ce3a80e11b71642b12fc45d6c8df91e1c85555779d74de905bc",
+      "size": 12779
+    },
+    {
+      "path": "frontend/src/apps/pms/rates-inventory/components/DailyRateMatrix.jsx",
+      "sha256": "fe8011ea7db3eb156418906278b1a2f08c39f8dc7228b620788cee33c32165bd",
+      "size": 6855
+    },
+    {
+      "path": "frontend/src/apps/pms/rates-inventory/formats.test.js",
+      "sha256": "638af12ed501cb17ca681d135dfd18b62a695d00d4e7318b7b5369457a5f9dbc",
+      "size": 4649
+    },
+    {
+      "path": "frontend/src/apps/pms/rates-inventory/pages/ARI.css",
+      "sha256": "09c0a8d12c2d5767c00b4a8e5e9568dc53074a1a56ad8813a753eb741174e80b",
+      "size": 3878
+    },
+    {
+      "path": "frontend/src/apps/pms/rates-inventory/pages/ARI.jsx",
+      "sha256": "8de94d5254474db55780eacf392415c673e139657c376ffe4d3a8fab122b2b51",
+      "size": 15629
+    },
+    {
+      "path": "frontend/src/apps/pms/rates-inventory/pages/ExchangeRates.jsx",
+      "sha256": "7f056d1b8ab0e1190e9b61476fcdb3de83c253bd655305b939bc48d3678947ea",
+      "size": 5285
+    },
+    {
+      "path": "frontend/src/apps/pms/rates-inventory/pages/MatrixRate.css",
+      "sha256": "c22df5cce5ffd5d81a07a46327b00c5fd09cec7a20308c50a93db6072df52c9d",
+      "size": 6603
+    },
+    {
+      "path": "frontend/src/apps/pms/rates-inventory/pages/MatrixRate.jsx",
+      "sha256": "0018fee6d8a08ce77871484015c970d1637ddcbf1c8ef2ed542e6f928f7600cc",
+      "size": 8713
+    },
+    {
+      "path": "frontend/src/apps/pms/rates-inventory/pages/NightlyRates.jsx",
+      "sha256": "a77929ad4c0eefa90b7bbde99e1492f658bef95459cebfe4239c439afc8a1fc4",
+      "size": 10093
+    },
+    {
+      "path": "frontend/src/apps/pms/rates-inventory/pages/PricingManagement.jsx",
+      "sha256": "e61bba7fddf747ef9c8fc060a698bea127ab4caf6b2715ba1cbe7491396b03ff",
+      "size": 18729
+    },
+    {
+      "path": "frontend/src/apps/pms/rates-inventory/pages/Promotions.jsx",
+      "sha256": "5d04e650ebcec2e24f929175c337c9aa4edb4d22297fdff8b171c8e4bb557a6e",
+      "size": 147
+    },
+    {
+      "path": "frontend/src/apps/pms/rates-inventory/pages/Rates.jsx",
+      "sha256": "e4edff7c619e93261b40724894cb97708043c04d9d45e04796a1ac7e15b3ceaf",
+      "size": 4725
+    },
+    {
+      "path": "frontend/src/apps/pms/rates-inventory/pages/RatesARI.jsx",
+      "sha256": "12d1589e17f60cfdc25960936322f8cfdde42fa72c29ba6fbe0a407d8849e2c4",
+      "size": 3758
+    },
+    {
+      "path": "frontend/src/apps/pms/rates-inventory/pages/Vouchers.jsx",
+      "sha256": "ffe181ed32c8c0d137110570bceb33a939fc8e45b43ac7ed6b91f5459682241f",
+      "size": 143
+    },
+    {
+      "path": "frontend/src/apps/pms/rates-inventory/rateRange.js",
+      "sha256": "a59e6e747fcefc30670c6a8dd990dd4b0c03cced4f4b5c321fe0b752a5bf9097",
+      "size": 1026
+    },
+    {
+      "path": "frontend/src/apps/pms/rates-inventory/rateRange.test.js",
+      "sha256": "0cc1d14d40d4ee946d51782fbd231b294ea1e4f3d0c1259af335f2d7bb6dcfa5",
+      "size": 2100
+    },
+    {
+      "path": "frontend/src/apps/pms/reconciliation/DayReconciliation.css",
+      "sha256": "831f00ef1f748e5d978d54ddeab7a5592e99e03e6097e761a8da3d94b8c22fe5",
+      "size": 7154
+    },
+    {
+      "path": "frontend/src/apps/pms/reconciliation/DayReconciliation.jsx",
+      "sha256": "98f257c916ce2a52be11e3face573c72138758bc82f077fbc684b0ba082fc687",
+      "size": 14145
+    },
+    {
+      "path": "frontend/src/apps/pms/reconciliation/NightAuditPanel.jsx",
+      "sha256": "c20e67fb49c9703aec063b3c97a93fcdf9b7e41a3846ae036c9f80046eb64072",
+      "size": 6469
+    },
+    {
+      "path": "frontend/src/apps/pms/reconciliation/NightAuditPanel.test.js",
+      "sha256": "39a0019af94342e79797b4bda78f2d807534695d62de3c97ff09c8b896cc5847",
+      "size": 9223
+    },
+    {
+      "path": "frontend/src/apps/pms/reports/pages/BusinessReports.jsx",
+      "sha256": "f7ace49a7f91f42be40fc6ead5c54df084ff058bd98e1b958aa87e6ed6ad4d49",
+      "size": 8702
+    },
+    {
+      "path": "frontend/src/apps/pms/reports/pages/Reports.css",
+      "sha256": "17713dc2f5a96f01e6269340e5b0226379f9372874b878c03f17d77aab15b2cf",
+      "size": 7293
+    },
+    {
+      "path": "frontend/src/apps/pms/reports/pages/Reports.jsx",
+      "sha256": "ea8171c5f104592f7a40182258af4f5ed65e4dad98f7a34a14b00b646be76350",
+      "size": 13686
+    },
+    {
+      "path": "frontend/src/apps/pms/reports/pages/formats.test.js",
+      "sha256": "542d4785980330e2b9b7b27cf90044a5237552b69755f5d3503c6a59eac41a81",
+      "size": 1568
+    },
+    {
+      "path": "frontend/src/apps/pms/reservations/bookingDocument.js",
+      "sha256": "c8e11862b93a444fd1266c5c95b0c93a85c4b6c1db42b86c45e50f4e637aaf29",
+      "size": 3085
+    },
+    {
+      "path": "frontend/src/apps/pms/reservations/bookingDocument.test.js",
+      "sha256": "b75abbdc2c8f88543a23290869afef9ff5eef94a1d0c56be8d9575ae252a8fe1",
+      "size": 2299
+    },
+    {
+      "path": "frontend/src/apps/pms/reservations/bookingDraft.js",
+      "sha256": "8e6f78739d41464a6099b35852bdc06494f42708a4cbe1be0f9f96de9fca506f",
+      "size": 1137
+    },
+    {
+      "path": "frontend/src/apps/pms/reservations/bookingDraft.test.js",
+      "sha256": "ef494d71524c124372cca0ff3e8337705bad370c86aa95907661e1bb88db10b4",
+      "size": 1805
+    },
+    {
+      "path": "frontend/src/apps/pms/reservations/bookingLifecycle.js",
+      "sha256": "4cb5949fc4eace24ae83d90d51c46c581fd2d6da5c27070e8a887906afbba2b7",
+      "size": 806
+    },
+    {
+      "path": "frontend/src/apps/pms/reservations/bookingLifecycle.test.js",
+      "sha256": "293c7f47bc4b13ee7ee5aaa95b720306cff2e9ff237e0959eac7826ca9593ba4",
+      "size": 2022
+    },
+    {
+      "path": "frontend/src/apps/pms/reservations/components/BookingDetailPanel.css",
+      "sha256": "5e346a64297c76186305de32c51d247e8bc157a095247ea64f823abf3c1283a2",
+      "size": 15290
+    },
+    {
+      "path": "frontend/src/apps/pms/reservations/components/BookingDetailPanel.jsx",
+      "sha256": "9842edda31511c68e9e86dceebdfff85b009126cf38b88427ddc6c367d536cbe",
+      "size": 22351
+    },
+    {
+      "path": "frontend/src/apps/pms/reservations/components/BookingDetailPanel.test.js",
+      "sha256": "91aea687231559e89dd13c272847051ecaea0f84e3e86c4043db149f38cc5633",
+      "size": 10608
+    },
+    {
+      "path": "frontend/src/apps/pms/reservations/components/BookingModal.css",
+      "sha256": "013511fa6400bba2301fe26aaab6dbb1801ee21d0168b58c7cd130ce3de89972",
+      "size": 2886
+    },
+    {
+      "path": "frontend/src/apps/pms/reservations/components/BookingModal.jsx",
+      "sha256": "24d46b1f3e6b942b237750b181fdcf281942bcd6f730e458377aad218617e9f8",
+      "size": 19560
+    },
+    {
+      "path": "frontend/src/apps/pms/reservations/components/BookingModal.test.js",
+      "sha256": "2ea7b2730f437d1a29d19f4133a77a1022cd9ce9b4ffb8face72cf1000a12934",
+      "size": 10654
+    },
+    {
+      "path": "frontend/src/apps/pms/reservations/components/BookingTabs.jsx",
+      "sha256": "190d0a0df2293faad100951495ee1e1bb3df18dbdd58311ec243c1613a3bdbb1",
+      "size": 13524
+    },
+    {
+      "path": "frontend/src/apps/pms/reservations/components/BookingTabsFormats.test.js",
+      "sha256": "7d9eacf6b4bd21c243ac74be25e2b1d599cac428d3f596f22d314f26d9a2e71b",
+      "size": 1897
+    },
+    {
+      "path": "frontend/src/apps/pms/reservations/components/StayChangeForm.jsx",
+      "sha256": "a0d699d01ae11a12e65bf282d8ac8256ee1f126e0c4f21e57dc50de3d11986f5",
+      "size": 6678
+    },
+    {
+      "path": "frontend/src/apps/pms/reservations/components/StayChangeForm.test.js",
+      "sha256": "ca7efa1cdd601d9e3b6840cbf6f729d17f54f32a7a90b1c17c0fb0741310d149",
+      "size": 10833
+    },
+    {
+      "path": "frontend/src/apps/pms/reservations/languageDataPreservation.test.js",
+      "sha256": "4a5c1a6588b113a311f7ee17fa8a2608af453dddb4c536b44708c4657c825da2",
+      "size": 5269
+    },
+    {
+      "path": "frontend/src/apps/pms/reservations/pages/Reservations.css",
+      "sha256": "c49bb999edeb85f150652d5f748eb6cfbcd3ba4cbd02966e3085ca05121badf0",
+      "size": 8865
+    },
+    {
+      "path": "frontend/src/apps/pms/reservations/pages/Reservations.jsx",
+      "sha256": "2232ca15badd94ab952c911181c8371e4c225be8e83c9a493676bfba9489c1e0",
+      "size": 9417
+    },
+    {
+      "path": "frontend/src/apps/pms/reservations/reservationsCsv.js",
+      "sha256": "13551f52636079a5fcde12ba22efa0508b564cb5dcae7d8244ada09e974abb85",
+      "size": 485
+    },
+    {
+      "path": "frontend/src/apps/pms/rooms/components/RoomLocationFilters.jsx",
+      "sha256": "ee89c2cbb3efd6bf028704e2c7464abc87e036fa96e564f7a5369e7ad22ccd6e",
+      "size": 1255
+    },
+    {
+      "path": "frontend/src/apps/pms/rooms/pages/RoomDiagram.css",
+      "sha256": "f651fdd5d538491b8f53f5af07125c0ab5a150f6803098bca10d2d878baaa24e",
+      "size": 12080
+    },
+    {
+      "path": "frontend/src/apps/pms/rooms/pages/RoomDiagram.jsx",
+      "sha256": "32ddf1d49eeb374abd99a4d45cc019ed51d4891b67e088a33fa54f3f525664ef",
+      "size": 15865
+    },
+    {
+      "path": "frontend/src/apps/pms/rooms/pages/Rooms.jsx",
+      "sha256": "7a7ac438468e69404d25e9f19ea3870ae563cd2e65d79ca420146a3936da2549",
+      "size": 4856
+    },
+    {
+      "path": "frontend/src/apps/pms/rooms/roomLocations.js",
+      "sha256": "8098e178bcecf340522a0c311bc3e3caaa083ccea5146d28711d52673777c562",
+      "size": 1910
+    },
+    {
+      "path": "frontend/src/apps/pms/rooms/roomLocations.test.js",
+      "sha256": "c4c8ce17c26388a3d9d182d67ac4a36ee3babd91d61819d3b0274148cd550f3d",
+      "size": 4133
+    },
+    {
+      "path": "frontend/src/apps/pms/settings/pages/BusinessSettings.css",
+      "sha256": "0e89f42cc65de075e77ba91180045fd17e28010011cf0d3bd4f78b35d289290e",
+      "size": 5044
+    },
+    {
+      "path": "frontend/src/apps/pms/settings/pages/BusinessSettings.jsx",
+      "sha256": "505b41c0c596706de89ff5496cac220ab5feaf3da352c264bc287122380d0188",
+      "size": 11069
+    },
+    {
+      "path": "frontend/src/apps/pms/settings/pages/InventorySettingsShell.css",
+      "sha256": "81f4de1e718065f53da8b4ceb5f10802f3ea619807e213ee79b95dd11e531869",
+      "size": 10449
+    },
+    {
+      "path": "frontend/src/apps/pms/settings/pages/InventoryUnits.jsx",
+      "sha256": "052d3da0ecc1d5c26d75d461a58f30c31cbfac7877827821298461df031bc6e4",
+      "size": 7567
+    },
+    {
+      "path": "frontend/src/apps/pms/settings/pages/RoomLocations.css",
+      "sha256": "6faa1dec1edb2ffb8560ba61eb8415a225ac81c467a771f21e5c112920d29dcf",
+      "size": 8189
+    },
+    {
+      "path": "frontend/src/apps/pms/settings/pages/RoomLocations.jsx",
+      "sha256": "7d9cd7de1056574047fadf6c2040559e122ea89cbaa932fa1a11a86fd3f1fb72",
+      "size": 7289
+    },
+    {
+      "path": "frontend/src/apps/pms/settings/pages/Settings.css",
+      "sha256": "bd49f94d41d8b2d8a9dae5dd3d3ad07d6f55fb861205ae0da1860eb8aa7004b7",
+      "size": 9771
+    },
+    {
+      "path": "frontend/src/apps/pms/settings/pages/Settings.jsx",
+      "sha256": "e417857d68c6023ee18a4c666275f61201baa162052b577509c47d8d518de54d",
+      "size": 13709
+    },
+    {
+      "path": "frontend/src/apps/pms/settings/pages/SettingsCatalogs.css",
+      "sha256": "760d5ca46c10d7720008bda19abd88e634da460662d9bc517eb6edc51df16306",
+      "size": 11052
+    },
+    {
+      "path": "frontend/src/apps/pms/settings/pages/SettingsCatalogs.jsx",
+      "sha256": "3a93060f15e7ffac9dd37d5ff4cd812a94de2b089f165fbdddc4941903da48b6",
+      "size": 19412
+    },
+    {
+      "path": "frontend/src/apps/pms/settings/pages/businessProfileForm.js",
+      "sha256": "91124d968058b14574c32f083e51ac9ce0382398deeb5822f1da4144cd3c1b7c",
+      "size": 1547
+    },
+    {
+      "path": "frontend/src/apps/pms/settings/pages/businessProfileForm.test.js",
+      "sha256": "7ecdeb82bd02af7ac064ed800707883b4061463403b61b86edc66f6a79a2ed4f",
+      "size": 1429
+    },
+    {
+      "path": "frontend/src/apps/pms/settings/pages/catalogForm.js",
+      "sha256": "b71f02d6cd3f62f8d85562eac6e65c1cbc886170015036fb3a6944d981eaf234",
+      "size": 321
+    },
+    {
+      "path": "frontend/src/apps/pms/settings/pages/catalogForm.test.js",
+      "sha256": "9d1f1b215ce240259d5c67ec9d290a642e755f645e864d53f9fc5f4007ed06e9",
+      "size": 769
+    },
+    {
+      "path": "frontend/src/apps/pms/settings/pages/clientFormats.test.js",
+      "sha256": "dbda6d1e5e0a672530bada5cdd8afc569f61f19cce6ce775afde5f381a84a8fd",
+      "size": 7255
+    },
+    {
+      "path": "frontend/src/apps/pms/settings/pages/currencyCompatibility.test.js",
+      "sha256": "4971050827661ca2f8ae3699980023d63a872d564fe1c429b44876051c82d4b6",
+      "size": 5443
+    },
+    {
+      "path": "frontend/src/apps/pms/user-management/pages/UserManagement.css",
+      "sha256": "fa3ee2d497f9f04e14b48b1ebd386421ac075f693566aecb8d67a61ea7199f32",
+      "size": 62
+    },
+    {
+      "path": "frontend/src/apps/pms/user-management/pages/UserManagement.jsx",
+      "sha256": "158d6c36effd8edee6b55fb2a17b6be56093627b1ca01c59dd95fed7dccbc466",
+      "size": 23448
+    },
+    {
+      "path": "frontend/src/apps/pms/user-management/pages/UserManagement.test.js",
+      "sha256": "aa15706b623b244a6c0a54e7a3f8ab73bf407d2ad138bb78201af251ed1591cb",
+      "size": 2823
+    },
+    {
+      "path": "frontend/src/assets/hero.png",
+      "sha256": "881ffbcaafc212e49addad08846a5b82761355fa20624253af3477ba33262c5c",
+      "size": 13057
+    },
+    {
+      "path": "frontend/src/assets/react.svg",
+      "sha256": "35ef61ed53b323ae94a16a8ec659b3d0af3880698791133f23b084085ab1c2e5",
+      "size": 4126
+    },
+    {
+      "path": "frontend/src/assets/vite.svg",
+      "sha256": "2f1f6c6f90a0ef7422cbb4cfafcd8ad329c507a18afdc34cc21fa72179b9c54a",
+      "size": 8710
+    },
+    {
+      "path": "frontend/src/index.css",
+      "sha256": "5d2825836f57648a255e54c99027575ac9d6ecd1c115b001967c08f837ac4eb0",
+      "size": 13316
+    },
+    {
+      "path": "frontend/src/main.jsx",
+      "sha256": "e762214711e35ec1bd68b9246b890f6e112ada1d8bdfa8b4e4e514ec39cacd85",
+      "size": 243
+    },
+    {
+      "path": "frontend/src/shared/components/AccessControl.jsx",
+      "sha256": "d5b7e99ce8e1fca16edcab67d3a7f670705e2837036d237cd5ae0a6ace4d3c1b",
+      "size": 4244
+    },
+    {
+      "path": "frontend/src/shared/components/DateInput.css",
+      "sha256": "3b47bc07ba239932f5844263878e0cfa4f51de7a4b5cb6340ddac4eb30f51535",
+      "size": 716
+    },
+    {
+      "path": "frontend/src/shared/components/DateInput.jsx",
+      "sha256": "4c1a8ec7b1d8a971109b9ab808106022806b2e35dc5cf666c0534fa8ee9e30f1",
+      "size": 2385
+    },
+    {
+      "path": "frontend/src/shared/components/DateInput.test.js",
+      "sha256": "b5014d26cf686aee4dfbda507ff511b0499ab7d0f4d121c60540c45910d90559",
+      "size": 3629
+    },
+    {
+      "path": "frontend/src/shared/components/LohaBrand.jsx",
+      "sha256": "7681fd285a1f97cc32d145cc710b88f66dbdb4845584319f2471ad84448a173e",
+      "size": 414
+    },
+    {
+      "path": "frontend/src/shared/components/LohaErrorPage.css",
+      "sha256": "03550cdfddde881a1a093c2c19efc4e3f74e12308994202253d41128b9058b39",
+      "size": 4189
+    },
+    {
+      "path": "frontend/src/shared/components/LohaErrorPage.jsx",
+      "sha256": "bb835a3983ca0628805db1d679c11e416c6a6fec1929dbaf0a59f07d54614bde",
+      "size": 4005
+    },
+    {
+      "path": "frontend/src/shared/components/LohaLoading.css",
+      "sha256": "61431dbcbdd7fbfd7575eaf1978a9da6df3fbce7e8324332df1d4a3ec612e8df",
+      "size": 1329
+    },
+    {
+      "path": "frontend/src/shared/components/LohaLoading.jsx",
+      "sha256": "ec40b3ac28c03442e7e45eb4b4cc585e4b44e60d0c8255a76cccc2ad20466bd5",
+      "size": 771
+    },
+    {
+      "path": "frontend/src/shared/components/RequestActivity.css",
+      "sha256": "d096635ef7ad3f55e5b06b9291d489c27a9fa612b05160b182a0954b8e367d64",
+      "size": 1060
+    },
+    {
+      "path": "frontend/src/shared/components/RequestActivity.jsx",
+      "sha256": "a7491ee4c37bc94b2ae0af3111ea18e8f9cbbbc7561cb3a0f817664995291aac",
+      "size": 599
+    },
+    {
+      "path": "frontend/src/shared/components/RouteErrorBoundary.jsx",
+      "sha256": "642d20c7e723e8ea9783a73027c07ae83bb91755fc28185eec7ea93a0b05206b",
+      "size": 1645
+    },
+    {
+      "path": "frontend/src/shared/components/RouteErrorBoundary.test.js",
+      "sha256": "42af12dde65b6ac98392e58e3cba481d098073d418c71e21ebd7193edff4c5f2",
+      "size": 4576
+    },
+    {
+      "path": "frontend/src/shared/components/errorStatus.js",
+      "sha256": "a26d2191e3250809ff6bba9cb83ed0a3b0cdf1159ebed98775f5365cb8a1bb9c",
+      "size": 2051
+    },
+    {
+      "path": "frontend/src/shared/components/errorStatus.test.js",
+      "sha256": "ddc28f6656cc93af35e203b97cabe14020542aa6c7b0f67000796b70ce07d53c",
+      "size": 2180
+    },
+    {
+      "path": "frontend/src/shared/config/pricingPlans.js",
+      "sha256": "c16d8f99da75f9731815c29f99481142d3444d5d8c8f3cdc2a3eab45725b58f9",
+      "size": 578
+    },
+    {
+      "path": "frontend/src/shared/drafts/DraftGuard.css",
+      "sha256": "e7eac3e614f26d8f773fba5837a8725976808aaf9ea341b502b29b090f585d3b",
+      "size": 1268
+    },
+    {
+      "path": "frontend/src/shared/drafts/DraftGuardProvider.jsx",
+      "sha256": "95fff51fca4b616ee823ecbde412f7eacc1e18781506e53f23313625280e75e1",
+      "size": 5144
+    },
+    {
+      "path": "frontend/src/shared/drafts/DraftGuardProvider.test.js",
+      "sha256": "c63704ca8076fbd5b5b87bc29fc33be036a6166087c35ee9ff0d4f3c6d3b995b",
+      "size": 8444
+    },
+    {
+      "path": "frontend/src/shared/drafts/guardManager.js",
+      "sha256": "e91bbdbeed7bbdecfe163d3ed3245b6e6546721e4630852c69c4496e181ec422",
+      "size": 3995
+    },
+    {
+      "path": "frontend/src/shared/drafts/guardManager.test.js",
+      "sha256": "b0242bdb98ae1f3411f64bcf06dfdbdd92e469aea92e705e61a59019c22f3c7b",
+      "size": 6382
+    },
+    {
+      "path": "frontend/src/shared/drafts/testDom.js",
+      "sha256": "83fdcd57a707ed609513015306f4369e3dda4fcc8b769afb01873c03d7186d20",
+      "size": 3223
+    },
+    {
+      "path": "frontend/src/shared/i18n/LanguageSwitcher.css",
+      "sha256": "1f62f4278c388a41dd2495d591e422456254062ad66a3d4ef87dfa1c0be7ae5c",
+      "size": 4866
+    },
+    {
+      "path": "frontend/src/shared/i18n/LanguageSwitcher.jsx",
+      "sha256": "5a747b68f21221bd11af39e23aa478d9e8deee6a39597f1f36b96b258fd6e820",
+      "size": 3767
+    },
+    {
+      "path": "frontend/src/shared/i18n/LegacyI18nBridge.jsx",
+      "sha256": "e23a280d4a9ea6f2b91f3956efa7927a77e528909d722c8a2c29a419265a2ccf",
+      "size": 962
+    },
+    {
+      "path": "frontend/src/shared/i18n/README.md",
+      "sha256": "cb07bb0002e6561b28712b132f0590e719af281d2066863124273bcae7454a7c",
+      "size": 4685
+    },
+    {
+      "path": "frontend/src/shared/i18n/core.js",
+      "sha256": "5383bd1761ea6cea6e432c77610ec3fc9bd094385cebc85fd794d3caeb745531",
+      "size": 4948
+    },
+    {
+      "path": "frontend/src/shared/i18n/core.test.js",
+      "sha256": "56989dc60076e0acc3a093805ed75e31d86c251b6e93238099ad4f845ec6f573",
+      "size": 9351
+    },
+    {
+      "path": "frontend/src/shared/i18n/fontCoverage.test.js",
+      "sha256": "90fcc259912af72015e81e1facd237e8e775be093abf69a6f1e5b5864fd56b69",
+      "size": 4491
+    },
+    {
+      "path": "frontend/src/shared/i18n/formatters.js",
+      "sha256": "e00436721b6428af8fba70b48e190887b1cbd39a32400ba600a585f15eae7124",
+      "size": 217
+    },
+    {
+      "path": "frontend/src/shared/i18n/legacyDom.js",
+      "sha256": "2f6109e0386f6ee6b437a8e3a2abcb89e0417795200922fcf88254b2a47c624a",
+      "size": 2689
+    },
+    {
+      "path": "frontend/src/shared/i18n/legacyDom.test.js",
+      "sha256": "0d14dd0fc89d989b14e19bdd3f7ee5f80044a1f46ff7a0d43e13b66a37028214",
+      "size": 10793
+    },
+    {
+      "path": "frontend/src/shared/i18n/locales/en-US.json",
+      "sha256": "ef841b75da06a7c9eda6d949b25951fe06de344c06c20b755a439ead123b8da4",
+      "size": 69888
+    },
+    {
+      "path": "frontend/src/shared/i18n/locales/legacy-en-US.json",
+      "sha256": "e4859aca393ee92c4e8cb8e610e20b9b121183fc79ed3fca011bb7993339b9a2",
+      "size": 217901
+    },
+    {
+      "path": "frontend/src/shared/i18n/locales/legacy-zh-CN.json",
+      "sha256": "0c6c9e40a114014421c63b2f2611164876f4368680222e8c75240f44097077fa",
+      "size": 206125
+    },
+    {
+      "path": "frontend/src/shared/i18n/locales/vi.json",
+      "sha256": "4c375fe5559e1c2e71ed01fb2fcc5168169e64aa3f80eeedb0097ed2d62d58cf",
+      "size": 80676
+    },
+    {
+      "path": "frontend/src/shared/i18n/locales/zh-CN.json",
+      "sha256": "888fbe1aeca39d9052f1bcd8ad8801b2f1a55316a9fbf0627887dc1e03d9fc9d",
+      "size": 66621
+    },
+    {
+      "path": "frontend/src/shared/i18n/store.js",
+      "sha256": "94d82b04ebf4cf7699cc36bffaa4c2d7167f4bb70135e2c2ec0d50994af36aa3",
+      "size": 1525
+    },
+    {
+      "path": "frontend/src/shared/i18n/useI18n.js",
+      "sha256": "5bf622b39879ff49898f0131b935dafc3d7a94d4d14174bc43d809763c3e165f",
+      "size": 485
+    },
+    {
+      "path": "frontend/src/shared/lib/chunkRecovery.js",
+      "sha256": "fc15dfb9b1d70cf22d588c56b0f53f3fe5057b4e74402a9259a94578fc0d8ca9",
+      "size": 2947
+    },
+    {
+      "path": "frontend/src/shared/lib/chunkRecovery.test.js",
+      "sha256": "797e774e45a1c4f3a767e46c919eb28bd9398aa336abb665d3247386d244b19e",
+      "size": 5802
+    },
+    {
+      "path": "frontend/src/shared/lib/csv.js",
+      "sha256": "3ab873d7b8454f1909f6c1bf42d9fb14dceeba49e8d17ea3d2d7c8885450f83c",
+      "size": 800
+    },
+    {
+      "path": "frontend/src/shared/lib/csv.test.js",
+      "sha256": "719bb98b277eae815fff0f13c3ac171fe5bc1f5cc0600821aa44914fd3058cde",
+      "size": 787
+    },
+    {
+      "path": "frontend/src/shared/lib/currencies.js",
+      "sha256": "f297b9e802efa25771c2472c865333b7667455ce4914a5dd5c1ae9979d50bbfa",
+      "size": 1907
+    },
+    {
+      "path": "frontend/src/shared/lib/currencies.test.js",
+      "sha256": "2079d8279c504e4dcda20396993715f53123e9dcfa6a1991be35a6467883f66f",
+      "size": 1384
+    },
+    {
+      "path": "frontend/src/shared/lib/date.js",
+      "sha256": "d61939085f278907e97a4f1758bad73f13651424be527c6d14b9dda8bdc7267e",
+      "size": 2295
+    },
+    {
+      "path": "frontend/src/shared/lib/date.test.js",
+      "sha256": "c5f0a520cf006b258c8a17690e67b91f3d91377b01166c13d716074b43b307a5",
+      "size": 2637
+    },
+    {
+      "path": "frontend/src/shared/lib/dateRangeQuery.js",
+      "sha256": "b65a8f1913e58b4c0a37eaabf79279c6ff32cf77b414e4264bf7a65b8ceda4cf",
+      "size": 587
+    },
+    {
+      "path": "frontend/src/shared/lib/dateRangeQuery.test.js",
+      "sha256": "491c011aee7f6faa278758da46845e2d45ec8b3d219a5f28835bf008eae62fe6",
+      "size": 2864
+    },
+    {
+      "path": "frontend/src/shared/lib/lazyRoute.js",
+      "sha256": "65134db5cc03169245e7abe9688b99d8e3156ee547e322300f84ac1fd0a2c5e5",
+      "size": 173
+    },
+    {
+      "path": "frontend/src/shared/lib/number.js",
+      "sha256": "6c32074d02dd093279ccf542d301fc03c9905a9b86217f4e5754c26e02e871b5",
+      "size": 917
+    },
+    {
+      "path": "frontend/src/shared/lib/number.test.js",
+      "sha256": "f3f0f95b28fa701edc7f51d0c3519f18c08184176bd024ee570ab3e1a5600813",
+      "size": 1263
+    },
+    {
+      "path": "frontend/src/shared/lib/phone.js",
+      "sha256": "c4d88c4feb6a9b276a094c56f39aa1f1dec7d8c6f72ec0d21f49a73e6b7f3fcb",
+      "size": 574
+    },
+    {
+      "path": "frontend/src/shared/lib/phone.test.js",
+      "sha256": "1752d41c17bbd26defb79af9efd523365fe137e503facf957fea8c9d1b4c6024",
+      "size": 1260
+    },
+    {
+      "path": "frontend/src/shared/lib/planPricing.js",
+      "sha256": "ad5a86d7fdf9a101b474379b1253742725945e7564b51815fb48b7a0ee6167bf",
+      "size": 4490
+    },
+    {
+      "path": "frontend/src/shared/lib/planPricing.test.js",
+      "sha256": "93f5f70e35db9e33dc30667cae499419d0fa647d9f76edd47d9f49dde7bd76db",
+      "size": 3732
+    },
+    {
+      "path": "frontend/src/shared/lib/validation.js",
+      "sha256": "56517510778225e354b0cee8f31388baf9819b43395245b5141d2033a6a95837",
+      "size": 1022
+    },
+    {
+      "path": "frontend/src/shared/lib/validation.test.js",
+      "sha256": "63daf0627fa698593c274bc415dc773701855624069da447374f88f56164313e",
+      "size": 2141
+    },
+    {
+      "path": "frontend/src/shared/lib/vietnamProvinces.js",
+      "sha256": "e42ab6ed0295495f9d7245441cb86586e4f966d4260470b81430b04b8c4d4c88",
+      "size": 1846
+    },
+    {
+      "path": "frontend/src/shared/lib/vietnamProvinces.test.js",
+      "sha256": "6b2f23c6dc652a29c9a670ee2be9528c6efcb7109401aad600e0e38457ce6dc8",
+      "size": 1057
+    },
+    {
+      "path": "frontend/src/shared/security.test.js",
+      "sha256": "acd356a1a46099cdf95f8ada9563914eba73a4fe884dfca6895f572dd6a1043d",
+      "size": 4416
+    },
+    {
+      "path": "frontend/src/shared/styles/fonts.css",
+      "sha256": "77b312d8e99f579e1b7286e39b7ef3a1b268dbbf2225b75badc6a927d7548106",
+      "size": 1204
+    },
+    {
+      "path": "frontend/src/shared/styles/loha.css",
+      "sha256": "80be275239b738908bba4d70a27de268d6009e2d6b13a82d7cee8a88c2874626",
+      "size": 3332
+    },
+    {
+      "path": "frontend/vite.config.js",
+      "sha256": "875494f30b760f1e86ad4f4a042197e487ab3122e5f960b7e81cef2a929a3a60",
+      "size": 527
+    },
+    {
+      "path": "pms_system_design_final.md",
+      "sha256": "c85d2b83a722648a8b0f67437e4b47f7fbf2ab49354737b83661766d631d6294",
+      "size": 65467
+    },
+    {
+      "path": "start_backend.bat",
+      "sha256": "d0ae16dce4a99a7f2b636eff04f1133ff9682f8e693ebeda8dc6801c74a19730",
+      "size": 580
+    },
+    {
+      "path": "start_frontend.bat",
+      "sha256": "9d3df33c6b21e13e3f9de138de9edfb14202da32986593db8f878ff0a26d8de2",
+      "size": 98
+    },
+    {
+      "path": "tasks/api-standardization.md",
+      "sha256": "1494c57a79dc6ea35f0bee296fe3858f2d7acd83567048794c0d19f5818a0d54",
+      "size": 3146
+    },
+    {
+      "path": "tasks/be10-be11.md",
+      "sha256": "d7d31bbfa526f983c7022c04ce79ab579056892e0d6f02cd83f902e728f062e5",
+      "size": 3019
+    },
+    {
+      "path": "tasks/be12.md",
+      "sha256": "6bfecaa46c5ee2ee8c7cd2a1ca81a735eb1bda1f494f5a03ca3cd5edef81a0cb",
+      "size": 2028
+    },
+    {
+      "path": "tasks/error-pages.md",
+      "sha256": "3302ec83cf33e52c1850a4e08c8d02b8848b8e15065d838e3abe75f6211961a6",
+      "size": 2610
+    },
+    {
+      "path": "tasks/manager-completion.md",
+      "sha256": "1c5909d26352b28db8d0929b7fd5b58fd808c92f277463fb4286250016eafee9",
+      "size": 7377
+    },
+    {
+      "path": "tasks/manager-owner.md",
+      "sha256": "90bb39cd509992fa29ef7c0c826049b85810d3c7ea1ce829bf60788a2487d965",
+      "size": 3690
+    },
+    {
+      "path": "tasks/plan.md",
+      "sha256": "3af1cafa4d724d3c4a57fed64d8a7b2137d002954bb6553a12d45c1991b5f312",
+      "size": 8633
+    },
+    {
+      "path": "tasks/todo.md",
+      "sha256": "994df0ef79a3b371008275089b29f39075dbef96eb0c336785c365b17f7f09b2",
+      "size": 12634
+    }
+  ],
+  "excluded": [
+    {
+      "path": ".postman/resources.yaml",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "Bao_cao_QLDA_LOHA_PMS_Nhom_2.docx",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "docs/bao-cao-chuc-nang-con-thieu-2026-10-10.pdf",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "docs/bao-cao-hoc-phan/Bao_cao_QLDA_LOHA_PMS_Nhom_2.docx",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "docs/bao-cao-hoc-phan/Suon_thuyet_trinh_Quan_ly_rui_ro_Nhom_2.docx",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "docs/bao-cao-hoc-phan/build_report.py",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "docs/bao-cao-tien-do/01_Muc_tieu_và_pham_vi.pdf",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "docs/bao-cao-tien-do/Bao_cao_tuan_03-09_10_2026_Le_Tran_Xuan_Loc.docx",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "docs/bao-cao-tien-do/Muc_tieu_de_tai_Smart_Irrigation.docx",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "docs/bao-cao-tien-do/Pham_vi_thuc_hien_Smart_Irrigation.docx",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "docs/bao-cao-tien-do/TAI_LIEU_SRS_v1.1.docx",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "docs/channex-docs-coverage-2026-10-10.json",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "docs/huong-dan-channex-staging-loha.pdf",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "docs/reports/frontend/assets/client-ux-2026-10-15/booking-mobile-320.png",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "docs/reports/frontend/assets/client-ux-2026-10-15/booking-save-scope.png",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "frontend/.playwright-cli/page-2026-10-17T13-30-07-904Z.yml",
+      "reason": "Runtime, generated output, sensitive path or unsafe path"
+    },
+    {
+      "path": "frontend/.playwright-cli/page-2026-10-17T13-30-26-954Z.yml",
+      "reason": "Runtime, generated output, sensitive path or unsafe path"
+    },
+    {
+      "path": "frontend/.playwright-cli/page-2026-10-17T13-30-51-459Z.yml",
+      "reason": "Runtime, generated output, sensitive path or unsafe path"
+    },
+    {
+      "path": "frontend/.playwright-cli/page-2026-10-17T13-36-57-899Z.yml",
+      "reason": "Runtime, generated output, sensitive path or unsafe path"
+    },
+    {
+      "path": "frontend/src/apps/manager/logs/pages/AdminLogs.css",
+      "reason": "Runtime, generated output, sensitive path or unsafe path"
+    },
+    {
+      "path": "frontend/src/apps/manager/logs/pages/AdminLogs.jsx",
+      "reason": "Runtime, generated output, sensitive path or unsafe path"
+    },
+    {
+      "path": "graphify-out/.gitignore",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "graphify-out/.graphify_labels.json",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "graphify-out/.graphify_learning.json",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "graphify-out/.graphify_python",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "graphify-out/.graphify_root",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "graphify-out/.vocab.txt",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "graphify-out/GRAPH_REPORT.md",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "graphify-out/build_graph.py",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "graphify-out/cache/ast/v0.9.73-s4/6f9bb94d0663fa894893bf5da8e891b2ae0a0a150372e286aca59a5aca92c104.json",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "graphify-out/cache/ast/v0.9.73-s4/7c328b72c0da726cf66aa42c2a6b064349b449e6755cbcda2cf4a6ec024538e7.json",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "graphify-out/cache/ast/v0.9.73-s4/ae04138d42ac8453064296ea23c34c5666d2949e00310a2f6a155b0a3a6669bb.json",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "graphify-out/cache/last_query_stamp",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "graphify-out/cache/semantic/pa567fc138e3a/0d9e32bfbc860a8c83980b128bea73672b21d355cb93f85641d2027800b48833.json",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "graphify-out/cache/semantic/pa567fc138e3a/27ac613c619afb7eb19b352e1fc1698c731437096e109eebe7315e18fc646d9b.json",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "graphify-out/cache/semantic/pa567fc138e3a/2b02e12a4a45fccb05de8b856fee6ab8f9adfc2d6388bddfc18a9c238801a2af.json",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "graphify-out/cache/semantic/pa567fc138e3a/399e636012f77d159cebf983f7b97757f7c1857fe14f58da0d2d2cdaddf1ea40.json",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "graphify-out/cache/semantic/pa567fc138e3a/410cbb491fe3304a60e659905a41f7d7f668f64c30bde27ad287399153135b04.json",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "graphify-out/cache/semantic/pa567fc138e3a/778a1c8b77ea52d56e09162b68906bef20db4ccb02634af5c509b4806f6ac696.json",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "graphify-out/cache/semantic/pa567fc138e3a/ab7ca1a3382eb755a7409a14a8c0fa217554a12bde42c003e41f61aa2f02a345.json",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "graphify-out/cache/semantic/pa567fc138e3a/b91f8b511ba45c1e9a6de88c492c1c2b4934cbfc888605466027d3532855ced2.json",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "graphify-out/cache/semantic/pa567fc138e3a/d3790381ae5bac1361b684d790590390ded46432b2efda957c4531f96a64791f.json",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "graphify-out/cache/semantic/pa567fc138e3a/e784e1ec23a30d3bbb0a375e33b635e5c28d2e0f9dc01030d831e279c1b6434b.json",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "graphify-out/cache/stat-index.json",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "graphify-out/cost.json",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "graphify-out/extraction.json",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "graphify-out/graph-health.json",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "graphify-out/graph.html",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "graphify-out/graph.json",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "graphify-out/manifest.json",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "graphify-out/memory/query_20261002_154008_cf68535d_bạn_xem_file_system_design_final_và_dự_án_còn_thiế.md",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "graphify-out/memory/query_20261002_175856_064cea84_bạn_xem_qua_file_system_design_final_và_đánh_giá_l.md",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "graphify-out/memory/query_20261003_071555_b4bae0e9_vậy_bây_giờ_code_local_thì_kết_nối_postgres_local.md",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "graphify-out/memory/query_20261003_075710_b899980d_bây_giờ_kết_nối_postgresql_local_ok_rồi_giờ_làm_ch.md",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "graphify-out/memory/query_20261003_155054_4186a596_ủa_từ_backend_về_client_làm_tới_đâu_rồi_và_báo_cáo.md",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "graphify-out/memory/query_20261004_083946_848c7f3f_bạn_xem_thư_mục_frontend_và_backend_tái_cấu_trúc_l.md",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "graphify-out/memory/query_20261006_115052_f523fed7_giờ_còn_be_nào_để_tiếp_tục_làm_nhỉ.md",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "graphify-out/memory/query_20261006_120634_cf505b82_về_phần_be_manager_làm_được_gì_rồi.md",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "graphify-out/memory/query_20261009_091444_2a7df466_role_manager_da_day_du_chuc_nang_chua__dang_thieu.md",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "graphify-out/memory/query_20261010_095004_30230479_du_an_co_webhook__callback_url_chua.md",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "graphify-out/reflections/LESSONS.md",
+      "reason": "Outside application source and selected handoff documentation"
+    },
+    {
+      "path": "postman/globals/workspace.globals.yaml",
+      "reason": "Outside application source and selected handoff documentation"
+    }
+  ]
+}

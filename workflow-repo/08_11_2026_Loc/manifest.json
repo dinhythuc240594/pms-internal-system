@@ -1,0 +1,132 @@
+{
+  "date": "2026-11-08",
+  "pusher": "Loc",
+  "folder": "08_11_2026_Loc",
+  "title": "Nền tảng backend, cấu hình và khởi động + Nền tảng React, router, dependency và build",
+  "branch": "work/2026-11-08-loc-fullstack-01",
+  "backend_topic": "Nền tảng backend, cấu hình và khởi động",
+  "frontend_topic": "Nền tảng React, router, dependency và build",
+  "backend_count": 13,
+  "frontend_count": 6,
+  "commit_message": "feat(fullstack): ban giao 08/11/2026 - Loc",
+  "depends_on": [],
+  "source_commit": "902a01f1ddfaca73a7466a3c5a3a06ddfbf84bb6",
+  "created_at": "2026-11-08T06:03:33+00:00",
+  "status": "prepared_not_pushed",
+  "file_count": 22,
+  "bytes": 75292,
+  "operation": "upsert_only",
+  "deletions": [],
+  "files": [
+    {
+      "path": ".gitignore",
+      "sha256": "ad4de47ae59ee1e9001b880153e78c19de0f667805c1106d5b46b0c7c8e80023",
+      "size": 499
+    },
+    {
+      "path": "backend/.dockerignore",
+      "sha256": "d285d68a8ed6eb3a7254164c2ae04b0332919320ebc0a3d91db781a5357ce7bd",
+      "size": 136
+    },
+    {
+      "path": "backend/.env.example",
+      "sha256": "18644eedfe1f50b29a6dec5dfbdd4b6732b9b1613a68764054df6fa94e33c95e",
+      "size": 1435
+    },
+    {
+      "path": "backend/Dockerfile",
+      "sha256": "1b4657aa357222f0d343de1e3504e36cf654d4ca7e4f99d9658a16aafebf78b8",
+      "size": 1042
+    },
+    {
+      "path": "backend/app.py",
+      "sha256": "f23ff4cd2b02a213b6cb10cdb45fb7a8a56a00cea792e9b6156523ae15af8d34",
+      "size": 155
+    },
+    {
+      "path": "backend/gunicorn_conf.py",
+      "sha256": "e835eeb9e5e689d50ce0843eaddd5b94f4f768757f4c65f0f4534c97b94a2bb1",
+      "size": 192
+    },
+    {
+      "path": "backend/manage.py",
+      "sha256": "a8aa3b7be6b6a9ce2116a0a84aec9c15170ce728c9f865a7b20d5b23854d410f",
+      "size": 250
+    },
+    {
+      "path": "backend/pms_api/__init__.py",
+      "sha256": "d2961f27e7514ae3d3995d05e3dc57c6c37f7881bf7962e1f4d6afe8243f4dd9",
+      "size": 2999
+    },
+    {
+      "path": "backend/pms_api/config.py",
+      "sha256": "bb010f7af790d6f0cf435f846b857b4df6aa10279114586ffa80ecf151603b3f",
+      "size": 5255
+    },
+    {
+      "path": "backend/pms_api/extensions.py",
+      "sha256": "8b8263d6d186a3221ab050303fcee77c225ba6b1caf2572d64efa5fed37cacc7",
+      "size": 622
+    },
+    {
+      "path": "backend/pyproject.toml",
+      "sha256": "76e1b3826776e52b6c55bf8b7e9aec74f5ff6f54cb097c6c2c3b46ede6a13909",
+      "size": 157
+    },
+    {
+      "path": "backend/requirements-audit.txt",
+      "sha256": "d83f35b1dff6d2618ffb4f3bcd81a6b4410e09505e8f2d42634969faec4bb7e4",
+      "size": 30709
+    },
+    {
+      "path": "backend/requirements-dev.txt",
+      "sha256": "92e958c340a07985c595ad29f7d3a2bf04e3933ba76117d279124e88125c4447",
+      "size": 1617
+    },
+    {
+      "path": "backend/requirements-installer.txt",
+      "sha256": "ea114286b410264d55ff95580652fe64af5eee120c1cffb9eb3b4a2823ba720a",
+      "size": 218
+    },
+    {
+      "path": "frontend/.oxlintrc.json",
+      "sha256": "14930c372bd68868c533fa67b5b1e035907bda85b816bc523012d3ffcb8aa9ef",
+      "size": 449
+    },
+    {
+      "path": "frontend/index.html",
+      "sha256": "12acf49970218090a2909280019f2f1615452c9f8a4422ecddec705de58b6062",
+      "size": 404
+    },
+    {
+      "path": "frontend/nixpacks.toml",
+      "sha256": "a09627c87056b9b16c80359d55e85128f48f396ce8738473f7771fc87e99afaf",
+      "size": 112
+    },
+    {
+      "path": "frontend/src/app/App.jsx",
+      "sha256": "8f0d24dc2aea4373464a4224f3b8fe1c1a91ba56385ff4e25601a677df638288",
+      "size": 13216
+    },
+    {
+      "path": "frontend/src/app/App.test.js",
+      "sha256": "9776b7b1bdf5d35d204259e530a0791e89aca7e36a1912d94a6d896b62cf5da8",
+      "size": 14904
+    },
+    {
+      "path": "frontend/src/main.jsx",
+      "sha256": "e762214711e35ec1bd68b9246b890f6e112ada1d8bdfa8b4e4e514ec39cacd85",
+      "size": 243
+    },
+    {
+      "path": "start_backend.bat",
+      "sha256": "d0ae16dce4a99a7f2b636eff04f1133ff9682f8e693ebeda8dc6801c74a19730",
+      "size": 580
+    },
+    {
+      "path": "start_frontend.bat",
+      "sha256": "9d3df33c6b21e13e3f9de138de9edfb14202da32986593db8f878ff0a26d8de2",
+      "size": 98
+    }
+  ]
+}

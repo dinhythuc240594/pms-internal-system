@@ -1,0 +1,95 @@
+{
+  "date": "2026-11-21",
+  "pusher": "Thuc",
+  "folder": "21_11_2026_Thuc",
+  "title": "Nhận booking, webhook và onboarding OTA + Buồng phòng, phân công và kế hoạch dọn",
+  "branch": "work/2026-11-21-thuc-fullstack-14",
+  "backend_topic": "Nhận booking, webhook và onboarding OTA",
+  "frontend_topic": "Buồng phòng, phân công và kế hoạch dọn",
+  "backend_count": 3,
+  "frontend_count": 11,
+  "commit_message": "feat(fullstack): ban giao 21/11/2026 - Thuc",
+  "depends_on": [
+    "20_11_2026_Loc",
+    "20_11_2026_Thuc"
+  ],
+  "source_commit": "902a01f1ddfaca73a7466a3c5a3a06ddfbf84bb6",
+  "created_at": "2026-11-08T06:03:33+00:00",
+  "status": "prepared_not_pushed",
+  "file_count": 14,
+  "bytes": 89731,
+  "operation": "upsert_only",
+  "deletions": [],
+  "files": [
+    {
+      "path": "backend/pms_api/channels/importer.py",
+      "sha256": "61d80a9276ed50efb7510d29f7bb8d532af55a4446007fd03263723d9c123eb7",
+      "size": 23133
+    },
+    {
+      "path": "backend/pms_api/channels/workflows.py",
+      "sha256": "dddf30d9c61ad85842c7cf87972c34409351499032628a53401b58f965c20814",
+      "size": 1548
+    },
+    {
+      "path": "backend/tests/test_channel_webhooks.py",
+      "sha256": "e581a25177898902dfa7477b12f2d7941df6d4c9ca12799d217a37dc03e7225c",
+      "size": 9207
+    },
+    {
+      "path": "frontend/src/apps/pms/housekeeping/automaticPlan.js",
+      "sha256": "2948b2746bdff4338ed36c62482ac5d7753c9bc60c25eccf4451c53053e7f631",
+      "size": 1611
+    },
+    {
+      "path": "frontend/src/apps/pms/housekeeping/automaticPlan.test.js",
+      "sha256": "cc9770ac96ed1e057bfe55adddbdecad3ae6fab99eabac8a114887c33f09b6ed",
+      "size": 2896
+    },
+    {
+      "path": "frontend/src/apps/pms/housekeeping/components/AssignmentForm.jsx",
+      "sha256": "7dcdb5e6fb2be85ac0652687ccd718bc50f6e4ed2e757a0bef150d98dfcaa087",
+      "size": 3041
+    },
+    {
+      "path": "frontend/src/apps/pms/housekeeping/components/AutomaticPlanForm.jsx",
+      "sha256": "0198540355fbda4c141f05f18acb1d36d34eedd8b93e5f53daf35c82e587369c",
+      "size": 7194
+    },
+    {
+      "path": "frontend/src/apps/pms/housekeeping/components/ManualTaskForm.jsx",
+      "sha256": "e44f90c6ef0132c9c522a55d7ff9ec761d12748505eeef846d49adb16ade451c",
+      "size": 3901
+    },
+    {
+      "path": "frontend/src/apps/pms/housekeeping/components/TaskDetail.jsx",
+      "sha256": "cfd8d7cf41bf9be8d9e2c153e924be37130e9e90843e438989552309637a5115",
+      "size": 4530
+    },
+    {
+      "path": "frontend/src/apps/pms/housekeeping/pages/HousekeepingPlan.css",
+      "sha256": "b91518646530d85c79dbe9012c4c2d32e3d0bd67cea9d7077b48ce6f7a4f8de2",
+      "size": 13873
+    },
+    {
+      "path": "frontend/src/apps/pms/housekeeping/pages/HousekeepingPlan.jsx",
+      "sha256": "8312b3e081606d68e41c12a83ac5893a5e7ec8ae19897e28fd545779ded47c30",
+      "size": 15419
+    },
+    {
+      "path": "frontend/src/apps/pms/housekeeping/planCalendar.js",
+      "sha256": "e105c1f9a92e209440636f74616fadd60e5b5273cf382bcfca9bbc7ead301c53",
+      "size": 978
+    },
+    {
+      "path": "frontend/src/apps/pms/housekeeping/shiftSchedule.js",
+      "sha256": "52689e3a121b3b1a1cdf84d996883ef2ed9df19e9886b2fafd0281b41f3c1168",
+      "size": 919
+    },
+    {
+      "path": "frontend/src/apps/pms/housekeeping/shiftSchedule.test.js",
+      "sha256": "21df95b2e8c50a2dda8057e293d105a3b6c40a56267992303024c817f3db576a",
+      "size": 1481
+    }
+  ]
+}

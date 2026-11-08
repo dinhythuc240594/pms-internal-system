@@ -1,0 +1,75 @@
+{
+  "date": "2026-11-13",
+  "pusher": "Loc",
+  "folder": "13_11_2026_Loc",
+  "title": "API đặt phòng và vòng đời lưu trú cơ bản + Đăng nhập và quản lý người dùng khách sạn",
+  "branch": "work/2026-11-13-loc-fullstack-06",
+  "backend_topic": "API đặt phòng và vòng đời lưu trú cơ bản",
+  "frontend_topic": "Đăng nhập và quản lý người dùng khách sạn",
+  "backend_count": 7,
+  "frontend_count": 3,
+  "commit_message": "feat(fullstack): ban giao 13/11/2026 - Loc",
+  "depends_on": [
+    "12_11_2026_Loc",
+    "12_11_2026_Thuc"
+  ],
+  "source_commit": "902a01f1ddfaca73a7466a3c5a3a06ddfbf84bb6",
+  "created_at": "2026-11-08T06:03:33+00:00",
+  "status": "prepared_not_pushed",
+  "file_count": 10,
+  "bytes": 63976,
+  "operation": "upsert_only",
+  "deletions": [],
+  "files": [
+    {
+      "path": "backend/pms_api/bookings/__init__.py",
+      "sha256": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6",
+      "size": 2
+    },
+    {
+      "path": "backend/pms_api/bookings/room_stays.py",
+      "sha256": "72d76f317794dd2d47f61371f073bf33957fe4158c5aadac7ac35f4d0cb9910e",
+      "size": 1072
+    },
+    {
+      "path": "backend/pms_api/bookings/routes.py",
+      "sha256": "feeb271aeeb5b2870c5212aded10232aee0b5f3a9f3003b86e6d85d7d3dc7a9a",
+      "size": 3006
+    },
+    {
+      "path": "backend/pms_api/bookings/urls.py",
+      "sha256": "e25bad2163c4f440cc22802e90a064d8770c796c7ca642c9eeb75bcd77fa8910",
+      "size": 3453
+    },
+    {
+      "path": "backend/tests/test_booking_client_acceptance.py",
+      "sha256": "b1c68222fbacb3ee7f358d176b3180d5d7c85da91b1a58b29f778633d0f35b48",
+      "size": 10704
+    },
+    {
+      "path": "backend/tests/test_booking_integration.py",
+      "sha256": "b92a2db635fea980967ac74ab15b3b601f6509f67ded0d9438897b51c9305152",
+      "size": 22711
+    },
+    {
+      "path": "backend/tests/test_booking_no_show.py",
+      "sha256": "605b3a3fdd7cb29fcb120b8a0826f403358087aad5277d8c131a431b256a14f6",
+      "size": 9962
+    },
+    {
+      "path": "frontend/src/apps/pms/auth/layouts/AuthLayout.css",
+      "sha256": "9cf2672bbf4f2582978a596764d4f59cec61590433c856c22fcb0be30d133a81",
+      "size": 6549
+    },
+    {
+      "path": "frontend/src/apps/pms/auth/layouts/AuthLayout.jsx",
+      "sha256": "77f92db7ed81e84648c5523d5db827b389bb3fd67da92abb6a6f75ecdde9dc16",
+      "size": 2000
+    },
+    {
+      "path": "frontend/src/apps/pms/auth/pages/Login.jsx",
+      "sha256": "3e1cc3bfdfce7482062d30348a5be8e4fb2e7c7c757ef04e8ebede8da62c2cdb",
+      "size": 4517
+    }
+  ]
+}

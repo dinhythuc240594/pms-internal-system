@@ -1,0 +1,14 @@
+backend/pms_api/channels/importer.py
+backend/pms_api/channels/workflows.py
+backend/tests/test_channel_webhooks.py
+frontend/src/apps/pms/housekeeping/automaticPlan.js
+frontend/src/apps/pms/housekeeping/automaticPlan.test.js
+frontend/src/apps/pms/housekeeping/components/AssignmentForm.jsx
+frontend/src/apps/pms/housekeeping/components/AutomaticPlanForm.jsx
+frontend/src/apps/pms/housekeeping/components/ManualTaskForm.jsx
+frontend/src/apps/pms/housekeeping/components/TaskDetail.jsx
+frontend/src/apps/pms/housekeeping/pages/HousekeepingPlan.css
+frontend/src/apps/pms/housekeeping/pages/HousekeepingPlan.jsx
+frontend/src/apps/pms/housekeeping/planCalendar.js
+frontend/src/apps/pms/housekeeping/shiftSchedule.js
+frontend/src/apps/pms/housekeeping/shiftSchedule.test.js

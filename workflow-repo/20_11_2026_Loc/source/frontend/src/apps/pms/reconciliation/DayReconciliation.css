@@ -1,0 +1,61 @@
+.day-reconciliation { min-width: 0; color: var(--text-primary); display: grid; gap: 1rem; font-size: .875rem; }
+.day-reconciliation :is(h1, h2, h3, p) { margin: 0; overflow-wrap: anywhere; }
+.day-reconciliation h1 { display: flex; align-items: center; gap: .625rem; font-size: clamp(1.25rem, 3vw, 1.5rem); line-height: 1.35; }
+.day-reconciliation h2 { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; font-size: 1.0625rem; line-height: 1.4; }
+.day-reconciliation h3 { font-size: 1rem; }
+.day-reconciliation-heading p { margin-top: .375rem; color: var(--text-secondary); }
+.day-reconciliation :is(button, input, textarea) { font: inherit; }
+.day-reconciliation button, .day-reconciliation-dialog button { min-height: 2.75rem; border: 1px solid var(--border-color); border-radius: .5rem; padding: .625rem .875rem; color: var(--text-primary); background: var(--bg-surface); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: .5rem; overflow-wrap: anywhere; }
+.day-reconciliation button svg { flex-shrink: 0; }
+.day-reconciliation button.is-primary, .day-reconciliation-dialog button.is-primary { background: var(--accent-secondary); border-color: var(--accent-secondary); color: #fff; font-weight: 600; }
+.day-reconciliation button:disabled, .day-reconciliation-dialog button:disabled { opacity: .55; cursor: not-allowed; }
+.day-reconciliation :focus-visible, .day-reconciliation-dialog :focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 3px; }
+.day-reconciliation-notice { border: 1px solid var(--border-color); background: var(--bg-surface); border-left: .25rem solid var(--accent-primary); border-radius: .5rem; padding: .875rem 1rem; color: var(--text-secondary); line-height: 1.6; }
+.day-reconciliation-filter, .day-reconciliation-section, .day-reconciliation-card { min-width: 0; border: 1px solid var(--border-color); border-radius: .75rem; padding: 1rem; background: var(--bg-surface); }
+.day-reconciliation-filter { display: flex; align-items: end; flex-wrap: wrap; gap: 1rem; }
+.day-reconciliation-filter > label { display: grid; gap: .375rem; flex: 1 1 10rem; min-width: 0; }
+.day-reconciliation-filter > p { color: var(--text-secondary); flex: 1 1 10rem; }
+.day-reconciliation-filter strong { display: block; color: var(--text-primary); }
+.day-reconciliation input[type="date"], .day-reconciliation-dialog textarea { width: 100%; min-width: 0; max-width: 100%; min-height: 2.75rem; border: 1px solid var(--text-muted); border-radius: .5rem; padding: .625rem; background: var(--bg-surface); color: var(--text-primary); }
+.day-reconciliation-filter > button { flex: 1 1 10rem; }
+.day-reconciliation-error { background: #fef2f2; color: #991b1b; padding: .875rem; border: 1px solid #fecaca; border-radius: .5rem; }
+.day-reconciliation-error button { margin-top: .5rem; }
+.day-reconciliation-success { background: #ecfdf5; color: #065f46; padding: .875rem; border: 1px solid #a7f3d0; border-radius: .5rem; }
+.day-reconciliation-snapshot { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .75rem; }
+.day-reconciliation-snapshot p { color: var(--text-secondary); margin-top: .25rem; }
+.day-reconciliation-cards { display: grid; gap: .75rem; grid-template-columns: minmax(0, 1fr); }
+.day-reconciliation-card span { display: block; color: var(--text-secondary); }
+.day-reconciliation-card strong { display: block; margin-top: .375rem; font-size: clamp(1.125rem, 2vw, 1.5rem); overflow-wrap: anywhere; }
+.day-reconciliation-help { color: var(--text-secondary); line-height: 1.6; }
+.day-reconciliation-stays { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr); }
+.day-reconciliation-section > h2 { margin-bottom: .75rem; }
+.day-reconciliation-count { display: inline-flex; align-items: center; justify-content: center; min-width: 1.75rem; padding: .125rem .5rem; font-size: .875rem; border-radius: 1rem; background: var(--bg-main); }
+.day-reconciliation-stay-list { list-style: none; margin: 0; padding: 0; }
+.day-reconciliation-stay-list li { border-top: 1px solid var(--border-color); padding: .875rem 0; }
+.day-reconciliation-stay-list li:last-child { padding-bottom: 0; }
+.day-reconciliation-stay-list small { display: block; color: var(--text-secondary); overflow-wrap: anywhere; margin-top: .25rem; }
+.day-reconciliation dl, .day-reconciliation-dialog dl { display: grid; gap: .375rem; margin: .5rem 0 0; }
+.day-reconciliation dl > div, .day-reconciliation-dialog dl > div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .25rem .75rem; min-width: 0; }
+.day-reconciliation dt, .day-reconciliation-dialog dt { color: var(--text-secondary); }
+.day-reconciliation dd, .day-reconciliation-dialog dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.day-reconciliation-fund-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: .75rem; margin-top: 1rem; }
+.day-reconciliation-fund { border: 1px solid var(--border-color); border-radius: .5rem; padding: .875rem; min-width: 0; }
+.day-reconciliation-fund small { font-size: .75rem; color: var(--text-secondary); }
+.day-reconciliation-fund dl > div:last-child { border-top: 1px solid var(--border-color); padding-top: .5rem; margin-top: .25rem; }
+.day-reconciliation-confirm { display: grid; gap: .5rem; justify-items: start; }
+.day-reconciliation-record { border-top: 1px solid var(--border-color); padding: .875rem 0; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .75rem; }
+.day-reconciliation-record > div { min-width: 0; flex: 1 1 16rem; }
+.day-reconciliation-record p { color: var(--text-secondary); margin-top: .25rem; }
+.day-reconciliation-note-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.day-reconciliation-pagination { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .5rem; margin-top: .75rem; }
+.day-reconciliation-dialog { display: grid; gap: 1rem; color: var(--text-primary); }
+.day-reconciliation-dialog > p { line-height: 1.6; margin: 0; }
+.day-reconciliation-dialog > label:not(.day-reconciliation-ack) { display: grid; gap: .375rem; }
+.day-reconciliation-dialog textarea { resize: vertical; }
+.day-reconciliation-ack { display: flex; align-items: start; gap: .75rem; min-height: 2.75rem; cursor: pointer; }
+.day-reconciliation-ack input { flex-shrink: 0; width: 1.25rem; height: 1.25rem; margin-top: .125rem; accent-color: var(--accent-secondary); }
+.day-reconciliation-dialog-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .625rem; }
+.day-reconciliation-dialog-actions button { flex: 1 1 10rem; }
+@media (min-width: 48rem) { .day-reconciliation-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); } .day-reconciliation-fund-list, .day-reconciliation-stays { grid-template-columns: repeat(2, minmax(0, 1fr)); } .day-reconciliation-filter > button { flex: 0 1 auto; } }
+.night-audit-panel { min-width: 0; overflow-wrap: anywhere; }
+.night-audit-panel button, .night-audit-panel input[type="date"] { min-height: 2.75rem; }

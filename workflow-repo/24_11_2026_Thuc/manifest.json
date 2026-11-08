@@ -1,0 +1,75 @@
+{
+  "date": "2026-11-24",
+  "pusher": "Thuc",
+  "folder": "24_11_2026_Thuc",
+  "title": "Quản lý tính năng và quyền sử dụng hiệu lực + Hồ sơ và thuê bao của chủ khách sạn",
+  "branch": "work/2026-11-24-thuc-fullstack-17",
+  "backend_topic": "Quản lý tính năng và quyền sử dụng hiệu lực",
+  "frontend_topic": "Hồ sơ và thuê bao của chủ khách sạn",
+  "backend_count": 2,
+  "frontend_count": 8,
+  "commit_message": "feat(fullstack): ban giao 24/11/2026 - Thuc",
+  "depends_on": [
+    "23_11_2026_Loc",
+    "23_11_2026_Thuc"
+  ],
+  "source_commit": "902a01f1ddfaca73a7466a3c5a3a06ddfbf84bb6",
+  "created_at": "2026-11-08T06:03:33+00:00",
+  "status": "prepared_not_pushed",
+  "file_count": 10,
+  "bytes": 52413,
+  "operation": "upsert_only",
+  "deletions": [],
+  "files": [
+    {
+      "path": "backend/pms_api/admin/feature_models.py",
+      "sha256": "7efabdb6be9c5aa1540540f3a35d47b3ddcae81fcacb6fc18ef27526e0507dfd",
+      "size": 1903
+    },
+    {
+      "path": "backend/tests/test_manager_features.py",
+      "sha256": "0f9d8da372f78e8a124535804bc5ca81bbc86fbffbe8e8c004e39ff7680d490f",
+      "size": 23614
+    },
+    {
+      "path": "frontend/src/apps/pms/profile/pages/Profile.css",
+      "sha256": "a3cb13a022e945ed5c89570de18b925412c03ee97d3d328a103a466c8b8ce094",
+      "size": 3836
+    },
+    {
+      "path": "frontend/src/apps/pms/profile/pages/Profile.jsx",
+      "sha256": "0f36faca1c57d43fe787ea68167a07f5343f2c6abcacfc8130210867412a39c4",
+      "size": 9435
+    },
+    {
+      "path": "frontend/src/apps/pms/profile/pages/billingDisplay.js",
+      "sha256": "c7e52eedac4ea1f89515df8fdca49b5bcf28dc293a98f8218c38059ae54656b9",
+      "size": 1418
+    },
+    {
+      "path": "frontend/src/apps/pms/profile/pages/billingDisplay.test.js",
+      "sha256": "0de17af607aebf55d4e593d563adb21a7f7bdf3d75fd1f971bcb05567a93b7dc",
+      "size": 854
+    },
+    {
+      "path": "frontend/src/apps/pms/profile/pages/billingDocument.js",
+      "sha256": "3d5f602860fb71f6bd669d185b57b95074374548c8b3a6d72159a37f39c2a8e9",
+      "size": 4340
+    },
+    {
+      "path": "frontend/src/apps/pms/profile/pages/billingDocument.test.js",
+      "sha256": "c011e529823626258a57b73997ad8f8bea14f2cb68a7c6572a589b6f88741072",
+      "size": 4771
+    },
+    {
+      "path": "frontend/src/apps/pms/profile/pages/profileForm.js",
+      "sha256": "789553ed91c643f68faedf23bd6aea59a2835e7dee4464379e357b2303596fd2",
+      "size": 636
+    },
+    {
+      "path": "frontend/src/apps/pms/profile/pages/profileForm.test.js",
+      "sha256": "d7c92e9c946ce85f63951d85e655f457f422f1db40b1697ea21242a81747351b",
+      "size": 1606
+    }
+  ]
+}

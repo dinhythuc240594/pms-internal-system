@@ -1,0 +1,75 @@
+{
+  "date": "2026-11-19",
+  "pusher": "Loc",
+  "folder": "19_11_2026_Loc",
+  "title": "Nền tảng adapter, credential và mô hình Channex + POS, sổ quỹ và hoa hồng",
+  "branch": "work/2026-11-19-loc-fullstack-12",
+  "backend_topic": "Nền tảng adapter, credential và mô hình Channex",
+  "frontend_topic": "POS, sổ quỹ và hoa hồng",
+  "backend_count": 7,
+  "frontend_count": 3,
+  "commit_message": "feat(fullstack): ban giao 19/11/2026 - Loc",
+  "depends_on": [
+    "18_11_2026_Loc",
+    "18_11_2026_Thuc"
+  ],
+  "source_commit": "902a01f1ddfaca73a7466a3c5a3a06ddfbf84bb6",
+  "created_at": "2026-11-08T06:03:33+00:00",
+  "status": "prepared_not_pushed",
+  "file_count": 10,
+  "bytes": 101044,
+  "operation": "upsert_only",
+  "deletions": [],
+  "files": [
+    {
+      "path": "backend/pms_api/channels/access.py",
+      "sha256": "41d6993494efed90e21923a69b2ba6c2f84ae4fb9c482202089e1ff9f3304f7c",
+      "size": 1584
+    },
+    {
+      "path": "backend/pms_api/channels/domain.py",
+      "sha256": "6004c23744a772ecdffac3a73e15443928b927a720c55ad699679b0d9328ee03",
+      "size": 11073
+    },
+    {
+      "path": "backend/pms_api/channels/identifiers.py",
+      "sha256": "9b2e16dab5791786c87a565340c64926a35ea6d198bd8b58a32cdab2a4a0b6db",
+      "size": 404
+    },
+    {
+      "path": "backend/pms_api/channels/models.py",
+      "sha256": "a3075b57bc16ff443edfca0785bc0e06c237d8e91133046862fa74b01b76ae83",
+      "size": 11024
+    },
+    {
+      "path": "backend/pms_api/channels/repository.py",
+      "sha256": "0c06128a7c6b5eb60526e32ae5c97fa782feca142f512b889b62588391fa5236",
+      "size": 897
+    },
+    {
+      "path": "backend/tests/test_channel_credentials.py",
+      "sha256": "7970ef23623c63a71d2e3ffb2120165f38e5a5450e7849d6c8530f4f6de2c67b",
+      "size": 29352
+    },
+    {
+      "path": "backend/tests/test_channel_source.py",
+      "sha256": "bf0f353226925206002d34b34b3bfc96b5102e61d09aa72aec091e6c3bc08382",
+      "size": 6647
+    },
+    {
+      "path": "frontend/src/apps/pms/finance/pages/Cashflow.css",
+      "sha256": "7464f4028075b2c40d9530c97ad74dd071b999d1f537d4c8dbf2b28b9038327d",
+      "size": 4730
+    },
+    {
+      "path": "frontend/src/apps/pms/finance/pages/Cashflow.jsx",
+      "sha256": "c8724366e758032b19642f503e945d87d596b1cb916e89f9dd8aaf7280c94e76",
+      "size": 21895
+    },
+    {
+      "path": "frontend/src/apps/pms/finance/pages/Sales.jsx",
+      "sha256": "c96d42eedca877defa17eaf6117c7ba1ff8fbb84a81e9a8f0aebe8bc790093c0",
+      "size": 13438
+    }
+  ]
+}

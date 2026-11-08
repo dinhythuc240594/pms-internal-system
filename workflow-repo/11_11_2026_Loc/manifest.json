@@ -1,0 +1,130 @@
+{
+  "date": "2026-11-11",
+  "pusher": "Loc",
+  "folder": "11_11_2026_Loc",
+  "title": "Danh mục khách sạn, phòng, tiền tệ và kiểm tra dữ liệu + Ngôn ngữ, bản dịch và công cụ kiểm tra i18n",
+  "branch": "work/2026-11-11-loc-fullstack-04",
+  "backend_topic": "Danh mục khách sạn, phòng, tiền tệ và kiểm tra dữ liệu",
+  "frontend_topic": "Ngôn ngữ, bản dịch và công cụ kiểm tra i18n",
+  "backend_count": 7,
+  "frontend_count": 14,
+  "commit_message": "feat(fullstack): ban giao 11/11/2026 - Loc",
+  "depends_on": [
+    "10_11_2026_Loc",
+    "10_11_2026_Thuc"
+  ],
+  "source_commit": "902a01f1ddfaca73a7466a3c5a3a06ddfbf84bb6",
+  "created_at": "2026-11-08T06:03:33+00:00",
+  "status": "prepared_not_pushed",
+  "file_count": 21,
+  "bytes": 382417,
+  "operation": "upsert_only",
+  "deletions": [],
+  "files": [
+    {
+      "path": "backend/pms_api/catalog/models.py",
+      "sha256": "0b56d0dab24462fb21ab835f992dbcf60a247f3dc0cc895ee864ff5ef4623a41",
+      "size": 7056
+    },
+    {
+      "path": "backend/pms_api/catalog/routes.py",
+      "sha256": "6bfaefd543f0c6aa802d04daa303e22223d44bac4455524776983755cf163c88",
+      "size": 2543
+    },
+    {
+      "path": "backend/pms_api/catalog/urls.py",
+      "sha256": "9f2e2dee55572ed4baa877c9aece70c5eb9d58f772192c84b846fe583f228a59",
+      "size": 2603
+    },
+    {
+      "path": "backend/pms_api/currencies.py",
+      "sha256": "f142275ffcc0c761d1a234995d76f073f97ba85384a90faca04427483f423ffb",
+      "size": 848
+    },
+    {
+      "path": "backend/pms_api/validation.py",
+      "sha256": "756cc274241828223d9f7fe3d251fb407479ebec7e0f492a0c44002fbfc19adb",
+      "size": 823
+    },
+    {
+      "path": "backend/tests/test_catalog_postgres.py",
+      "sha256": "9fbe1e6f6fe1a3b79b147cd0426c9e0b59b6404c523bca12f1eba8f6694d75a5",
+      "size": 21126
+    },
+    {
+      "path": "backend/tests/test_room_guest_acceptance.py",
+      "sha256": "5566bff688e1fd2fafb937df93244aa8209429f0d939f52b127d8fbc7305fefe",
+      "size": 19192
+    },
+    {
+      "path": "frontend/scripts/audit-i18n.mjs",
+      "sha256": "bf7b3f8f84bc4148120d6e61477cd193e0518d9af24bb93bb7a951f9dac563a8",
+      "size": 3395
+    },
+    {
+      "path": "frontend/scripts/generate-legacy-translations.mjs",
+      "sha256": "db013468b93bee44cdd9600a5792466c76ff6c2567b73c518c057062b17ada67",
+      "size": 2562
+    },
+    {
+      "path": "frontend/src/shared/i18n/LanguageSwitcher.css",
+      "sha256": "1f62f4278c388a41dd2495d591e422456254062ad66a3d4ef87dfa1c0be7ae5c",
+      "size": 4866
+    },
+    {
+      "path": "frontend/src/shared/i18n/LanguageSwitcher.jsx",
+      "sha256": "5a747b68f21221bd11af39e23aa478d9e8deee6a39597f1f36b96b258fd6e820",
+      "size": 3767
+    },
+    {
+      "path": "frontend/src/shared/i18n/LegacyI18nBridge.jsx",
+      "sha256": "e23a280d4a9ea6f2b91f3956efa7927a77e528909d722c8a2c29a419265a2ccf",
+      "size": 962
+    },
+    {
+      "path": "frontend/src/shared/i18n/README.md",
+      "sha256": "cb07bb0002e6561b28712b132f0590e719af281d2066863124273bcae7454a7c",
+      "size": 4685
+    },
+    {
+      "path": "frontend/src/shared/i18n/fontCoverage.test.js",
+      "sha256": "90fcc259912af72015e81e1facd237e8e775be093abf69a6f1e5b5864fd56b69",
+      "size": 4491
+    },
+    {
+      "path": "frontend/src/shared/i18n/formatters.js",
+      "sha256": "e00436721b6428af8fba70b48e190887b1cbd39a32400ba600a585f15eae7124",
+      "size": 217
+    },
+    {
+      "path": "frontend/src/shared/i18n/legacyDom.js",
+      "sha256": "2f6109e0386f6ee6b437a8e3a2abcb89e0417795200922fcf88254b2a47c624a",
+      "size": 2689
+    },
+    {
+      "path": "frontend/src/shared/i18n/legacyDom.test.js",
+      "sha256": "0d14dd0fc89d989b14e19bdd3f7ee5f80044a1f46ff7a0d43e13b66a37028214",
+      "size": 10793
+    },
+    {
+      "path": "frontend/src/shared/i18n/locales/en-US.json",
+      "sha256": "ef841b75da06a7c9eda6d949b25951fe06de344c06c20b755a439ead123b8da4",
+      "size": 69888
+    },
+    {
+      "path": "frontend/src/shared/i18n/locales/legacy-en-US.json",
+      "sha256": "e4859aca393ee92c4e8cb8e610e20b9b121183fc79ed3fca011bb7993339b9a2",
+      "size": 217901
+    },
+    {
+      "path": "frontend/src/shared/i18n/store.js",
+      "sha256": "94d82b04ebf4cf7699cc36bffaa4c2d7167f4bb70135e2c2ec0d50994af36aa3",
+      "size": 1525
+    },
+    {
+      "path": "frontend/src/shared/i18n/useI18n.js",
+      "sha256": "5bf622b39879ff49898f0131b935dafc3d7a94d4d14174bc43d809763c3e165f",
+      "size": 485
+    }
+  ]
+}

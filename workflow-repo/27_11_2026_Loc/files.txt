@@ -1,0 +1,10 @@
+backend/pms_api/notification_models.py
+backend/pms_api/notifications.py
+backend/pms_api/notifications_urls.py
+backend/tests/test_notifications.py
+frontend/src/apps/manager/components/ManagerSidebar.jsx
+frontend/src/apps/manager/dashboard/operationsPresentation.js
+frontend/src/apps/manager/dashboard/operationsPresentation.test.js
+frontend/src/apps/manager/layouts/ManagerLayout.css
+frontend/src/apps/manager/layouts/ManagerLayout.jsx
+frontend/src/apps/manager/mockData.js

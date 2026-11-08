@@ -1,0 +1,4 @@
+# Keep handoff instructions even when the parent repository ignores Markdown.
+!**/*.md
+__pycache__/
+*.py[cod]

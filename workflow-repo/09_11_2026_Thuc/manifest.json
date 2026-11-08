@@ -1,0 +1,160 @@
+{
+  "date": "2026-11-09",
+  "pusher": "Thuc",
+  "folder": "09_11_2026_Thuc",
+  "title": "Common, adapter, composition và hạ tầng API + Thành phần dùng chung, giao diện và tài nguyên",
+  "branch": "work/2026-11-09-thuc-fullstack-02",
+  "backend_topic": "Common, adapter, composition và hạ tầng API",
+  "frontend_topic": "Thành phần dùng chung, giao diện và tài nguyên",
+  "backend_count": 15,
+  "frontend_count": 12,
+  "commit_message": "feat(fullstack): ban giao 09/11/2026 - Thuc",
+  "depends_on": [
+    "08_11_2026_Loc",
+    "08_11_2026_Thuc"
+  ],
+  "source_commit": "902a01f1ddfaca73a7466a3c5a3a06ddfbf84bb6",
+  "created_at": "2026-11-08T06:03:33+00:00",
+  "status": "prepared_not_pushed",
+  "file_count": 27,
+  "bytes": 106330,
+  "operation": "upsert_only",
+  "deletions": [],
+  "files": [
+    {
+      "path": "backend/common/__init__.py",
+      "sha256": "d7c9912ccdf16cbc0191c1330931a8fd2d7bc44dbcc5051657056dd1a6360754",
+      "size": 283
+    },
+    {
+      "path": "backend/common/errors.py",
+      "sha256": "0ab35a0968380aecf32b92adfaa6a4cdc8c10a4e77f79a75dbe4192f50d0ee3d",
+      "size": 253
+    },
+    {
+      "path": "backend/pms_api/adapters/flask_runtime.py",
+      "sha256": "e622acef20986718c2f8740d9cea013751c7943f58312cb987452df56a823008",
+      "size": 1294
+    },
+    {
+      "path": "backend/pms_api/commands.py",
+      "sha256": "ccab169e58762964d7065f08835fbba25d8b1f2c69653552defb6ff7425526a9",
+      "size": 10732
+    },
+    {
+      "path": "backend/pms_api/health_urls.py",
+      "sha256": "2b7f69b1f8452daa34a5f4f7d9f363201b85476630a5540c73df795ce01aafca",
+      "size": 666
+    },
+    {
+      "path": "backend/pms_api/model_registry.py",
+      "sha256": "b46e0eb774bad24bb93d9a1c62848e4b219edb8a958f3b734a97d5183af3b357",
+      "size": 619
+    },
+    {
+      "path": "backend/pms_api/ports.py",
+      "sha256": "05680370fe928fe264526c49eb735979375a76adc8ed46e2eee7b6f26b9ebcab",
+      "size": 1827
+    },
+    {
+      "path": "backend/pms_api/worker_health.py",
+      "sha256": "e1950fa6a88fbe32897fd113014b365838e242fdc1e212d0d37333d4187a8301",
+      "size": 4649
+    },
+    {
+      "path": "backend/pms_api/workspace_urls.py",
+      "sha256": "eb47864acc14c9544638ee4ec1c1a7df9956a0dae4f63676f2acf779304dc139",
+      "size": 196
+    },
+    {
+      "path": "backend/tests/domain_fixture.py",
+      "sha256": "df1a0c561ea1e4bb36921d5b9b03a388bbfbaa061ed1874fc6693a9e8cc2339c",
+      "size": 8555
+    },
+    {
+      "path": "backend/tests/test_architecture.py",
+      "sha256": "6dbce46cd7cbd9eff859603d25d35fbba229ed424086eed6b7f1b418ef22ca1c",
+      "size": 7007
+    },
+    {
+      "path": "backend/tests/test_audit_filters.py",
+      "sha256": "654ed28626d9f20c76d44f0dcfcd210181a8084c091c5febc875c8dc6787307f",
+      "size": 4629
+    },
+    {
+      "path": "backend/tests/test_design_patterns.py",
+      "sha256": "3d11781c3a8b17fa28d3b98679a6b16428d032fbe2265d34e52f5000e6255844",
+      "size": 10635
+    },
+    {
+      "path": "backend/tests/test_health.py",
+      "sha256": "cd0db7ddb208c3816ab4cdfc6ab4c1ed564965a5588414eb4de96e1efcc60113",
+      "size": 1943
+    },
+    {
+      "path": "backend/tests/test_lazy_http.py",
+      "sha256": "9759cccb7fb120a1cae7c8dc9f667af34a8b252a435296d020ae8d96d40e556a",
+      "size": 6501
+    },
+    {
+      "path": "frontend/public/50x.html",
+      "sha256": "ffa6c0108cf036c3c6061ac10d9f431c2b52bdcba5928dc26362479061c130df",
+      "size": 4935
+    },
+    {
+      "path": "frontend/public/favicon.svg",
+      "sha256": "be103fb3af6e43b57355f3e562373aa3f2c7624e762cc38e8e5ac628b8cf1b06",
+      "size": 312
+    },
+    {
+      "path": "frontend/public/icons.svg",
+      "sha256": "7ca2d67c9c3aebf50cdc8709ee8aacf8cdb8cc7ea6325ea94939caef5da1c53d",
+      "size": 5055
+    },
+    {
+      "path": "frontend/src/assets/hero.png",
+      "sha256": "881ffbcaafc212e49addad08846a5b82761355fa20624253af3477ba33262c5c",
+      "size": 13057
+    },
+    {
+      "path": "frontend/src/shared/components/LohaErrorPage.css",
+      "sha256": "03550cdfddde881a1a093c2c19efc4e3f74e12308994202253d41128b9058b39",
+      "size": 4189
+    },
+    {
+      "path": "frontend/src/shared/components/LohaErrorPage.jsx",
+      "sha256": "bb835a3983ca0628805db1d679c11e416c6a6fec1929dbaf0a59f07d54614bde",
+      "size": 4005
+    },
+    {
+      "path": "frontend/src/shared/components/RouteErrorBoundary.jsx",
+      "sha256": "642d20c7e723e8ea9783a73027c07ae83bb91755fc28185eec7ea93a0b05206b",
+      "size": 1645
+    },
+    {
+      "path": "frontend/src/shared/components/RouteErrorBoundary.test.js",
+      "sha256": "42af12dde65b6ac98392e58e3cba481d098073d418c71e21ebd7193edff4c5f2",
+      "size": 4576
+    },
+    {
+      "path": "frontend/src/shared/components/errorStatus.js",
+      "sha256": "a26d2191e3250809ff6bba9cb83ed0a3b0cdf1159ebed98775f5365cb8a1bb9c",
+      "size": 2051
+    },
+    {
+      "path": "frontend/src/shared/components/errorStatus.test.js",
+      "sha256": "ddc28f6656cc93af35e203b97cabe14020542aa6c7b0f67000796b70ce07d53c",
+      "size": 2180
+    },
+    {
+      "path": "frontend/src/shared/styles/fonts.css",
+      "sha256": "77b312d8e99f579e1b7286e39b7ef3a1b268dbbf2225b75badc6a927d7548106",
+      "size": 1204
+    },
+    {
+      "path": "frontend/src/shared/styles/loha.css",
+      "sha256": "80be275239b738908bba4d70a27de268d6009e2d6b13a82d7cee8a88c2874626",
+      "size": 3332
+    }
+  ]
+}

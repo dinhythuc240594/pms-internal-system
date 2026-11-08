@@ -1,0 +1,55 @@
+{
+  "date": "2026-11-24",
+  "pusher": "Loc",
+  "folder": "24_11_2026_Loc",
+  "title": "Quản lý tính năng và quyền sử dụng hiệu lực + Hồ sơ và thuê bao của chủ khách sạn",
+  "branch": "work/2026-11-24-loc-fullstack-17",
+  "backend_topic": "Quản lý tính năng và quyền sử dụng hiệu lực",
+  "frontend_topic": "Hồ sơ và thuê bao của chủ khách sạn",
+  "backend_count": 3,
+  "frontend_count": 3,
+  "commit_message": "feat(fullstack): ban giao 24/11/2026 - Loc",
+  "depends_on": [
+    "23_11_2026_Loc",
+    "23_11_2026_Thuc"
+  ],
+  "source_commit": "902a01f1ddfaca73a7466a3c5a3a06ddfbf84bb6",
+  "created_at": "2026-11-08T06:03:33+00:00",
+  "status": "prepared_not_pushed",
+  "file_count": 6,
+  "bytes": 35283,
+  "operation": "upsert_only",
+  "deletions": [],
+  "files": [
+    {
+      "path": "backend/pms_api/admin/features.py",
+      "sha256": "fcdb03da6d08a3114028b7e7f66b0ba1515a8da7ba2d8f01dd59758438161211",
+      "size": 1470
+    },
+    {
+      "path": "backend/pms_api/admin/features_application.py",
+      "sha256": "1ded2acc6f17490d0fadda8468f1f40ce9532e6fc4bce0bee5224628feaa0753",
+      "size": 5412
+    },
+    {
+      "path": "backend/pms_api/admin/features_urls.py",
+      "sha256": "c693848ddc2593f12a13d296d23a42900c21a20d66604985cda8301d92b98ac6",
+      "size": 1412
+    },
+    {
+      "path": "frontend/src/apps/pms/profile/pages/OwnerBilling.css",
+      "sha256": "e634cee904c36e1617f83abeece568965362e244504cd2ad70c628b07b023b03",
+      "size": 5132
+    },
+    {
+      "path": "frontend/src/apps/pms/profile/pages/OwnerBilling.jsx",
+      "sha256": "77eeb644fb87ceda43b8b3c899b9f98a1bd174483915bd2116e688e2b2e3e9c2",
+      "size": 12922
+    },
+    {
+      "path": "frontend/src/apps/pms/profile/pages/OwnerBilling.test.js",
+      "sha256": "c52f731e70f59356f8679291fae56aa9984fb3b99e3df68bbbb9e4f2e4d04a5c",
+      "size": 8935
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+backend/pms_api/bookings/stay_changes.py
+backend/pms_api/finance/commissions.py
+backend/pms_api/finance/commissions_application.py
+frontend/src/apps/manager/channex/ChannexSurface.css
+frontend/src/apps/manager/channex/airbnbReturn.js
+frontend/src/apps/manager/channex/airbnbReturn.test.js
+frontend/src/apps/manager/channex/channelForms.js
+frontend/src/apps/manager/channex/channelForms.test.js

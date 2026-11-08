@@ -1,0 +1,100 @@
+{
+  "date": "2026-11-28",
+  "pusher": "Loc",
+  "folder": "28_11_2026_Loc",
+  "title": "Thuê bao, billing và hạn mức phòng + Quản trị tenant, tài khoản, tính năng và nhật ký",
+  "branch": "work/2026-11-28-loc-fullstack-21",
+  "backend_topic": "Thuê bao, billing và hạn mức phòng",
+  "frontend_topic": "Quản trị tenant, tài khoản, tính năng và nhật ký",
+  "backend_count": 7,
+  "frontend_count": 8,
+  "commit_message": "feat(fullstack): ban giao 28/11/2026 - Loc",
+  "depends_on": [
+    "27_11_2026_Loc",
+    "27_11_2026_Thuc"
+  ],
+  "source_commit": "902a01f1ddfaca73a7466a3c5a3a06ddfbf84bb6",
+  "created_at": "2026-11-08T06:03:33+00:00",
+  "status": "prepared_not_pushed",
+  "file_count": 15,
+  "bytes": 150452,
+  "operation": "upsert_only",
+  "deletions": [],
+  "files": [
+    {
+      "path": "backend/pms_api/plan_pricing.py",
+      "sha256": "03a67ba8d34bd45d2d9bad9a1a0f5e3f792ebf81fbda3de6a9a695f5c4d1df08",
+      "size": 3828
+    },
+    {
+      "path": "backend/pms_api/saas_billing/__init__.py",
+      "sha256": "99ea6b91d179b067b49aa4f9715e7cba05f079e466f75ce2a4760d489722bb80",
+      "size": 76
+    },
+    {
+      "path": "backend/pms_api/saas_billing/application.py",
+      "sha256": "b5ff03ebb559cc2e6e48a98883841f1c2126b98efe543dd028ab5dde38c099d1",
+      "size": 23826
+    },
+    {
+      "path": "backend/pms_api/saas_billing/models.py",
+      "sha256": "72cb5d1574cb5928eb9efb44f9e9a322929ad77507632a132afd4ceea0280ae6",
+      "size": 6039
+    },
+    {
+      "path": "backend/pms_api/saas_billing/routes.py",
+      "sha256": "35fc6ddf23091d14b1f8bea5b454b23f7c0f7a3ed82cfb2e033da0cb1cf1b129",
+      "size": 2653
+    },
+    {
+      "path": "backend/pms_api/saas_billing/urls.py",
+      "sha256": "03857923b95a5765c3e5928c1a15755c8ab02880e9fdc598eb026d05dead1a3c",
+      "size": 2753
+    },
+    {
+      "path": "backend/tests/test_subscription_acceptance.py",
+      "sha256": "8764ad95ba310e59298391611034be9f18a3240fae75fda26ed1149abb675fcc",
+      "size": 19911
+    },
+    {
+      "path": "frontend/src/apps/manager/features/pages/AdminFeatures.css",
+      "sha256": "df45fc0f5da60701d48f2dec2af702c4394e469b9602a5afc99a6bd1c1674540",
+      "size": 6676
+    },
+    {
+      "path": "frontend/src/apps/manager/features/pages/AdminFeatures.jsx",
+      "sha256": "dafd182d633f5a350b42d17cabad71d8e94ddd68e791fd6632921fa32a044d4d",
+      "size": 53152
+    },
+    {
+      "path": "frontend/src/apps/manager/profile/pages/AdminProfile.css",
+      "sha256": "136f7b20506c7a9b8e10217f92e6886fbe17c8c56adff42ce7b13ee152208af8",
+      "size": 5035
+    },
+    {
+      "path": "frontend/src/apps/manager/profile/pages/AdminProfile.jsx",
+      "sha256": "a2797ba882e154786ce88b326b982f8793dcdce46c49ad9e8671a2f03afaae47",
+      "size": 9759
+    },
+    {
+      "path": "frontend/src/apps/manager/profile/pages/AdminProfile.test.js",
+      "sha256": "b5abb28bdf62d7b3b69885cf6ab7dce143a7ddc0b270c625ad083cc5694b2b51",
+      "size": 7237
+    },
+    {
+      "path": "frontend/src/apps/manager/tenants/pages/ManagerOTA.css",
+      "sha256": "66447956f22e7a013e8afdd3b27adb80bad03e5a6dea6a3e0a527c3639c0711c",
+      "size": 3364
+    },
+    {
+      "path": "frontend/src/apps/manager/tenants/pages/ManagerOTA.jsx",
+      "sha256": "71d5866f35f8f0890a8b1f352df7ec545e16727ef61dcd38385cdaf3eb4d83f0",
+      "size": 3816
+    },
+    {
+      "path": "frontend/src/apps/manager/tenants/pages/ManagerOTA.test.js",
+      "sha256": "16476dea72c05625f67bf4abb710eef1db5bd110acbc3c4519a1866d187762e1",
+      "size": 2327
+    }
+  ]
+}

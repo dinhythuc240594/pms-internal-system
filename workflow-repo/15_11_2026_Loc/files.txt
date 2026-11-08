@@ -1,0 +1,13 @@
+backend/pms_api/housekeeping/domain.py
+backend/pms_api/housekeeping/models.py
+backend/pms_api/housekeeping/routes.py
+backend/pms_api/housekeeping/service.py
+backend/pms_api/housekeeping/urls.py
+backend/tests/test_housekeeping_calendar.py
+backend/tests/test_housekeeping_integration.py
+backend/tests/test_housekeeping_shift_creation.py
+backend/tests/test_housekeeping_worker.py
+frontend/src/apps/pms/dashboard/pages/Dashboard.css
+frontend/src/apps/pms/dashboard/pages/Dashboard.jsx
+frontend/src/apps/pms/rooms/roomLocations.js
+frontend/src/apps/pms/rooms/roomLocations.test.js

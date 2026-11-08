@@ -1,0 +1,16 @@
+backend/pms_api/channels/exceptions.py
+backend/pms_api/channels/history.py
+backend/pms_api/channels/history_application.py
+backend/pms_api/channels/remote.py
+backend/pms_api/channels/remote_application.py
+frontend/src/apps/pms/inventory/Inventory.css
+frontend/src/apps/pms/inventory/InventoryDocuments.jsx
+frontend/src/apps/pms/inventory/InventoryFormats.test.js
+frontend/src/apps/pms/inventory/pages/InventoryCheck.jsx
+frontend/src/apps/pms/inventory/pages/InventoryIn.jsx
+frontend/src/apps/pms/inventory/pages/InventoryOut.jsx
+frontend/src/apps/pms/inventory/pages/InventoryStock.jsx
+frontend/src/apps/pms/inventory/pages/InventoryTransfer.jsx
+frontend/src/apps/pms/inventory/useInventoryQuery.js
+frontend/src/apps/pms/inventory/values.js
+frontend/src/apps/pms/inventory/values.test.js

@@ -1,0 +1,80 @@
+{
+  "date": "2026-11-23",
+  "pusher": "Thuc",
+  "folder": "23_11_2026_Thuc",
+  "title": "Quản trị tenant, khách hàng và tài khoản hệ thống + Cấu hình khách sạn và danh mục",
+  "branch": "work/2026-11-23-thuc-fullstack-16",
+  "backend_topic": "Quản trị tenant, khách hàng và tài khoản hệ thống",
+  "frontend_topic": "Cấu hình khách sạn và danh mục",
+  "backend_count": 3,
+  "frontend_count": 8,
+  "commit_message": "feat(fullstack): ban giao 23/11/2026 - Thuc",
+  "depends_on": [
+    "22_11_2026_Loc",
+    "22_11_2026_Thuc"
+  ],
+  "source_commit": "902a01f1ddfaca73a7466a3c5a3a06ddfbf84bb6",
+  "created_at": "2026-11-08T06:03:33+00:00",
+  "status": "prepared_not_pushed",
+  "file_count": 11,
+  "bytes": 99808,
+  "operation": "upsert_only",
+  "deletions": [],
+  "files": [
+    {
+      "path": "backend/pms_api/admin/application.py",
+      "sha256": "d29f4e36fb388c826fb80dab38ded5627a43caada2323ac17178f7727c70019d",
+      "size": 34061
+    },
+    {
+      "path": "backend/pms_api/admin/client_models.py",
+      "sha256": "4947195ac93bc9ae8a329a9b4866c23b40264f823919601f4898045efd2dffdb",
+      "size": 794
+    },
+    {
+      "path": "backend/pms_api/admin/customers.py",
+      "sha256": "d858ebad071d6207c970630e1fc54d865e0442ff89526bacde4f777da5b7c96f",
+      "size": 4911
+    },
+    {
+      "path": "frontend/src/apps/pms/settings/pages/InventoryUnits.jsx",
+      "sha256": "052d3da0ecc1d5c26d75d461a58f30c31cbfac7877827821298461df031bc6e4",
+      "size": 7567
+    },
+    {
+      "path": "frontend/src/apps/pms/settings/pages/RoomLocations.css",
+      "sha256": "6faa1dec1edb2ffb8560ba61eb8415a225ac81c467a771f21e5c112920d29dcf",
+      "size": 8189
+    },
+    {
+      "path": "frontend/src/apps/pms/settings/pages/RoomLocations.jsx",
+      "sha256": "7d9cd7de1056574047fadf6c2040559e122ea89cbaa932fa1a11a86fd3f1fb72",
+      "size": 7289
+    },
+    {
+      "path": "frontend/src/apps/pms/settings/pages/SettingsCatalogs.css",
+      "sha256": "760d5ca46c10d7720008bda19abd88e634da460662d9bc517eb6edc51df16306",
+      "size": 11052
+    },
+    {
+      "path": "frontend/src/apps/pms/settings/pages/SettingsCatalogs.jsx",
+      "sha256": "3a93060f15e7ffac9dd37d5ff4cd812a94de2b089f165fbdddc4941903da48b6",
+      "size": 19412
+    },
+    {
+      "path": "frontend/src/apps/pms/settings/pages/catalogForm.js",
+      "sha256": "b71f02d6cd3f62f8d85562eac6e65c1cbc886170015036fb3a6944d981eaf234",
+      "size": 321
+    },
+    {
+      "path": "frontend/src/apps/pms/settings/pages/catalogForm.test.js",
+      "sha256": "9d1f1b215ce240259d5c67ec9d290a642e755f645e864d53f9fc5f4007ed06e9",
+      "size": 769
+    },
+    {
+      "path": "frontend/src/apps/pms/settings/pages/currencyCompatibility.test.js",
+      "sha256": "4971050827661ca2f8ae3699980023d63a872d564fe1c429b44876051c82d4b6",
+      "size": 5443
+    }
+  ]
+}

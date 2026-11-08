@@ -1,0 +1,75 @@
+{
+  "date": "2026-11-27",
+  "pusher": "Loc",
+  "folder": "27_11_2026_Loc",
+  "title": "Thông báo và sự kiện trong ứng dụng + Layout và Dashboard quản trị nền tảng",
+  "branch": "work/2026-11-27-loc-fullstack-20",
+  "backend_topic": "Thông báo và sự kiện trong ứng dụng",
+  "frontend_topic": "Layout và Dashboard quản trị nền tảng",
+  "backend_count": 4,
+  "frontend_count": 6,
+  "commit_message": "feat(fullstack): ban giao 27/11/2026 - Loc",
+  "depends_on": [
+    "26_11_2026_Loc",
+    "26_11_2026_Thuc"
+  ],
+  "source_commit": "902a01f1ddfaca73a7466a3c5a3a06ddfbf84bb6",
+  "created_at": "2026-11-08T06:03:33+00:00",
+  "status": "prepared_not_pushed",
+  "file_count": 10,
+  "bytes": 52330,
+  "operation": "upsert_only",
+  "deletions": [],
+  "files": [
+    {
+      "path": "backend/pms_api/notification_models.py",
+      "sha256": "ccfe8c60fe7093bcd12eae0e97d17ab36f284bd80bd2a563fe79149e22121a8a",
+      "size": 1808
+    },
+    {
+      "path": "backend/pms_api/notifications.py",
+      "sha256": "1273e7938b99a11ebe96abdfd5a6df792b4df0018edf6cbc86482db71cd3b953",
+      "size": 1522
+    },
+    {
+      "path": "backend/pms_api/notifications_urls.py",
+      "sha256": "7bfb80c80fa7865b80a5eb271429795d1185952e463beb09bc6d9cf9cc0763f9",
+      "size": 1374
+    },
+    {
+      "path": "backend/tests/test_notifications.py",
+      "sha256": "a1ebd64a97ebff1904460b0b9d67ffb0f6ef085e787ea5d01bda6863471d6181",
+      "size": 9311
+    },
+    {
+      "path": "frontend/src/apps/manager/components/ManagerSidebar.jsx",
+      "sha256": "aac86c5a9bbc9fbfb6f175065a37d128a96c5817233440984210d75fe3c73b6d",
+      "size": 3703
+    },
+    {
+      "path": "frontend/src/apps/manager/dashboard/operationsPresentation.js",
+      "sha256": "22ac0a5148abdf551b663dc3d6ca7a3b081f314b66d4a5ad1a341ca66a8d4fc4",
+      "size": 895
+    },
+    {
+      "path": "frontend/src/apps/manager/dashboard/operationsPresentation.test.js",
+      "sha256": "a9f7dc00532674a4956b33701a78ff8fc81e8c0c39f80c7711752c86433af3e2",
+      "size": 1070
+    },
+    {
+      "path": "frontend/src/apps/manager/layouts/ManagerLayout.css",
+      "sha256": "b27d93f957268bce1205feb3645d6285c364f57cce7b5ea3f545c0af81a0ebf2",
+      "size": 13370
+    },
+    {
+      "path": "frontend/src/apps/manager/layouts/ManagerLayout.jsx",
+      "sha256": "e88fc71d8d78c6232c79d309edf8d1121535c3e263ebcec2c0fb2143156b1fdc",
+      "size": 3626
+    },
+    {
+      "path": "frontend/src/apps/manager/mockData.js",
+      "sha256": "d43ff562145e212dcb00461eec77a73458890d37e826ccd81cc8af63d3edca0d",
+      "size": 15651
+    }
+  ]
+}

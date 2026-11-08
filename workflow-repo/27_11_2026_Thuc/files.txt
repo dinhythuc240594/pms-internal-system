@@ -1,0 +1,8 @@
+backend/pms_api/notifications_application.py
+backend/tests/test_channel_notifications.py
+frontend/src/apps/manager/components/ManagerHeader.jsx
+frontend/src/apps/manager/dashboard/OperationsPanel.css
+frontend/src/apps/manager/dashboard/OperationsPanel.jsx
+frontend/src/apps/manager/dashboard/pages/AdminDashboard.css
+frontend/src/apps/manager/dashboard/pages/AdminDashboard.jsx
+frontend/src/apps/manager/theme.js

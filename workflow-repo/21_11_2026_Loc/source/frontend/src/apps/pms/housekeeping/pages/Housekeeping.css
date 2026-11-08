@@ -1,0 +1,7 @@
+.pms-housekeeping .hk-room-action { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 34px; padding: 6px 10px; border: 1px solid var(--border-color); border-radius: 7px; background: var(--bg-surface); color: var(--text-secondary); font: inherit; font-size: 12px; font-weight: 500; text-decoration: none; cursor: pointer; }
+.pms-housekeeping button.hk-room-action { margin-left: 8px; }
+.pms-housekeeping .hk-room-action:hover:not(:disabled) { background: var(--bg-main); border-color: var(--accent-primary); color: var(--accent-primary); }
+.pms-housekeeping .hk-room-task-link { color: var(--accent-primary); font-size: 12px; text-decoration: none; }
+.pms-housekeeping .hk-room-task-link:hover { text-decoration: underline; }
+.pms-housekeeping :is(.hk-room-action, .hk-room-task-link):focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
+@media (pointer: coarse) { .pms-housekeeping .hk-room-action { min-height: 42px; } }

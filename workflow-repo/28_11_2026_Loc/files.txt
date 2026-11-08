@@ -1,0 +1,15 @@
+backend/pms_api/plan_pricing.py
+backend/pms_api/saas_billing/__init__.py
+backend/pms_api/saas_billing/application.py
+backend/pms_api/saas_billing/models.py
+backend/pms_api/saas_billing/routes.py
+backend/pms_api/saas_billing/urls.py
+backend/tests/test_subscription_acceptance.py
+frontend/src/apps/manager/features/pages/AdminFeatures.css
+frontend/src/apps/manager/features/pages/AdminFeatures.jsx
+frontend/src/apps/manager/profile/pages/AdminProfile.css
+frontend/src/apps/manager/profile/pages/AdminProfile.jsx
+frontend/src/apps/manager/profile/pages/AdminProfile.test.js
+frontend/src/apps/manager/tenants/pages/ManagerOTA.css
+frontend/src/apps/manager/tenants/pages/ManagerOTA.jsx
+frontend/src/apps/manager/tenants/pages/ManagerOTA.test.js

@@ -1,0 +1,120 @@
+{
+  "date": "2026-11-14",
+  "pusher": "Thuc",
+  "folder": "14_11_2026_Thuc",
+  "title": "Dịch vụ, POS, thu chi và sổ quỹ + PMS provider, API client, layout và điều hướng",
+  "branch": "work/2026-11-14-thuc-fullstack-07",
+  "backend_topic": "Dịch vụ, POS, thu chi và sổ quỹ",
+  "frontend_topic": "PMS provider, API client, layout và điều hướng",
+  "backend_count": 4,
+  "frontend_count": 15,
+  "commit_message": "feat(fullstack): ban giao 14/11/2026 - Thuc",
+  "depends_on": [
+    "13_11_2026_Loc",
+    "13_11_2026_Thuc"
+  ],
+  "source_commit": "902a01f1ddfaca73a7466a3c5a3a06ddfbf84bb6",
+  "created_at": "2026-11-08T06:03:33+00:00",
+  "status": "prepared_not_pushed",
+  "file_count": 19,
+  "bytes": 190775,
+  "operation": "upsert_only",
+  "deletions": [],
+  "files": [
+    {
+      "path": "backend/pms_api/finance/models.py",
+      "sha256": "d20c20efe35846093af91bc112a2030f70159b204e142d007b39e3836966d28f",
+      "size": 12800
+    },
+    {
+      "path": "backend/pms_api/finance/routes.py",
+      "sha256": "04374a04b2a4d12b3625996dc9dd377c7aa6781f0df59ee5362664dfe1c46faf",
+      "size": 2816
+    },
+    {
+      "path": "backend/tests/test_cashbook_categories.py",
+      "sha256": "9f839877db19cdd2034d8088dec3f0a4c8fc95b9880d84471d062f58c3b95f8a",
+      "size": 9050
+    },
+    {
+      "path": "backend/tests/test_finance_integration.py",
+      "sha256": "bcb0417e798a7b0621044440d1fd221b08bee83e8606fca1deaac354da1f53e3",
+      "size": 26472
+    },
+    {
+      "path": "frontend/src/apps/pms/components/DomainForms.css",
+      "sha256": "f4fbe6a61715119d966881b86614fa015502c9bf6aaaa66664d591a0a850e321",
+      "size": 3211
+    },
+    {
+      "path": "frontend/src/apps/pms/components/Header.jsx",
+      "sha256": "ab1b000773e0b9ee55e188757fc4202c5cb0fe6f68c9fd0adee7d0eb2bba0cad",
+      "size": 5260
+    },
+    {
+      "path": "frontend/src/apps/pms/components/LegacyOverlay.jsx",
+      "sha256": "0373e206095abb20784b32384b891675c2368fce35fac3a8ac95c309dcb33f6c",
+      "size": 2985
+    },
+    {
+      "path": "frontend/src/apps/pms/components/NotificationBell.css",
+      "sha256": "98d42558732372a4be290d96f761033fd9a84ed88bdba7c3dc0ee965e1d98952",
+      "size": 16562
+    },
+    {
+      "path": "frontend/src/apps/pms/components/NotificationBell.jsx",
+      "sha256": "f245ccbbd83fb40fbbbe30d85dd23db9f4b7ccf02e0745ef09862a2b32123977",
+      "size": 15200
+    },
+    {
+      "path": "frontend/src/apps/pms/components/NotificationBell.test.js",
+      "sha256": "7ba02dca5974c40464d31b560cc1ad8bb936bcb6489ffbcb21d51138d16ed275",
+      "size": 17006
+    },
+    {
+      "path": "frontend/src/apps/pms/components/Sidebar.jsx",
+      "sha256": "9aeb256da61b28c019c8c6f74c5fed5d87c2b4823b32f944ec85c2667df02838",
+      "size": 7541
+    },
+    {
+      "path": "frontend/src/apps/pms/components/useRevealActive.js",
+      "sha256": "b8d1a2abc61c653207b360e84afc1b0b5e001143f23001316b50ad42142b04dd",
+      "size": 1153
+    },
+    {
+      "path": "frontend/src/apps/pms/data/access.js",
+      "sha256": "813d053e890ccd6d47d00c2a6dae7a946c01edb413bf65a06ff93cf2b7898b94",
+      "size": 3681
+    },
+    {
+      "path": "frontend/src/apps/pms/data/api.js",
+      "sha256": "7600092e48dfcc3b312257f0f7b44eee62be898fbef520f8e1dec3769252e686",
+      "size": 10941
+    },
+    {
+      "path": "frontend/src/apps/pms/data/api.test.js",
+      "sha256": "ab11fdd46b1730c7ec08d7e36c0d4a357b60fa8b8b57544c964875773bcf15b7",
+      "size": 32997
+    },
+    {
+      "path": "frontend/src/apps/pms/data/document.js",
+      "sha256": "b1222a3d413128b3b3a8178a1292824fdc8593d0c0e1306ea6f9229d8130f6df",
+      "size": 699
+    },
+    {
+      "path": "frontend/src/apps/pms/data/usePms.js",
+      "sha256": "43e5a23742b89710c256be6ca4762b28ff71f8382ea65dfa9cf86ccbcdcecb8c",
+      "size": 153
+    },
+    {
+      "path": "frontend/src/apps/pms/layouts/PmsLayout.css",
+      "sha256": "8f0dfd2633482a1d551e957f109ca4aa87f3666669159f2042f40bcff2521360",
+      "size": 17220
+    },
+    {
+      "path": "frontend/src/apps/pms/layouts/PmsLayout.jsx",
+      "sha256": "8973925ecedd7074eb26dc447f5beabfc1d826b4044cdde26a4731b62a9c8b9e",
+      "size": 5028
+    }
+  ]
+}

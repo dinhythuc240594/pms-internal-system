@@ -1,0 +1,10 @@
+backend/pms_api/admin/channex.py
+backend/pms_api/admin/channex_application.py
+backend/pms_api/admin/channex_remote.py
+backend/tests/test_channex_remote.py
+frontend/src/apps/pms/channel-manager/ChannelManager.css
+frontend/src/apps/pms/channel-manager/IntegrationWorkspace.css
+frontend/src/apps/pms/channel-manager/catalog.js
+frontend/src/apps/pms/channel-manager/catalog.test.js
+frontend/src/apps/pms/channel-manager/clientChannelOperations.js
+frontend/src/apps/pms/channel-manager/clientChannelOperations.test.js

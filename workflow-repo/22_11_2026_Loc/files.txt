@@ -1,0 +1,3 @@
+backend/pms_api/channels/exceptions_application.py
+frontend/src/apps/pms/inventory/pages/InventorySettings.css
+frontend/src/apps/pms/inventory/pages/InventorySettings.jsx

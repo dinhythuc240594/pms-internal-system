@@ -1,0 +1,65 @@
+{
+  "date": "2026-11-30",
+  "pusher": "Loc",
+  "folder": "30_11_2026_Loc",
+  "title": "Thay đổi lưu trú và hoa hồng + Logic biểu mẫu và dữ liệu Channex quản trị",
+  "branch": "work/2026-11-30-loc-fullstack-23",
+  "backend_topic": "Thay đổi lưu trú và hoa hồng",
+  "frontend_topic": "Logic biểu mẫu và dữ liệu Channex quản trị",
+  "backend_count": 3,
+  "frontend_count": 5,
+  "commit_message": "feat(fullstack): ban giao 30/11/2026 - Loc",
+  "depends_on": [
+    "29_11_2026_Loc",
+    "29_11_2026_Thuc"
+  ],
+  "source_commit": "902a01f1ddfaca73a7466a3c5a3a06ddfbf84bb6",
+  "created_at": "2026-11-08T06:03:33+00:00",
+  "status": "prepared_not_pushed",
+  "file_count": 8,
+  "bytes": 52372,
+  "operation": "upsert_only",
+  "deletions": [],
+  "files": [
+    {
+      "path": "backend/pms_api/bookings/stay_changes.py",
+      "sha256": "88af2718bde9cfa6e853a91663e7e9749e712c87c815e54e9f54f95928b48575",
+      "size": 787
+    },
+    {
+      "path": "backend/pms_api/finance/commissions.py",
+      "sha256": "df2723e845c025de3ef1cf58553df6d568362cb44eaaf78c74b5bc3414eca6b1",
+      "size": 1679
+    },
+    {
+      "path": "backend/pms_api/finance/commissions_application.py",
+      "sha256": "78679d50272d65fff88c08205a833f9ce4fa8eb6fb337318ba6c4bbb44fe0106",
+      "size": 31487
+    },
+    {
+      "path": "frontend/src/apps/manager/channex/ChannexSurface.css",
+      "sha256": "31d90ee8a2b3b9948da9043984e07cfcd82a4f22216e3f1083e917e50ac34bf0",
+      "size": 5597
+    },
+    {
+      "path": "frontend/src/apps/manager/channex/airbnbReturn.js",
+      "sha256": "12f7bed83498c74a952cc5741b041da9cfa056d69ecdb26a96467832c8c9ab64",
+      "size": 1430
+    },
+    {
+      "path": "frontend/src/apps/manager/channex/airbnbReturn.test.js",
+      "sha256": "dd52b8657094e4db7377e1ada2f2611fad7f0491b20e95e04fce3f2e93ee4b60",
+      "size": 1701
+    },
+    {
+      "path": "frontend/src/apps/manager/channex/channelForms.js",
+      "sha256": "838455eac500f9b2e3fa89a74be89b86de08171264ecf91114bade3cbe4d76ac",
+      "size": 3354
+    },
+    {
+      "path": "frontend/src/apps/manager/channex/channelForms.test.js",
+      "sha256": "ff3a461f667c0efb67827fe1838d01ccc8d31d2727a2352cad41b15e56395afb",
+      "size": 6337
+    }
+  ]
+}

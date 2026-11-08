@@ -1,0 +1,17 @@
+backend/pms_api/core_models.py
+backend/pms_api/security.py
+backend/tests/test_client_profile.py
+frontend/src/shared/config/pricingPlans.js
+frontend/src/shared/drafts/DraftGuardProvider.jsx
+frontend/src/shared/drafts/DraftGuardProvider.test.js
+frontend/src/shared/lib/csv.js
+frontend/src/shared/lib/csv.test.js
+frontend/src/shared/lib/currencies.js
+frontend/src/shared/lib/currencies.test.js
+frontend/src/shared/lib/number.js
+frontend/src/shared/lib/number.test.js
+frontend/src/shared/lib/planPricing.js
+frontend/src/shared/lib/planPricing.test.js
+frontend/src/shared/lib/validation.js
+frontend/src/shared/lib/validation.test.js
+frontend/src/shared/security.test.js

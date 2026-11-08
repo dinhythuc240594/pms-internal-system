@@ -1,0 +1,70 @@
+{
+  "date": "2026-11-25",
+  "pusher": "Thuc",
+  "folder": "25_11_2026_Thuc",
+  "title": "Cấu hình Channex và công cụ quản trị từ xa + Logic và trình bày tích hợp OTA",
+  "branch": "work/2026-11-25-thuc-fullstack-18",
+  "backend_topic": "Cấu hình Channex và công cụ quản trị từ xa",
+  "frontend_topic": "Logic và trình bày tích hợp OTA",
+  "backend_count": 2,
+  "frontend_count": 7,
+  "commit_message": "feat(fullstack): ban giao 25/11/2026 - Thuc",
+  "depends_on": [
+    "24_11_2026_Loc",
+    "24_11_2026_Thuc"
+  ],
+  "source_commit": "902a01f1ddfaca73a7466a3c5a3a06ddfbf84bb6",
+  "created_at": "2026-11-08T06:03:33+00:00",
+  "status": "prepared_not_pushed",
+  "file_count": 9,
+  "bytes": 86410,
+  "operation": "upsert_only",
+  "deletions": [],
+  "files": [
+    {
+      "path": "backend/pms_api/admin/channex_remote_application.py",
+      "sha256": "ce711b092f0ca6c678fec569de9496cd08c08a5d27db58291010f51e91917c10",
+      "size": 27946
+    },
+    {
+      "path": "backend/tests/test_tenant_remote_channels.py",
+      "sha256": "c77cb118f3f801c24c5b00cd8302a288305c3e7c8de78564ff650f4cce5245c4",
+      "size": 19508
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/integration.js",
+      "sha256": "e3fbce187b3a741befecb25ddc9e441952721303d2f9cde1d0e0be3522649ac8",
+      "size": 1912
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/integration.test.js",
+      "sha256": "c8100bafd51e0aa4b7b35ab7ecb590b74e12e7b7452eccca9a711920863f37fd",
+      "size": 3827
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/jobHistory.js",
+      "sha256": "d04877c3ad6543f559e8441a17c8ca87c4c00e2303e1ea6233c7e8137d0c2557",
+      "size": 1498
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/jobHistory.test.js",
+      "sha256": "dd8b6ece3587f93d2d2c8d8db5ed17941c71223f3a8a6bfd4575eef2b8509a30",
+      "size": 3213
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/presentation.js",
+      "sha256": "468534d64143e06812421cfc0b229a7ed8974e1c186486b3321762d9de10f87d",
+      "size": 14039
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/presentation.test.js",
+      "sha256": "3f925f493063144b68067125c79ac3337b466d2fc100770b57f885b1be9abed3",
+      "size": 13062
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/useChannels.js",
+      "sha256": "2ab268cf2e47893f1e2c2d70d05bc9aa715e0852d0251beb73bc8767393c88f8",
+      "size": 1405
+    }
+  ]
+}

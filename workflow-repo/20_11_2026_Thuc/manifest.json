@@ -1,0 +1,75 @@
+{
+  "date": "2026-11-20",
+  "pusher": "Thuc",
+  "folder": "20_11_2026_Thuc",
+  "title": "API, chính sách và hàng đợi đồng bộ ARI + Báo cáo, đối soát và chốt ngày",
+  "branch": "work/2026-11-20-thuc-fullstack-13",
+  "backend_topic": "API, chính sách và hàng đợi đồng bộ ARI",
+  "frontend_topic": "Báo cáo, đối soát và chốt ngày",
+  "backend_count": 6,
+  "frontend_count": 4,
+  "commit_message": "feat(fullstack): ban giao 20/11/2026 - Thuc",
+  "depends_on": [
+    "19_11_2026_Loc",
+    "19_11_2026_Thuc"
+  ],
+  "source_commit": "902a01f1ddfaca73a7466a3c5a3a06ddfbf84bb6",
+  "created_at": "2026-11-08T06:03:33+00:00",
+  "status": "prepared_not_pushed",
+  "file_count": 10,
+  "bytes": 101730,
+  "operation": "upsert_only",
+  "deletions": [],
+  "files": [
+    {
+      "path": "backend/pms_api/channels/application.py",
+      "sha256": "eda36314a19d7436287833a0325ff922900c10470f549453a25f1585eefe4929",
+      "size": 27868
+    },
+    {
+      "path": "backend/pms_api/channels/preview.py",
+      "sha256": "eac9a7d4890e6b52579b985c8df2495860605039b037b71d6cb77eafbe29a083",
+      "size": 493
+    },
+    {
+      "path": "backend/pms_api/channels/publication.py",
+      "sha256": "111e4fdb5bf5e5d24084cf1145956952f74f16399f44e9ed263aad74fd9a313f",
+      "size": 7907
+    },
+    {
+      "path": "backend/pms_api/channels/routes.py",
+      "sha256": "b24d7a13b4dd1ec31c1e1e33d0523732e64427701db47ba056ede44f2f02617c",
+      "size": 2260
+    },
+    {
+      "path": "backend/tests/test_channel_mapping_lifecycle.py",
+      "sha256": "c3cb75370ee1dabcc8974279afc5cb5c2426fff1052ad49ca74bfe4586dbd391",
+      "size": 13600
+    },
+    {
+      "path": "backend/tests/test_channel_pacing.py",
+      "sha256": "7a8cdc284b8183223b6fb8d69e7553266fb6e5e52238d0555a400119fcfc9847",
+      "size": 12931
+    },
+    {
+      "path": "frontend/src/apps/pms/reconciliation/NightAuditPanel.jsx",
+      "sha256": "c20e67fb49c9703aec063b3c97a93fcdf9b7e41a3846ae036c9f80046eb64072",
+      "size": 6469
+    },
+    {
+      "path": "frontend/src/apps/pms/reconciliation/NightAuditPanel.test.js",
+      "sha256": "39a0019af94342e79797b4bda78f2d807534695d62de3c97ff09c8b896cc5847",
+      "size": 9223
+    },
+    {
+      "path": "frontend/src/apps/pms/reports/pages/Reports.css",
+      "sha256": "17713dc2f5a96f01e6269340e5b0226379f9372874b878c03f17d77aab15b2cf",
+      "size": 7293
+    },
+    {
+      "path": "frontend/src/apps/pms/reports/pages/Reports.jsx",
+      "sha256": "ea8171c5f104592f7a40182258af4f5ed65e4dad98f7a34a14b00b646be76350",
+      "size": 13686
+    }
+  ]
+}

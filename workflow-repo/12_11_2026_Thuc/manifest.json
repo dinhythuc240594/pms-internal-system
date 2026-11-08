@@ -1,0 +1,80 @@
+{
+  "date": "2026-11-12",
+  "pusher": "Thuc",
+  "folder": "12_11_2026_Thuc",
+  "title": "Mô hình và quy tắc đặt phòng + Website giới thiệu và trang thông tin",
+  "branch": "work/2026-11-12-thuc-fullstack-05",
+  "backend_topic": "Mô hình và quy tắc đặt phòng",
+  "frontend_topic": "Website giới thiệu và trang thông tin",
+  "backend_count": 4,
+  "frontend_count": 7,
+  "commit_message": "feat(fullstack): ban giao 12/11/2026 - Thuc",
+  "depends_on": [
+    "11_11_2026_Loc",
+    "11_11_2026_Thuc"
+  ],
+  "source_commit": "902a01f1ddfaca73a7466a3c5a3a06ddfbf84bb6",
+  "created_at": "2026-11-08T06:03:33+00:00",
+  "status": "prepared_not_pushed",
+  "file_count": 11,
+  "bytes": 47781,
+  "operation": "upsert_only",
+  "deletions": [],
+  "files": [
+    {
+      "path": "backend/pms_api/bookings/domain.py",
+      "sha256": "68dbd3185c36aab1d7c99938c1ada2fe8ba23a2731550cbb253045ccc2bbcc8a",
+      "size": 2187
+    },
+    {
+      "path": "backend/pms_api/bookings/ports.py",
+      "sha256": "cd1ae7e1a193def27d7488f0671c00dbef47f592d49bea2dadf2bf04307effb1",
+      "size": 425
+    },
+    {
+      "path": "backend/pms_api/bookings/repository.py",
+      "sha256": "e4212e1f6936a704c6724710f9f806323d5e325055737eadcb1c38df5dad1534",
+      "size": 4125
+    },
+    {
+      "path": "backend/tests/test_booking_values.py",
+      "sha256": "5c1a871ebd79ba6b1e6323e4679d4368987685977b59c5bc2904789cd101129f",
+      "size": 1372
+    },
+    {
+      "path": "frontend/src/apps/marketing/Blog.css",
+      "sha256": "2271c7bbf362588c1b2ba98a011ffb23d10473e30c821364b7d5a35c811c0132",
+      "size": 4130
+    },
+    {
+      "path": "frontend/src/apps/marketing/Blog.jsx",
+      "sha256": "c313c2330d5f2e98056db3bccbb51fb7cc25edcef9a6ec35e9f0ff447a5329ed",
+      "size": 8454
+    },
+    {
+      "path": "frontend/src/apps/marketing/Contact.css",
+      "sha256": "98525857069351a5cf09aca09690a22c48ac795cc4a31de1922920c79081e4ad",
+      "size": 4350
+    },
+    {
+      "path": "frontend/src/apps/marketing/Contact.jsx",
+      "sha256": "4325b30c63339887955e59da3e05c1ac82251aed6c5baa2c928ec51be583835c",
+      "size": 8204
+    },
+    {
+      "path": "frontend/src/apps/marketing/Marketing.css",
+      "sha256": "2b9c903a1f461057a34b0449a1770e619cac0d05ac619468464bb98ae20a914f",
+      "size": 5091
+    },
+    {
+      "path": "frontend/src/apps/marketing/layouts/MarketingLayout.css",
+      "sha256": "9d3849f9bd251342e6c315193bc36d31a3599825183f68212b47e64b6ede0eff",
+      "size": 4559
+    },
+    {
+      "path": "frontend/src/apps/marketing/layouts/MarketingLayout.jsx",
+      "sha256": "7c4be2ffd1e00a09a0865f5ca4474def8eeade88fb258d8e1e29de3d7f9aa504",
+      "size": 4884
+    }
+  ]
+}

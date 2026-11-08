@@ -1,0 +1,10 @@
+backend/pms_api/admin/feature_models.py
+backend/tests/test_manager_features.py
+frontend/src/apps/pms/profile/pages/Profile.css
+frontend/src/apps/pms/profile/pages/Profile.jsx
+frontend/src/apps/pms/profile/pages/billingDisplay.js
+frontend/src/apps/pms/profile/pages/billingDisplay.test.js
+frontend/src/apps/pms/profile/pages/billingDocument.js
+frontend/src/apps/pms/profile/pages/billingDocument.test.js
+frontend/src/apps/pms/profile/pages/profileForm.js
+frontend/src/apps/pms/profile/pages/profileForm.test.js

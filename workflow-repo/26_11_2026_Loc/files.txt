@@ -1,0 +1,10 @@
+backend/pms_api/admin/channex_airbnb.py
+backend/pms_api/admin/channex_channels_application.py
+backend/pms_api/admin/channex_insights_application.py
+backend/tests/test_channex_airbnb.py
+frontend/src/apps/pms/channel-manager/pages/ChannexSourcePicker.jsx
+frontend/src/apps/pms/channel-manager/pages/ClientChannels.css
+frontend/src/apps/pms/channel-manager/pages/ClientChannels.jsx
+frontend/src/apps/pms/channel-manager/pages/IntegrationWorkspace.jsx
+frontend/src/apps/pms/channel-manager/pages/OTA.jsx
+frontend/src/apps/pms/channel-manager/pages/mappingForm.test.js

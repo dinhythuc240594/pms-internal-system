@@ -1,0 +1,110 @@
+{
+  "date": "2026-11-10",
+  "pusher": "Loc",
+  "folder": "10_11_2026_Loc",
+  "title": "Xác thực, vai trò, membership và cách ly khách sạn + Tiện ích dữ liệu, ngày, tiền và bản nháp",
+  "branch": "work/2026-11-10-loc-fullstack-03",
+  "backend_topic": "Xác thực, vai trò, membership và cách ly khách sạn",
+  "frontend_topic": "Tiện ích dữ liệu, ngày, tiền và bản nháp",
+  "backend_count": 3,
+  "frontend_count": 14,
+  "commit_message": "feat(fullstack): ban giao 10/11/2026 - Loc",
+  "depends_on": [
+    "09_11_2026_Loc",
+    "09_11_2026_Thuc"
+  ],
+  "source_commit": "902a01f1ddfaca73a7466a3c5a3a06ddfbf84bb6",
+  "created_at": "2026-11-08T06:03:33+00:00",
+  "status": "prepared_not_pushed",
+  "file_count": 17,
+  "bytes": 62024,
+  "operation": "upsert_only",
+  "deletions": [],
+  "files": [
+    {
+      "path": "backend/pms_api/core_models.py",
+      "sha256": "e320d30624cc716b2b88ecad09b8eeda2defb8023a2726158eb090d25fa86500",
+      "size": 6696
+    },
+    {
+      "path": "backend/pms_api/security.py",
+      "sha256": "f0bbf7f9d561f61254df948c6e152796e532c47f91315f186b76a13920dbc83e",
+      "size": 11737
+    },
+    {
+      "path": "backend/tests/test_client_profile.py",
+      "sha256": "adbb5d11e422f13e4e588439901d371b15752c032c4c588fefeed775992dfddd",
+      "size": 6566
+    },
+    {
+      "path": "frontend/src/shared/config/pricingPlans.js",
+      "sha256": "c16d8f99da75f9731815c29f99481142d3444d5d8c8f3cdc2a3eab45725b58f9",
+      "size": 578
+    },
+    {
+      "path": "frontend/src/shared/drafts/DraftGuardProvider.jsx",
+      "sha256": "95fff51fca4b616ee823ecbde412f7eacc1e18781506e53f23313625280e75e1",
+      "size": 5144
+    },
+    {
+      "path": "frontend/src/shared/drafts/DraftGuardProvider.test.js",
+      "sha256": "c63704ca8076fbd5b5b87bc29fc33be036a6166087c35ee9ff0d4f3c6d3b995b",
+      "size": 8444
+    },
+    {
+      "path": "frontend/src/shared/lib/csv.js",
+      "sha256": "3ab873d7b8454f1909f6c1bf42d9fb14dceeba49e8d17ea3d2d7c8885450f83c",
+      "size": 800
+    },
+    {
+      "path": "frontend/src/shared/lib/csv.test.js",
+      "sha256": "719bb98b277eae815fff0f13c3ac171fe5bc1f5cc0600821aa44914fd3058cde",
+      "size": 787
+    },
+    {
+      "path": "frontend/src/shared/lib/currencies.js",
+      "sha256": "f297b9e802efa25771c2472c865333b7667455ce4914a5dd5c1ae9979d50bbfa",
+      "size": 1907
+    },
+    {
+      "path": "frontend/src/shared/lib/currencies.test.js",
+      "sha256": "2079d8279c504e4dcda20396993715f53123e9dcfa6a1991be35a6467883f66f",
+      "size": 1384
+    },
+    {
+      "path": "frontend/src/shared/lib/number.js",
+      "sha256": "6c32074d02dd093279ccf542d301fc03c9905a9b86217f4e5754c26e02e871b5",
+      "size": 917
+    },
+    {
+      "path": "frontend/src/shared/lib/number.test.js",
+      "sha256": "f3f0f95b28fa701edc7f51d0c3519f18c08184176bd024ee570ab3e1a5600813",
+      "size": 1263
+    },
+    {
+      "path": "frontend/src/shared/lib/planPricing.js",
+      "sha256": "ad5a86d7fdf9a101b474379b1253742725945e7564b51815fb48b7a0ee6167bf",
+      "size": 4490
+    },
+    {
+      "path": "frontend/src/shared/lib/planPricing.test.js",
+      "sha256": "93f5f70e35db9e33dc30667cae499419d0fa647d9f76edd47d9f49dde7bd76db",
+      "size": 3732
+    },
+    {
+      "path": "frontend/src/shared/lib/validation.js",
+      "sha256": "56517510778225e354b0cee8f31388baf9819b43395245b5141d2033a6a95837",
+      "size": 1022
+    },
+    {
+      "path": "frontend/src/shared/lib/validation.test.js",
+      "sha256": "63daf0627fa698593c274bc415dc773701855624069da447374f88f56164313e",
+      "size": 2141
+    },
+    {
+      "path": "frontend/src/shared/security.test.js",
+      "sha256": "acd356a1a46099cdf95f8ada9563914eba73a4fe884dfca6895f572dd6a1043d",
+      "size": 4416
+    }
+  ]
+}

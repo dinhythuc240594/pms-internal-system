@@ -1,0 +1,10 @@
+backend/pms_api/inventory/__init__.py
+backend/pms_api/inventory/models.py
+backend/pms_api/inventory/routes.py
+backend/pms_api/inventory/urls.py
+backend/tests/test_inventory_integration.py
+backend/tests/test_inventory_values.py
+frontend/src/apps/pms/reservations/components/BookingTabs.jsx
+frontend/src/apps/pms/reservations/components/BookingTabsFormats.test.js
+frontend/src/apps/pms/reservations/components/StayChangeForm.jsx
+frontend/src/apps/pms/reservations/components/StayChangeForm.test.js

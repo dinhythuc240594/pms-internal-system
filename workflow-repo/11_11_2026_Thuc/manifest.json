@@ -1,0 +1,75 @@
+{
+  "date": "2026-11-11",
+  "pusher": "Thuc",
+  "folder": "11_11_2026_Thuc",
+  "title": "Danh mục khách sạn, phòng, tiền tệ và kiểm tra dữ liệu + Ngôn ngữ, bản dịch và công cụ kiểm tra i18n",
+  "branch": "work/2026-11-11-thuc-fullstack-04",
+  "backend_topic": "Danh mục khách sạn, phòng, tiền tệ và kiểm tra dữ liệu",
+  "frontend_topic": "Ngôn ngữ, bản dịch và công cụ kiểm tra i18n",
+  "backend_count": 5,
+  "frontend_count": 5,
+  "commit_message": "feat(fullstack): ban giao 11/11/2026 - Thuc",
+  "depends_on": [
+    "10_11_2026_Loc",
+    "10_11_2026_Thuc"
+  ],
+  "source_commit": "902a01f1ddfaca73a7466a3c5a3a06ddfbf84bb6",
+  "created_at": "2026-11-08T06:03:33+00:00",
+  "status": "prepared_not_pushed",
+  "file_count": 10,
+  "bytes": 421466,
+  "operation": "upsert_only",
+  "deletions": [],
+  "files": [
+    {
+      "path": "backend/pms_api/catalog/__init__.py",
+      "sha256": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6",
+      "size": 2
+    },
+    {
+      "path": "backend/pms_api/catalog/application.py",
+      "sha256": "5c833e81d40a41bc798d3dc7611e9626708e756e5c83b20bd513e31d9bd7ef77",
+      "size": 40309
+    },
+    {
+      "path": "backend/pms_api/catalog/domain.py",
+      "sha256": "53d9c11d5493d63a717afc7ee9dd588ff98fb0bb9487445c3fe414bc9ec2ae1e",
+      "size": 2017
+    },
+    {
+      "path": "backend/tests/test_catalog_validation.py",
+      "sha256": "dba733198b03f9e40768fd7e9ee0ecca710dc1345224b4dac60d6a943aeddf66",
+      "size": 4547
+    },
+    {
+      "path": "backend/tests/test_client_settings.py",
+      "sha256": "3f70350eabd859bea0e253262f5d8522d666e749cc55e4403f1643c010422354",
+      "size": 6870
+    },
+    {
+      "path": "frontend/src/shared/i18n/core.js",
+      "sha256": "5383bd1761ea6cea6e432c77610ec3fc9bd094385cebc85fd794d3caeb745531",
+      "size": 4948
+    },
+    {
+      "path": "frontend/src/shared/i18n/core.test.js",
+      "sha256": "56989dc60076e0acc3a093805ed75e31d86c251b6e93238099ad4f845ec6f573",
+      "size": 9351
+    },
+    {
+      "path": "frontend/src/shared/i18n/locales/legacy-zh-CN.json",
+      "sha256": "0c6c9e40a114014421c63b2f2611164876f4368680222e8c75240f44097077fa",
+      "size": 206125
+    },
+    {
+      "path": "frontend/src/shared/i18n/locales/vi.json",
+      "sha256": "4c375fe5559e1c2e71ed01fb2fcc5168169e64aa3f80eeedb0097ed2d62d58cf",
+      "size": 80676
+    },
+    {
+      "path": "frontend/src/shared/i18n/locales/zh-CN.json",
+      "sha256": "888fbe1aeca39d9052f1bcd8ad8801b2f1a55316a9fbf0627887dc1e03d9fc9d",
+      "size": 66621
+    }
+  ]
+}

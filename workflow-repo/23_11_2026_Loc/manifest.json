@@ -1,0 +1,95 @@
+{
+  "date": "2026-11-23",
+  "pusher": "Loc",
+  "folder": "23_11_2026_Loc",
+  "title": "Quản trị tenant, khách hàng và tài khoản hệ thống + Cấu hình khách sạn và danh mục",
+  "branch": "work/2026-11-23-loc-fullstack-16",
+  "backend_topic": "Quản trị tenant, khách hàng và tài khoản hệ thống",
+  "frontend_topic": "Cấu hình khách sạn và danh mục",
+  "backend_count": 6,
+  "frontend_count": 8,
+  "commit_message": "feat(fullstack): ban giao 23/11/2026 - Loc",
+  "depends_on": [
+    "22_11_2026_Loc",
+    "22_11_2026_Thuc"
+  ],
+  "source_commit": "902a01f1ddfaca73a7466a3c5a3a06ddfbf84bb6",
+  "created_at": "2026-11-08T06:03:33+00:00",
+  "status": "prepared_not_pushed",
+  "file_count": 14,
+  "bytes": 99627,
+  "operation": "upsert_only",
+  "deletions": [],
+  "files": [
+    {
+      "path": "backend/pms_api/admin/__init__.py",
+      "sha256": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6",
+      "size": 2
+    },
+    {
+      "path": "backend/pms_api/admin/routes.py",
+      "sha256": "7b05412227521b6f0f662f2265891d768de6ce7e028432d0b014aed541d107b5",
+      "size": 4391
+    },
+    {
+      "path": "backend/pms_api/admin/urls.py",
+      "sha256": "28dd9187962c444d103e40fe268233f962b868ceb10248e95cd84b25fc1d79d4",
+      "size": 10800
+    },
+    {
+      "path": "backend/tests/test_manager_customers.py",
+      "sha256": "cdf02ec024d73ae0c794ece561c5af13a6651fc575178e17e62fa83d83be3376",
+      "size": 9621
+    },
+    {
+      "path": "backend/tests/test_manager_profile.py",
+      "sha256": "e9b157163305c5f765533fc502c71e923fe92e9827799993c1dc92f81f4a53b0",
+      "size": 5303
+    },
+    {
+      "path": "backend/tests/test_manager_users.py",
+      "sha256": "21806a7117df1621421cf20c10726698d925a65428c5be748a1defa356da742f",
+      "size": 9237
+    },
+    {
+      "path": "frontend/src/apps/pms/settings/pages/BusinessSettings.css",
+      "sha256": "0e89f42cc65de075e77ba91180045fd17e28010011cf0d3bd4f78b35d289290e",
+      "size": 5044
+    },
+    {
+      "path": "frontend/src/apps/pms/settings/pages/BusinessSettings.jsx",
+      "sha256": "505b41c0c596706de89ff5496cac220ab5feaf3da352c264bc287122380d0188",
+      "size": 11069
+    },
+    {
+      "path": "frontend/src/apps/pms/settings/pages/InventorySettingsShell.css",
+      "sha256": "81f4de1e718065f53da8b4ceb5f10802f3ea619807e213ee79b95dd11e531869",
+      "size": 10449
+    },
+    {
+      "path": "frontend/src/apps/pms/settings/pages/Settings.css",
+      "sha256": "bd49f94d41d8b2d8a9dae5dd3d3ad07d6f55fb861205ae0da1860eb8aa7004b7",
+      "size": 9771
+    },
+    {
+      "path": "frontend/src/apps/pms/settings/pages/Settings.jsx",
+      "sha256": "e417857d68c6023ee18a4c666275f61201baa162052b577509c47d8d518de54d",
+      "size": 13709
+    },
+    {
+      "path": "frontend/src/apps/pms/settings/pages/businessProfileForm.js",
+      "sha256": "91124d968058b14574c32f083e51ac9ce0382398deeb5822f1da4144cd3c1b7c",
+      "size": 1547
+    },
+    {
+      "path": "frontend/src/apps/pms/settings/pages/businessProfileForm.test.js",
+      "sha256": "7ecdeb82bd02af7ac064ed800707883b4061463403b61b86edc66f6a79a2ed4f",
+      "size": 1429
+    },
+    {
+      "path": "frontend/src/apps/pms/settings/pages/clientFormats.test.js",
+      "sha256": "dbda6d1e5e0a672530bada5cdd8afc569f61f19cce6ce775afde5f381a84a8fd",
+      "size": 7255
+    }
+  ]
+}

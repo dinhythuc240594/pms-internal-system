@@ -1,0 +1,45 @@
+{
+  "date": "2026-11-12",
+  "pusher": "Loc",
+  "folder": "12_11_2026_Loc",
+  "title": "Mô hình và quy tắc đặt phòng + Website giới thiệu và trang thông tin",
+  "branch": "work/2026-11-12-loc-fullstack-05",
+  "backend_topic": "Mô hình và quy tắc đặt phòng",
+  "frontend_topic": "Website giới thiệu và trang thông tin",
+  "backend_count": 1,
+  "frontend_count": 3,
+  "commit_message": "feat(fullstack): ban giao 12/11/2026 - Loc",
+  "depends_on": [
+    "11_11_2026_Loc",
+    "11_11_2026_Thuc"
+  ],
+  "source_commit": "902a01f1ddfaca73a7466a3c5a3a06ddfbf84bb6",
+  "created_at": "2026-11-08T06:03:33+00:00",
+  "status": "prepared_not_pushed",
+  "file_count": 4,
+  "bytes": 54619,
+  "operation": "upsert_only",
+  "deletions": [],
+  "files": [
+    {
+      "path": "backend/pms_api/bookings/models.py",
+      "sha256": "ff4bb859b6aeb8661e6e199d8cf443ad7063b155aa86326cd93c95765789402d",
+      "size": 14615
+    },
+    {
+      "path": "frontend/src/apps/marketing/Home.css",
+      "sha256": "b20a566557fc732764cabb818e8ef2bb6167c330d7c05d11abaa41ea33fffa00",
+      "size": 18502
+    },
+    {
+      "path": "frontend/src/apps/marketing/Home.jsx",
+      "sha256": "a91af590f4a694eed3e0fc94b7d3e2100fb387214f4577e32e66ab91d4071fdf",
+      "size": 13727
+    },
+    {
+      "path": "frontend/src/apps/marketing/Pricing.jsx",
+      "sha256": "1a8323731fd23e452aeef1e00f56860e4bcaf4ac9add9c354606e130ca55b517",
+      "size": 7775
+    }
+  ]
+}

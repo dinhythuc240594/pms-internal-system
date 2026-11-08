@@ -1,0 +1,10 @@
+backend/pms_api/channels/onboarding.py
+backend/tests/test_channels_integration.py
+frontend/src/apps/pms/housekeeping/components/AutomaticDayPlan.jsx
+frontend/src/apps/pms/housekeeping/components/PlanDialog.jsx
+frontend/src/apps/pms/housekeeping/formats.test.js
+frontend/src/apps/pms/housekeeping/pages/Housekeeping.css
+frontend/src/apps/pms/housekeeping/pages/Housekeeping.jsx
+frontend/src/apps/pms/housekeeping/pages/HousekeepingStaff.css
+frontend/src/apps/pms/housekeeping/pages/HousekeepingStaff.jsx
+frontend/src/apps/pms/housekeeping/useAutomaticShifts.js

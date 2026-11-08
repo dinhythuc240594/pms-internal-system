@@ -1,0 +1,14 @@
+backend/pms_api/reports/__init__.py
+backend/pms_api/reports/routes.py
+backend/pms_api/reports/urls.py
+backend/tests/test_reports_business.py
+backend/tests/test_reports_financial.py
+frontend/src/apps/pms/reservations/bookingDocument.js
+frontend/src/apps/pms/reservations/bookingDocument.test.js
+frontend/src/apps/pms/reservations/bookingDraft.js
+frontend/src/apps/pms/reservations/bookingDraft.test.js
+frontend/src/apps/pms/reservations/bookingLifecycle.js
+frontend/src/apps/pms/reservations/bookingLifecycle.test.js
+frontend/src/apps/pms/reservations/languageDataPreservation.test.js
+frontend/src/apps/pms/reservations/pages/Reservations.css
+frontend/src/apps/pms/reservations/pages/Reservations.jsx

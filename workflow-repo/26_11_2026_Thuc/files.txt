@@ -1,0 +1,12 @@
+backend/pms_api/admin/channex_airbnb_application.py
+backend/pms_api/admin/channex_channels.py
+backend/pms_api/admin/channex_insights.py
+backend/tests/test_channex_channels.py
+backend/tests/test_channex_insights.py
+frontend/src/apps/pms/channel-manager/pages/AriPreview.jsx
+frontend/src/apps/pms/channel-manager/pages/AriPreview.test.js
+frontend/src/apps/pms/channel-manager/pages/BookingOnboarding.jsx
+frontend/src/apps/pms/channel-manager/pages/OTAExceptions.css
+frontend/src/apps/pms/channel-manager/pages/OTAExceptions.jsx
+frontend/src/apps/pms/channel-manager/pages/OTAExceptions.test.js
+frontend/src/apps/pms/channel-manager/pages/OTAHistory.jsx

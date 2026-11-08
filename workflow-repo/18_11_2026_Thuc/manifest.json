@@ -1,0 +1,100 @@
+{
+  "date": "2026-11-18",
+  "pusher": "Thuc",
+  "folder": "18_11_2026_Thuc",
+  "title": "Chính sách giá, khuyến mãi và snapshot + Giá, tồn phòng, ARI và khuyến mãi",
+  "branch": "work/2026-11-18-thuc-fullstack-11",
+  "backend_topic": "Chính sách giá, khuyến mãi và snapshot",
+  "frontend_topic": "Giá, tồn phòng, ARI và khuyến mãi",
+  "backend_count": 7,
+  "frontend_count": 8,
+  "commit_message": "feat(fullstack): ban giao 18/11/2026 - Thuc",
+  "depends_on": [
+    "17_11_2026_Loc",
+    "17_11_2026_Thuc"
+  ],
+  "source_commit": "902a01f1ddfaca73a7466a3c5a3a06ddfbf84bb6",
+  "created_at": "2026-11-08T06:03:33+00:00",
+  "status": "prepared_not_pushed",
+  "file_count": 15,
+  "bytes": 92405,
+  "operation": "upsert_only",
+  "deletions": [],
+  "files": [
+    {
+      "path": "backend/pms_api/pricing/engine.py",
+      "sha256": "db2e1c0d4c3863a568fcaac7407228e76955e4b1b4e85be1c4cf95127f713fd7",
+      "size": 9724
+    },
+    {
+      "path": "backend/pms_api/pricing/models.py",
+      "sha256": "bb86f210e27c43bf3d52249f0bae47d786920a64cdca68dab25e6e396e69ebcf",
+      "size": 5191
+    },
+    {
+      "path": "backend/pms_api/pricing/ports.py",
+      "sha256": "35757f280d52402949a4b5828083e9c994f28c6d7339a66906ba83ace088a863",
+      "size": 631
+    },
+    {
+      "path": "backend/pms_api/pricing/repository.py",
+      "sha256": "0f73b97cf51f89cd6481c4a283c897a36e30c66d9d142aa2473756c7f058e073",
+      "size": 2149
+    },
+    {
+      "path": "backend/pms_api/pricing/routes.py",
+      "sha256": "4ec529e93b2ad2cc244767a763d3103026e9f58547610b395bb8f46dfe233a91",
+      "size": 2052
+    },
+    {
+      "path": "backend/tests/test_pricing_integration.py",
+      "sha256": "719c8b7832e80808fe2ac3b8e57a1ad272d36c1af1d2c49010908ed2ac3678a6",
+      "size": 17458
+    },
+    {
+      "path": "backend/tests/test_pricing_values.py",
+      "sha256": "d956f40abba6b0c0501cc544feba991282f2355a7cb991a6ddb8f2bc15562c04",
+      "size": 1240
+    },
+    {
+      "path": "frontend/src/apps/pms/rates-inventory/components/DailyRateMatrix.jsx",
+      "sha256": "fe8011ea7db3eb156418906278b1a2f08c39f8dc7228b620788cee33c32165bd",
+      "size": 6855
+    },
+    {
+      "path": "frontend/src/apps/pms/rates-inventory/formats.test.js",
+      "sha256": "638af12ed501cb17ca681d135dfd18b62a695d00d4e7318b7b5369457a5f9dbc",
+      "size": 4649
+    },
+    {
+      "path": "frontend/src/apps/pms/rates-inventory/pages/ExchangeRates.jsx",
+      "sha256": "7f056d1b8ab0e1190e9b61476fcdb3de83c253bd655305b939bc48d3678947ea",
+      "size": 5285
+    },
+    {
+      "path": "frontend/src/apps/pms/rates-inventory/pages/MatrixRate.css",
+      "sha256": "c22df5cce5ffd5d81a07a46327b00c5fd09cec7a20308c50a93db6072df52c9d",
+      "size": 6603
+    },
+    {
+      "path": "frontend/src/apps/pms/rates-inventory/pages/MatrixRate.jsx",
+      "sha256": "0018fee6d8a08ce77871484015c970d1637ddcbf1c8ef2ed542e6f928f7600cc",
+      "size": 8713
+    },
+    {
+      "path": "frontend/src/apps/pms/rates-inventory/pages/PricingManagement.jsx",
+      "sha256": "e61bba7fddf747ef9c8fc060a698bea127ab4caf6b2715ba1cbe7491396b03ff",
+      "size": 18729
+    },
+    {
+      "path": "frontend/src/apps/pms/rates-inventory/rateRange.js",
+      "sha256": "a59e6e747fcefc30670c6a8dd990dd4b0c03cced4f4b5c321fe0b752a5bf9097",
+      "size": 1026
+    },
+    {
+      "path": "frontend/src/apps/pms/rates-inventory/rateRange.test.js",
+      "sha256": "0cc1d14d40d4ee946d51782fbd231b294ea1e4f3d0c1259af335f2d7bb6dcfa5",
+      "size": 2100
+    }
+  ]
+}

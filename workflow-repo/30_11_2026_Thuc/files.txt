@@ -1,0 +1,7 @@
+backend/pms_api/bookings/stay_changes_application.py
+backend/tests/test_commissions.py
+frontend/src/apps/manager/channex/presentation.js
+frontend/src/apps/manager/channex/presentation.test.js
+frontend/src/apps/manager/channex/propertyForm.js
+frontend/src/apps/manager/channex/propertyForm.test.js
+frontend/src/apps/manager/channex/useChannexQuery.js

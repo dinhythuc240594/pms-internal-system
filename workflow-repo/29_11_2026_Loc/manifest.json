@@ -1,0 +1,100 @@
+{
+  "date": "2026-11-29",
+  "pusher": "Loc",
+  "folder": "29_11_2026_Loc",
+  "title": "Đối soát ngày nghiệp vụ và Night Audit + Quản trị gói, gia hạn và billing",
+  "branch": "work/2026-11-29-loc-fullstack-22",
+  "backend_topic": "Đối soát ngày nghiệp vụ và Night Audit",
+  "frontend_topic": "Quản trị gói, gia hạn và billing",
+  "backend_count": 5,
+  "frontend_count": 10,
+  "commit_message": "feat(fullstack): ban giao 29/11/2026 - Loc",
+  "depends_on": [
+    "28_11_2026_Loc",
+    "28_11_2026_Thuc"
+  ],
+  "source_commit": "902a01f1ddfaca73a7466a3c5a3a06ddfbf84bb6",
+  "created_at": "2026-11-08T06:03:33+00:00",
+  "status": "prepared_not_pushed",
+  "file_count": 15,
+  "bytes": 51208,
+  "operation": "upsert_only",
+  "deletions": [],
+  "files": [
+    {
+      "path": "backend/pms_api/reconciliation/__init__.py",
+      "sha256": "e9fd66da46d7acc823bddd202fa0f486b6529f427d314915e89e4e8f23418be0",
+      "size": 86
+    },
+    {
+      "path": "backend/pms_api/reconciliation/application.py",
+      "sha256": "32d114c980f0e0249c9f92e5ea45fde20c392804e9a54ae66b8803b931efdc00",
+      "size": 7656
+    },
+    {
+      "path": "backend/pms_api/reconciliation/service.py",
+      "sha256": "7d192d42bc80811e6544396444abc79794c0c3732e382aeccb637ac52730ea76",
+      "size": 1074
+    },
+    {
+      "path": "backend/pms_api/reconciliation/urls.py",
+      "sha256": "aa20bca87238a716e62157ae6671e4a70cb5a039942cbae64de762deb9c514c7",
+      "size": 1135
+    },
+    {
+      "path": "backend/tests/test_closed_finance.py",
+      "sha256": "e222fb166139be50661e86a661dd2f6e411bc1447bcb7b29604087bfe2a973e5",
+      "size": 5814
+    },
+    {
+      "path": "frontend/src/apps/manager/billing/pages/AdminBillingFormats.test.js",
+      "sha256": "ef865c02f607a4b86e253ac1bbeeff718fe8e24daddaf9b45a54931be520f2eb",
+      "size": 3762
+    },
+    {
+      "path": "frontend/src/apps/manager/billing/pages/OperationalAccess.jsx",
+      "sha256": "9402910cbdfb7838dfc59ada39719cd8df1dd06d49958834a5a4123fd8f594bb",
+      "size": 5004
+    },
+    {
+      "path": "frontend/src/apps/manager/billing/pages/PlanPricingModal.jsx",
+      "sha256": "71e2aa81ffe903fef0300d978eada5d9659be4d78bbbaef74700294f8cb620c5",
+      "size": 6941
+    },
+    {
+      "path": "frontend/src/apps/manager/billing/pages/planForm.js",
+      "sha256": "0956a7d02285dac8ad057b4766770371fd193daa0b59726a73a734b3b5cd8366",
+      "size": 2425
+    },
+    {
+      "path": "frontend/src/apps/manager/billing/pages/planForm.test.js",
+      "sha256": "37102c8679bf92f4000000907a464b848cbc149a054a99945f85bd234bec6fda",
+      "size": 4799
+    },
+    {
+      "path": "frontend/src/apps/manager/billing/pages/saasBillingForm.js",
+      "sha256": "46b5bb135517d704cdedbce85eda6f086171157e1d9a4ba0538af7169d1b3605",
+      "size": 1436
+    },
+    {
+      "path": "frontend/src/apps/manager/billing/pages/saasBillingForm.test.js",
+      "sha256": "d6bfdddac2593edbe7a78fbd6c7e0cf0b6fcd59784afdc46a6041dc7e4b20ba9",
+      "size": 2223
+    },
+    {
+      "path": "frontend/src/apps/manager/billing/pages/saasRecovery.test.js",
+      "sha256": "1af6b2553b253323d7ca951cc121d33ff85ba411a64aadc86ca094af3d4fb2a3",
+      "size": 5187
+    },
+    {
+      "path": "frontend/src/apps/manager/billing/subscriptionStatus.js",
+      "sha256": "a7e6759dcb134fbbd2d56edca591122702f56d748da59b0b59ef34178d1bd6bb",
+      "size": 1058
+    },
+    {
+      "path": "frontend/src/apps/manager/billing/subscriptionStatus.test.js",
+      "sha256": "666a1b4f697ac417c5113988be4784e476007592061cc826ac962dd4e79f2d13",
+      "size": 2608
+    }
+  ]
+}

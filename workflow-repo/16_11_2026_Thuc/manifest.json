@@ -1,0 +1,95 @@
+{
+  "date": "2026-11-16",
+  "pusher": "Thuc",
+  "folder": "16_11_2026_Thuc",
+  "title": "Dashboard và báo cáo nghiệp vụ/tài chính + Danh sách, tạo booking và các hàm hỗ trợ",
+  "branch": "work/2026-11-16-thuc-fullstack-09",
+  "backend_topic": "Dashboard và báo cáo nghiệp vụ/tài chính",
+  "frontend_topic": "Danh sách, tạo booking và các hàm hỗ trợ",
+  "backend_count": 5,
+  "frontend_count": 9,
+  "commit_message": "feat(fullstack): ban giao 16/11/2026 - Thuc",
+  "depends_on": [
+    "15_11_2026_Loc",
+    "15_11_2026_Thuc"
+  ],
+  "source_commit": "902a01f1ddfaca73a7466a3c5a3a06ddfbf84bb6",
+  "created_at": "2026-11-08T06:03:33+00:00",
+  "status": "prepared_not_pushed",
+  "file_count": 14,
+  "bytes": 67941,
+  "operation": "upsert_only",
+  "deletions": [],
+  "files": [
+    {
+      "path": "backend/pms_api/reports/__init__.py",
+      "sha256": "58bd39b47abbd6b89a9a996a68616b943fba7ac3fbb720a0e825608b3abac79e",
+      "size": 38
+    },
+    {
+      "path": "backend/pms_api/reports/routes.py",
+      "sha256": "c75658ce849647ffc2c34287249cda92261299f5bf1fc923d9dbba7fb4158c91",
+      "size": 1244
+    },
+    {
+      "path": "backend/pms_api/reports/urls.py",
+      "sha256": "b87c5dd6f731f9cbad6d67d961764eb87209b6763abf053a48832d7e3e60d69d",
+      "size": 1037
+    },
+    {
+      "path": "backend/tests/test_reports_business.py",
+      "sha256": "97990127a1a1afc70b5c8fd16ff90e9a7ae0fe2c325f3bff34a8ac04da8d8819",
+      "size": 13240
+    },
+    {
+      "path": "backend/tests/test_reports_financial.py",
+      "sha256": "bcaafedd4a755f60862a2212dd735789ced02dfc40018852874f3f2ea21bc5b5",
+      "size": 17677
+    },
+    {
+      "path": "frontend/src/apps/pms/reservations/bookingDocument.js",
+      "sha256": "c8e11862b93a444fd1266c5c95b0c93a85c4b6c1db42b86c45e50f4e637aaf29",
+      "size": 3085
+    },
+    {
+      "path": "frontend/src/apps/pms/reservations/bookingDocument.test.js",
+      "sha256": "b75abbdc2c8f88543a23290869afef9ff5eef94a1d0c56be8d9575ae252a8fe1",
+      "size": 2299
+    },
+    {
+      "path": "frontend/src/apps/pms/reservations/bookingDraft.js",
+      "sha256": "8e6f78739d41464a6099b35852bdc06494f42708a4cbe1be0f9f96de9fca506f",
+      "size": 1137
+    },
+    {
+      "path": "frontend/src/apps/pms/reservations/bookingDraft.test.js",
+      "sha256": "ef494d71524c124372cca0ff3e8337705bad370c86aa95907661e1bb88db10b4",
+      "size": 1805
+    },
+    {
+      "path": "frontend/src/apps/pms/reservations/bookingLifecycle.js",
+      "sha256": "4cb5949fc4eace24ae83d90d51c46c581fd2d6da5c27070e8a887906afbba2b7",
+      "size": 806
+    },
+    {
+      "path": "frontend/src/apps/pms/reservations/bookingLifecycle.test.js",
+      "sha256": "293c7f47bc4b13ee7ee5aaa95b720306cff2e9ff237e0959eac7826ca9593ba4",
+      "size": 2022
+    },
+    {
+      "path": "frontend/src/apps/pms/reservations/languageDataPreservation.test.js",
+      "sha256": "4a5c1a6588b113a311f7ee17fa8a2608af453dddb4c536b44708c4657c825da2",
+      "size": 5269
+    },
+    {
+      "path": "frontend/src/apps/pms/reservations/pages/Reservations.css",
+      "sha256": "c49bb999edeb85f150652d5f748eb6cfbcd3ba4cbd02966e3085ca05121badf0",
+      "size": 8865
+    },
+    {
+      "path": "frontend/src/apps/pms/reservations/pages/Reservations.jsx",
+      "sha256": "2232ca15badd94ab952c911181c8371e4c225be8e83c9a493676bfba9489c1e0",
+      "size": 9417
+    }
+  ]
+}

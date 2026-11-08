@@ -1,0 +1,11 @@
+backend/pms_api/admin/application.py
+backend/pms_api/admin/client_models.py
+backend/pms_api/admin/customers.py
+frontend/src/apps/pms/settings/pages/InventoryUnits.jsx
+frontend/src/apps/pms/settings/pages/RoomLocations.css
+frontend/src/apps/pms/settings/pages/RoomLocations.jsx
+frontend/src/apps/pms/settings/pages/SettingsCatalogs.css
+frontend/src/apps/pms/settings/pages/SettingsCatalogs.jsx
+frontend/src/apps/pms/settings/pages/catalogForm.js
+frontend/src/apps/pms/settings/pages/catalogForm.test.js
+frontend/src/apps/pms/settings/pages/currencyCompatibility.test.js

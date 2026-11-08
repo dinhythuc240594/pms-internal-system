@@ -1,0 +1,75 @@
+{
+  "date": "2026-11-21",
+  "pusher": "Loc",
+  "folder": "21_11_2026_Loc",
+  "title": "Nhận booking, webhook và onboarding OTA + Buồng phòng, phân công và kế hoạch dọn",
+  "branch": "work/2026-11-21-loc-fullstack-14",
+  "backend_topic": "Nhận booking, webhook và onboarding OTA",
+  "frontend_topic": "Buồng phòng, phân công và kế hoạch dọn",
+  "backend_count": 2,
+  "frontend_count": 8,
+  "commit_message": "feat(fullstack): ban giao 21/11/2026 - Loc",
+  "depends_on": [
+    "20_11_2026_Loc",
+    "20_11_2026_Thuc"
+  ],
+  "source_commit": "902a01f1ddfaca73a7466a3c5a3a06ddfbf84bb6",
+  "created_at": "2026-11-08T06:03:33+00:00",
+  "status": "prepared_not_pushed",
+  "file_count": 10,
+  "bytes": 110484,
+  "operation": "upsert_only",
+  "deletions": [],
+  "files": [
+    {
+      "path": "backend/pms_api/channels/onboarding.py",
+      "sha256": "5fea54f0cbed85241b6b23e404c643802d77610b44faa3cb82f8f9599fc62e07",
+      "size": 7772
+    },
+    {
+      "path": "backend/tests/test_channels_integration.py",
+      "sha256": "75d7648bcb626a02197ef4a867f6d9a9a79ba03c373a28e611be61d656b39f27",
+      "size": 47327
+    },
+    {
+      "path": "frontend/src/apps/pms/housekeeping/components/AutomaticDayPlan.jsx",
+      "sha256": "ca88d060a6cddcba349b91987f14205da7750e12884fcbdc7bf227b725e3727a",
+      "size": 3363
+    },
+    {
+      "path": "frontend/src/apps/pms/housekeeping/components/PlanDialog.jsx",
+      "sha256": "6c39eb1d8ba39efb248b61abcf70c6199de4b77df05f0850c1c50e7817050a44",
+      "size": 1088
+    },
+    {
+      "path": "frontend/src/apps/pms/housekeeping/formats.test.js",
+      "sha256": "8908df6e843400a4cf59186c877f0e18abf966ff87f730bbbea75d5cb44f351e",
+      "size": 3597
+    },
+    {
+      "path": "frontend/src/apps/pms/housekeeping/pages/Housekeeping.css",
+      "sha256": "b9d5cb6fd618cf2486b1fb030a2aa8edf6fd029fa2b85a840365d6317c11879e",
+      "size": 990
+    },
+    {
+      "path": "frontend/src/apps/pms/housekeeping/pages/Housekeeping.jsx",
+      "sha256": "1aa9e925c517789842c85ba7a54948748d949c60f73e640fdc84e0051e515b29",
+      "size": 18758
+    },
+    {
+      "path": "frontend/src/apps/pms/housekeeping/pages/HousekeepingStaff.css",
+      "sha256": "ae199c098d93d3f70dc0bdff038ef77c39842bdd8d45e78910058cd1e42cf17e",
+      "size": 9330
+    },
+    {
+      "path": "frontend/src/apps/pms/housekeeping/pages/HousekeepingStaff.jsx",
+      "sha256": "58e56fd0d66da7ee3cbea79fdf6ad6bbfc4db2d3b09fd7e9c8df52bc21de1c2b",
+      "size": 16671
+    },
+    {
+      "path": "frontend/src/apps/pms/housekeeping/useAutomaticShifts.js",
+      "sha256": "4a857dd5e9f5e3368e5d68f3c16a01cb23657162c1c841b28eb09a4ff746b235",
+      "size": 1588
+    }
+  ]
+}

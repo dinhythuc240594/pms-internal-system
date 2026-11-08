@@ -1,0 +1,105 @@
+{
+  "date": "2026-11-22",
+  "pusher": "Thuc",
+  "folder": "22_11_2026_Thuc",
+  "title": "Lịch sử, dữ liệu từ xa và ngoại lệ OTA + Giao diện kho và chứng từ",
+  "branch": "work/2026-11-22-thuc-fullstack-15",
+  "backend_topic": "Lịch sử, dữ liệu từ xa và ngoại lệ OTA",
+  "frontend_topic": "Giao diện kho và chứng từ",
+  "backend_count": 5,
+  "frontend_count": 11,
+  "commit_message": "feat(fullstack): ban giao 22/11/2026 - Thuc",
+  "depends_on": [
+    "21_11_2026_Loc",
+    "21_11_2026_Thuc"
+  ],
+  "source_commit": "902a01f1ddfaca73a7466a3c5a3a06ddfbf84bb6",
+  "created_at": "2026-11-08T06:03:33+00:00",
+  "status": "prepared_not_pushed",
+  "file_count": 16,
+  "bytes": 57919,
+  "operation": "upsert_only",
+  "deletions": [],
+  "files": [
+    {
+      "path": "backend/pms_api/channels/exceptions.py",
+      "sha256": "3cbe74051df96907c308fbcb2eeccd4a5f92c8809cd761671b6c38bc8121c5cc",
+      "size": 1015
+    },
+    {
+      "path": "backend/pms_api/channels/history.py",
+      "sha256": "aea0f877c9f018bc84f4e21fa59886dfd0f2e76bffa944086512246298e89cf3",
+      "size": 700
+    },
+    {
+      "path": "backend/pms_api/channels/history_application.py",
+      "sha256": "172912bcae689fd54cdf69995c3d3b029a59bea3a4e7e1224043e8b3b6b3f2ff",
+      "size": 7818
+    },
+    {
+      "path": "backend/pms_api/channels/remote.py",
+      "sha256": "4e15b4828bec0bcb5c04cbc61cf836be793d7a76b06f8193ad58dbbf4b8bc07c",
+      "size": 2703
+    },
+    {
+      "path": "backend/pms_api/channels/remote_application.py",
+      "sha256": "12ac44ac9362c77247213cb8e19d90c9c1ff6195687a797066b6cfea4c284806",
+      "size": 4892
+    },
+    {
+      "path": "frontend/src/apps/pms/inventory/Inventory.css",
+      "sha256": "cda3c129f68ac004422db214543aea4e8945b181e75bbefbce91f8c000fd5d0d",
+      "size": 3609
+    },
+    {
+      "path": "frontend/src/apps/pms/inventory/InventoryDocuments.jsx",
+      "sha256": "2e7d139ff7a505808df1a0b28db4f6ad25f12faccb619b20ed9f61d7cd556ff7",
+      "size": 24024
+    },
+    {
+      "path": "frontend/src/apps/pms/inventory/InventoryFormats.test.js",
+      "sha256": "fccc09261fce6d49e4602ff4c7df1e658d3d0f8e7d543ccc1d39a8c87568d7a6",
+      "size": 4038
+    },
+    {
+      "path": "frontend/src/apps/pms/inventory/pages/InventoryCheck.jsx",
+      "sha256": "022d98a60c12d32deb507bd434a9fcc9b8ba2f301f4dd377aee811ab6b34d833",
+      "size": 153
+    },
+    {
+      "path": "frontend/src/apps/pms/inventory/pages/InventoryIn.jsx",
+      "sha256": "225afd495a182e139d4f4211d5855389d42e19fa6da7dba5f476114c66450856",
+      "size": 152
+    },
+    {
+      "path": "frontend/src/apps/pms/inventory/pages/InventoryOut.jsx",
+      "sha256": "66f3d20b5f766242e6cbe8347127094c944afe97a2800386c4f6991884574657",
+      "size": 151
+    },
+    {
+      "path": "frontend/src/apps/pms/inventory/pages/InventoryStock.jsx",
+      "sha256": "a2d1b8d13a7baa6254ee444b304010137fa0e4008bdd4113e16d4ed9fd3e053e",
+      "size": 6006
+    },
+    {
+      "path": "frontend/src/apps/pms/inventory/pages/InventoryTransfer.jsx",
+      "sha256": "5e002bc6d38be71a7c4971605785db0332db238bc9d76fcae45459ace3e11435",
+      "size": 159
+    },
+    {
+      "path": "frontend/src/apps/pms/inventory/useInventoryQuery.js",
+      "sha256": "f552a1cc9c75d830ff5483e3b76a6b9d2357900bf05d3e82ce784f6e44b55f49",
+      "size": 1372
+    },
+    {
+      "path": "frontend/src/apps/pms/inventory/values.js",
+      "sha256": "c1c4b46db6589ce7e3bacec77b7840a84f101a9282f728a3170d42efc7c74a73",
+      "size": 530
+    },
+    {
+      "path": "frontend/src/apps/pms/inventory/values.test.js",
+      "sha256": "0097046121b40bd1ca21e58505d9e0fa477d22ad3f829d005ba6f002592f47b6",
+      "size": 597
+    }
+  ]
+}

@@ -1,0 +1,370 @@
+{
+  "date": "2026-12-01",
+  "pusher": "Thuc",
+  "folder": "01_12_2026_Thuc",
+  "title": "Migrations, công cụ kiểm thử và tài liệu bàn giao + Màn hình Channex quản trị, công cụ và hướng dẫn",
+  "branch": "work/2026-12-01-thuc-fullstack-24",
+  "backend_topic": "Migrations, công cụ kiểm thử và tài liệu bàn giao",
+  "frontend_topic": "Màn hình Channex quản trị, công cụ và hướng dẫn",
+  "backend_count": 26,
+  "frontend_count": 9,
+  "commit_message": "feat(fullstack): ban giao 01/12/2026 - Thuc",
+  "depends_on": [
+    "30_11_2026_Loc",
+    "30_11_2026_Thuc"
+  ],
+  "source_commit": "902a01f1ddfaca73a7466a3c5a3a06ddfbf84bb6",
+  "created_at": "2026-11-08T06:03:33+00:00",
+  "status": "prepared_not_pushed",
+  "file_count": 69,
+  "bytes": 1107013,
+  "operation": "upsert_only",
+  "deletions": [],
+  "files": [
+    {
+      "path": "BE01_05_IMPLEMENTATION_REPORT.md",
+      "sha256": "0c60f7711ff563c9c8083ee1a02e2ebe9bebe2e36d3aaf833d082811a92ff7e4",
+      "size": 8203
+    },
+    {
+      "path": "BE06_07_IMPLEMENTATION_REPORT.md",
+      "sha256": "2860d1eade72399d46d4d32b929170ecd68f18b1d6b02c34b46f5f9e9a356005",
+      "size": 7381
+    },
+    {
+      "path": "BE08_09_P1_FIX_REPORT.md",
+      "sha256": "378412f96f8a1bd51b5f4cfea2d3bb86e7b5536315eaa57eccb4fb16e748b796",
+      "size": 6334
+    },
+    {
+      "path": "BE08_09_TEST_REPORT.md",
+      "sha256": "5fed1bf77762168be7d36fd7541018e0b6aa78ad5916ce912461a5b91bff9406",
+      "size": 15151
+    },
+    {
+      "path": "BE10_11_IMPLEMENTATION_REPORT.md",
+      "sha256": "d979405868a3266778ef752d2e7bc038e90fc18ac4d42bad03d8c20cd6bbdb46",
+      "size": 10572
+    },
+    {
+      "path": "BE12_IMPLEMENTATION_REPORT.md",
+      "sha256": "b73b3721cf73493d373efca91f77fbfd07f28ed6287c3462593b9bea2061076f",
+      "size": 4342
+    },
+    {
+      "path": "BE_CLIENT_STATUS_PRIORITY_REPORT.md",
+      "sha256": "e2c8506f4ae84a8d073dca6f570740bcbe6c8721f335de539a46fd964c8e28bc",
+      "size": 14914
+    },
+    {
+      "path": "PMS_GAP_REPORT.md",
+      "sha256": "62389c758b70551eb3a76ea5157bbdc7df008b42b8697d26ed511a2d2866ee1a",
+      "size": 30132
+    },
+    {
+      "path": "backend/API_CONTRACT.md",
+      "sha256": "60300beb2f52bd910bf6d95dbbe6eaa1f2212de0ed7e9a22e513d1fc8ed9dc23",
+      "size": 111096
+    },
+    {
+      "path": "backend/migrations/alembic.ini",
+      "sha256": "530c623b8229418620efccd3c627840a0a1b4c63079db41a31c0a7137eb35edf",
+      "size": 599
+    },
+    {
+      "path": "backend/migrations/env.py",
+      "sha256": "12dda7c7aa39d084f81d558299efc030c98083e2c0ef6d7eb20f63da6b793c5d",
+      "size": 1371
+    },
+    {
+      "path": "backend/migrations/versions/0001_backend_baseline.py",
+      "sha256": "6a4cac782999e3325033dd4cc70bb064ffa9215aeb633f725fb0720568e6c438",
+      "size": 396
+    },
+    {
+      "path": "backend/migrations/versions/0002_identity.py",
+      "sha256": "76955a1f801f9cde01825a0e4cce9bec7980ebe2f27c3cd720d1c8facc614d02",
+      "size": 4595
+    },
+    {
+      "path": "backend/migrations/versions/0007_subscription_controls.py",
+      "sha256": "93a2eb961cf83eaef67ed5d7ea012a59d5a96233f290cd9d5bbe09374e089f2f",
+      "size": 4938
+    },
+    {
+      "path": "backend/migrations/versions/0008_inventory.py",
+      "sha256": "f52f3da6bc512b451f2c77c8ba69735c337fa933677b56f80f2e2367d1e834b7",
+      "size": 7890
+    },
+    {
+      "path": "backend/migrations/versions/0011_notifications.py",
+      "sha256": "22b6529ba8c2290a855bd6792892437454cf56c2426012d55d3c0ac2981bbe59",
+      "size": 3251
+    },
+    {
+      "path": "backend/migrations/versions/0013_channel_credentials.py",
+      "sha256": "7d6fc7480b223bdc1609c4894bad1e9bd17c7e5d13e597c61900574699420d70",
+      "size": 1670
+    },
+    {
+      "path": "backend/migrations/versions/0014_manager_customers.py",
+      "sha256": "9895811853328e210f8b854e5a4ccc2a664261917e6d4039faacfab1ee30d280",
+      "size": 1534
+    },
+    {
+      "path": "backend/migrations/versions/0015_merge_ota_manager.py",
+      "sha256": "ecb74943f69160ffd1795ceb90d48b4739e34447d225e620eae6b8439e851e4e",
+      "size": 299
+    },
+    {
+      "path": "backend/migrations/versions/0017_merge_catalog_channels.py",
+      "sha256": "48684b06e40410b80a956312cd9d01aca01d5a584d04ed9755f886911da288a5",
+      "size": 284
+    },
+    {
+      "path": "backend/migrations/versions/0021_booking_commissions.py",
+      "sha256": "09479256e0bf77b7d09bea83298b40b657b78fb3c3a9b3d59983573047d3c36c",
+      "size": 3409
+    },
+    {
+      "path": "backend/migrations/versions/0024_channel_booking_reviews.py",
+      "sha256": "f1b8066796d8cf11b724637737e47bd95e255e5e7b800208fb35af11ca0e47b4",
+      "size": 4391
+    },
+    {
+      "path": "backend/migrations/versions/0025_channel_cancellation_verification.py",
+      "sha256": "ac752267a866f4888db43c30faf1df94bb6d1da8504dc507e73d5db35c266b19",
+      "size": 806
+    },
+    {
+      "path": "backend/migrations/versions/0027_worker_health.py",
+      "sha256": "cc9c01401f1010507c3dc2a2d726741e4728e9b420c9b482789b74bb728443f3",
+      "size": 1243
+    },
+    {
+      "path": "backend/migrations/versions/0028_day_reconciliation.py",
+      "sha256": "173a1bad4031fc6ee99d900980be363b067a6c8850ac8da77f1fef4beeb9dd52",
+      "size": 1734
+    },
+    {
+      "path": "backend/migrations/versions/0032_channel_job_history.py",
+      "sha256": "7e55f8247322bc9047b4a876f959aac0e9dc309e6c239a0dc2f940bd35ae3573",
+      "size": 704
+    },
+    {
+      "path": "backend/migrations/versions/0032_room_locations.py",
+      "sha256": "b0fd5477f86e4178f9342a22186edd6f88423d50bca88791bcc3e9e951893356",
+      "size": 1160
+    },
+    {
+      "path": "backend/migrations/versions/0034_pms_tenant_authorization.py",
+      "sha256": "0b824df3f6ff59cbac1faff9d40c18439a71a2b41a0f531cfdc1f902b6ae2451",
+      "size": 8520
+    },
+    {
+      "path": "backend/migrations/versions/0036_channel_support.py",
+      "sha256": "e31737a5b5da8bb76c1426340808374d0bbb7a0c0a1d02db484c6dbf095bf389",
+      "size": 1463
+    },
+    {
+      "path": "backend/migrations/versions/0039_saas_recovery.py",
+      "sha256": "0c2749ef99f820679a8feb6ace3470589cd111715c310f68bef8e542b61b5555",
+      "size": 10086
+    },
+    {
+      "path": "backend/migrations/versions/0040_channel_exceptions.py",
+      "sha256": "02aca945948a26af3bc13bc191f4f8ea7948a9c15ea33ad0f3ed975adae62bb4",
+      "size": 5142
+    },
+    {
+      "path": "backend/scripts/ci_database.py",
+      "sha256": "1ddd852ccc2299aa0471b71b9b91bab6ec09b5bca0bf2b227043f8158af9db82",
+      "size": 5523
+    },
+    {
+      "path": "backend/scripts/local_postgres.py",
+      "sha256": "f9dffc6d3fe200cda394afdc0cb05d41ccec1d12cba228705fc7935753a73b4b",
+      "size": 13077
+    },
+    {
+      "path": "backend/scripts/run_domain_tests.py",
+      "sha256": "e4ca1eae69023c62f7272d9c6be03b24f4bb219c9000bd02c23290a3752c8b05",
+      "size": 2818
+    },
+    {
+      "path": "docs/ARCHITECTURE.md",
+      "sha256": "24206f8d5c681b941fb83d33a70832dfbc7f516d4c78e1690549176fdf9fbf26",
+      "size": 6609
+    },
+    {
+      "path": "docs/PMS_9luong_UseCase_Activity_Sequence_Class.drawio.xml",
+      "sha256": "df485d037391fd8b8a47a77813500d3c267ca928a4354b3a0d8bec414ccb56fa",
+      "size": 309054
+    },
+    {
+      "path": "docs/bao-cao-tien-do/pms-ai/02_Pham_vi_de_tai_PMS_AI.docx",
+      "sha256": "69303781f34b98c5e59bd3e3cd8b6e1b3e42abcc3ae9d39a200cb42195d3d3c1",
+      "size": 11292
+    },
+    {
+      "path": "docs/bao-cao-tien-do/pms-ai/02_Pham_vi_de_tai_PMS_AI.md",
+      "sha256": "4631f88f5381c05394cf73259e82ce80ecb646a3d96a2d6eee62178711bd4693",
+      "size": 21851
+    },
+    {
+      "path": "docs/bao-cao-tien-do/pms-ai/README.md",
+      "sha256": "f74142d94b31c77de22ef1448303cb2a9716eff14daf0f1e6d3a443c19585be5",
+      "size": 3136
+    },
+    {
+      "path": "docs/bao-cao-tien-do/pms-ai/assets/kien-truc-he-thong.png",
+      "sha256": "610fdec7895818197aeec4a2b80a1dd830fee20b59cd99d5a2678af9990439b6",
+      "size": 103268
+    },
+    {
+      "path": "docs/bao-cao-tien-do/pms-ai/assets/tao_so_do.ps1",
+      "sha256": "7f1ca56373752edf94ffd0c72bb575c04f006e464fa9314de98ef2a55d33d616",
+      "size": 7054
+    },
+    {
+      "path": "docs/bao-cao-tien-do/pms-ai/xuat_word.py",
+      "sha256": "51d258a7900cca035a3625e613f94c1865cd2533398a0aed758d51d9a3d37c91",
+      "size": 18886
+    },
+    {
+      "path": "docs/reports/README.md",
+      "sha256": "66a5a8733e723b6c2eb72c8adf21c96ac5b7aa323ff024abd04379cf60c07988",
+      "size": 2037
+    },
+    {
+      "path": "docs/reports/backend/BE10_11_IMPLEMENTATION_REPORT.md",
+      "sha256": "6b00e21a0bc69a114d847df291b18893ce0217a45b40499472f843079fc336a3",
+      "size": 10599
+    },
+    {
+      "path": "docs/reports/backend/PMS_BOOKING_ROOM_GUEST_TEST_REPORT_2026-10-14.md",
+      "sha256": "aed9681df8f80af22967c4ffd85be7f5ccfb8595ece0e9795cef3f55a7679f7e",
+      "size": 6231
+    },
+    {
+      "path": "docs/reports/backend/api-standardization.md",
+      "sha256": "1494c57a79dc6ea35f0bee296fe3858f2d7acd83567048794c0d19f5818a0d54",
+      "size": 3146
+    },
+    {
+      "path": "docs/reports/frontend/CLIENT_UI_UX_REVIEW_2026-10-15.md",
+      "sha256": "50a021b40b4ec8a2f8f54ee9833a0823dce480a64a46e11bce33e5e681c37c14",
+      "size": 28487
+    },
+    {
+      "path": "docs/reports/frontend/client-frontend-test-and-gaps-2026-10-15.md",
+      "sha256": "4ddcb2eb5630de3b0577793049b8ce12d48ba219d22ef444cddd9835c7837c65",
+      "size": 23798
+    },
+    {
+      "path": "docs/reports/frontend/housekeeping-shift-period-2026-10-17.md",
+      "sha256": "34f85f0af9a95895b0115c6fe83283ada2880f9f6658ebd735ebde476f6e048c",
+      "size": 2428
+    },
+    {
+      "path": "docs/reports/frontend/manual-refresh-2026-10-17.md",
+      "sha256": "d82250b9829b2af0ce7079ec82c96819adc79275f857e29680437a708be77280",
+      "size": 3641
+    },
+    {
+      "path": "docs/reports/manager/manager-completion.md",
+      "sha256": "20698bac3e437eeedb71da36428e8e75f7df4e02d7119541c4449591106829a2",
+      "size": 7401
+    },
+    {
+      "path": "docs/reports/manager/manager-owner.md",
+      "sha256": "10a49d09a162b3c50a503e5ff3ba77bc846e1734a0afe1a99fa91cc15b07f4ac",
+      "size": 3696
+    },
+    {
+      "path": "docs/reports/reviews/BE08_09_TEST_REPORT.md",
+      "sha256": "100760f4cce087609442edb34ce273d2dd5e161332c426d8135b4d06dc73fab5",
+      "size": 15351
+    },
+    {
+      "path": "docs/reports/reviews/PMS_PUBLIC_RELEASE_REVIEW_2026-10-03.md",
+      "sha256": "b11de16ccfd69d2529535f5188ebdf445b86f1303cc11aaad0f65f0285902c04",
+      "size": 68740
+    },
+    {
+      "path": "docs/reports/reviews/channex-adapter-fix-2026-10-14.md",
+      "sha256": "67117ff8bfeef88c2cb0946c70a72e22e74618311ebf8278252a7e468d3bda6b",
+      "size": 5530
+    },
+    {
+      "path": "docs/reports/reviews/remaining-functions-2026-10-14.md",
+      "sha256": "2057fbeb295402efda1419aa366be46f7c715e044ae26bfe77a12e4fb1948a59",
+      "size": 12561
+    },
+    {
+      "path": "frontend/scripts/bundle-manifest.mjs",
+      "sha256": "1c3bfabbb7b6283f2afdf53ca2b4110d0069ad3c3599531999e546ff0ff8520a",
+      "size": 857
+    },
+    {
+      "path": "frontend/src/apps/manager/channex/components/CatalogEditor.jsx",
+      "sha256": "4d6c4e8ce7f80d7c3e2be86e5a29db34953ae4abe64af0572b85db52f679f38d",
+      "size": 7016
+    },
+    {
+      "path": "frontend/src/apps/manager/channex/components/ChannelAirbnb.jsx",
+      "sha256": "9cdff5efa2d0cfcf4065cd41e7ddd5d2cab150d20964a29a61736cb6db7cd9a8",
+      "size": 8258
+    },
+    {
+      "path": "frontend/src/apps/manager/channex/components/ChannelFields.jsx",
+      "sha256": "40e7fba32fb037a174dec4bc944187c0e2e9f3ba5eb8e67f6145126e7458973b",
+      "size": 4857
+    },
+    {
+      "path": "frontend/src/apps/manager/channex/components/ChannelLifecycle.jsx",
+      "sha256": "57723fe5c600de02bccf288c7f86605a73a7ecb1b1c5cd3620dd8c48c3c0fa4b",
+      "size": 6950
+    },
+    {
+      "path": "frontend/src/apps/manager/channex/components/RemoteData.jsx",
+      "sha256": "f597885e58e27c13a05bbc10e68df0e22fccb5bc81133b35d44756262a0adcf4",
+      "size": 3263
+    },
+    {
+      "path": "frontend/src/apps/manager/channex/components/formFormats.test.js",
+      "sha256": "322ceb2ff424bb850fa96e45aa563f35a4e371084c89572c9ab213a94b692844",
+      "size": 5426
+    },
+    {
+      "path": "frontend/src/apps/manager/channex/pages/ManagerChannex.css",
+      "sha256": "1dcb732d9331b27e7eb7f2ac12c8d8b0f7631d6548bb6eb3255007c856880f1b",
+      "size": 24195
+    },
+    {
+      "path": "frontend/src/apps/manager/channex/pages/ManagerChannex.jsx",
+      "sha256": "195f661af2298a171ef42e1cb18b0be071d27fac35ae90bbb5105495be4c09c7",
+      "size": 3243
+    },
+    {
+      "path": "pms_system_design_final.md",
+      "sha256": "c85d2b83a722648a8b0f67437e4b47f7fbf2ab49354737b83661766d631d6294",
+      "size": 65467
+    },
+    {
+      "path": "tasks/be10-be11.md",
+      "sha256": "d7d31bbfa526f983c7022c04ce79ab579056892e0d6f02cd83f902e728f062e5",
+      "size": 3019
+    },
+    {
+      "path": "tasks/be12.md",
+      "sha256": "6bfecaa46c5ee2ee8c7cd2a1ca81a735eb1bda1f494f5a03ca3cd5edef81a0cb",
+      "size": 2028
+    },
+    {
+      "path": "tasks/error-pages.md",
+      "sha256": "3302ec83cf33e52c1850a4e08c8d02b8848b8e15065d838e3abe75f6211961a6",
+      "size": 2610
+    }
+  ]
+}

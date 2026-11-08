@@ -1,0 +1,9 @@
+backend/pms_api/admin/channex_remote_application.py
+backend/tests/test_tenant_remote_channels.py
+frontend/src/apps/pms/channel-manager/integration.js
+frontend/src/apps/pms/channel-manager/integration.test.js
+frontend/src/apps/pms/channel-manager/jobHistory.js
+frontend/src/apps/pms/channel-manager/jobHistory.test.js
+frontend/src/apps/pms/channel-manager/presentation.js
+frontend/src/apps/pms/channel-manager/presentation.test.js
+frontend/src/apps/pms/channel-manager/useChannels.js

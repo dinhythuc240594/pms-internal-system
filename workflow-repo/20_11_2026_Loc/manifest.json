@@ -1,0 +1,65 @@
+{
+  "date": "2026-11-20",
+  "pusher": "Loc",
+  "folder": "20_11_2026_Loc",
+  "title": "API, chính sách và hàng đợi đồng bộ ARI + Báo cáo, đối soát và chốt ngày",
+  "branch": "work/2026-11-20-loc-fullstack-13",
+  "backend_topic": "API, chính sách và hàng đợi đồng bộ ARI",
+  "frontend_topic": "Báo cáo, đối soát và chốt ngày",
+  "backend_count": 4,
+  "frontend_count": 4,
+  "commit_message": "feat(fullstack): ban giao 20/11/2026 - Loc",
+  "depends_on": [
+    "19_11_2026_Loc",
+    "19_11_2026_Thuc"
+  ],
+  "source_commit": "902a01f1ddfaca73a7466a3c5a3a06ddfbf84bb6",
+  "created_at": "2026-11-08T06:03:33+00:00",
+  "status": "prepared_not_pushed",
+  "file_count": 8,
+  "bytes": 96267,
+  "operation": "upsert_only",
+  "deletions": [],
+  "files": [
+    {
+      "path": "backend/pms_api/channels/policies.py",
+      "sha256": "f5c5c4b00cd343c5f91acde25cb6b8c82f7882f551294aee4cfd99b1edb56188",
+      "size": 556
+    },
+    {
+      "path": "backend/pms_api/channels/preview_application.py",
+      "sha256": "cc9ba01a9e920325a76a96ea311cf6dfd61c11cad10e188f1e8b17082a5473db",
+      "size": 4166
+    },
+    {
+      "path": "backend/pms_api/channels/service.py",
+      "sha256": "cfb84679cd9bf0c65e221d4b697ae363f374ec88879c8206a7346cfef6da1758",
+      "size": 51947
+    },
+    {
+      "path": "backend/pms_api/channels/urls.py",
+      "sha256": "2d44e28e6cee6ec16c77fc5f63e17981d4a5d64b2cad10072ae500159a614e18",
+      "size": 8029
+    },
+    {
+      "path": "frontend/src/apps/pms/reconciliation/DayReconciliation.css",
+      "sha256": "831f00ef1f748e5d978d54ddeab7a5592e99e03e6097e761a8da3d94b8c22fe5",
+      "size": 7154
+    },
+    {
+      "path": "frontend/src/apps/pms/reconciliation/DayReconciliation.jsx",
+      "sha256": "98f257c916ce2a52be11e3face573c72138758bc82f077fbc684b0ba082fc687",
+      "size": 14145
+    },
+    {
+      "path": "frontend/src/apps/pms/reports/pages/BusinessReports.jsx",
+      "sha256": "f7ace49a7f91f42be40fc6ead5c54df084ff058bd98e1b958aa87e6ed6ad4d49",
+      "size": 8702
+    },
+    {
+      "path": "frontend/src/apps/pms/reports/pages/formats.test.js",
+      "sha256": "542d4785980330e2b9b7b27cf90044a5237552b69755f5d3503c6a59eac41a81",
+      "size": 1568
+    }
+  ]
+}

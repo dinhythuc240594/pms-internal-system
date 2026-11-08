@@ -1,0 +1,80 @@
+{
+  "date": "2026-11-15",
+  "pusher": "Thuc",
+  "folder": "15_11_2026_Thuc",
+  "title": "Buồng phòng, lịch và phân công công việc + Dashboard, phòng và sơ đồ phòng",
+  "branch": "work/2026-11-15-thuc-fullstack-08",
+  "backend_topic": "Buồng phòng, lịch và phân công công việc",
+  "frontend_topic": "Dashboard, phòng và sơ đồ phòng",
+  "backend_count": 7,
+  "frontend_count": 4,
+  "commit_message": "feat(fullstack): ban giao 15/11/2026 - Thuc",
+  "depends_on": [
+    "14_11_2026_Loc",
+    "14_11_2026_Thuc"
+  ],
+  "source_commit": "902a01f1ddfaca73a7466a3c5a3a06ddfbf84bb6",
+  "created_at": "2026-11-08T06:03:33+00:00",
+  "status": "prepared_not_pushed",
+  "file_count": 11,
+  "bytes": 100570,
+  "operation": "upsert_only",
+  "deletions": [],
+  "files": [
+    {
+      "path": "backend/pms_api/housekeeping/__init__.py",
+      "sha256": "045de064de0511c9d9b42d98d7013b4507ab8cb81aae2ee8fe6a020ea9ac85fe",
+      "size": 70
+    },
+    {
+      "path": "backend/pms_api/housekeeping/application.py",
+      "sha256": "8e085512cb1fe4e43d3ee71dbe8f00c84a70459ff76f85dadc15224a0405fa6c",
+      "size": 33913
+    },
+    {
+      "path": "backend/tests/test_housekeeping_auto_assignment.py",
+      "sha256": "4cf6140ed545ad7d6aec79a819d6b049ae06b4e55c86ff09156fe84938f0e7f3",
+      "size": 7002
+    },
+    {
+      "path": "backend/tests/test_housekeeping_batch.py",
+      "sha256": "0f9b23470b82f8c1d8654b6edebe6209074890aedc8953257df12c6ddfd72cd2",
+      "size": 11980
+    },
+    {
+      "path": "backend/tests/test_housekeeping_day_selection.py",
+      "sha256": "6751ecad70e8d021ef87cc847f55e233777bab1ea1fb1654b05ac37938fc224e",
+      "size": 4577
+    },
+    {
+      "path": "backend/tests/test_housekeeping_shift_batch.py",
+      "sha256": "d014199b36e8ad4992ed7882addaa214b25f95e704e49c81640c8dcb1c4c3dc3",
+      "size": 4657
+    },
+    {
+      "path": "backend/tests/test_housekeeping_values.py",
+      "sha256": "84880c35c2b480a1ea6096c50dabc4807ce7727c44a098f8f5e11a59822b55a7",
+      "size": 4315
+    },
+    {
+      "path": "frontend/src/apps/pms/rooms/components/RoomLocationFilters.jsx",
+      "sha256": "ee89c2cbb3efd6bf028704e2c7464abc87e036fa96e564f7a5369e7ad22ccd6e",
+      "size": 1255
+    },
+    {
+      "path": "frontend/src/apps/pms/rooms/pages/RoomDiagram.css",
+      "sha256": "f651fdd5d538491b8f53f5af07125c0ab5a150f6803098bca10d2d878baaa24e",
+      "size": 12080
+    },
+    {
+      "path": "frontend/src/apps/pms/rooms/pages/RoomDiagram.jsx",
+      "sha256": "32ddf1d49eeb374abd99a4d45cc019ed51d4891b67e088a33fa54f3f525664ef",
+      "size": 15865
+    },
+    {
+      "path": "frontend/src/apps/pms/rooms/pages/Rooms.jsx",
+      "sha256": "7a7ac438468e69404d25e9f19ea3870ae563cd2e65d79ca420146a3936da2549",
+      "size": 4856
+    }
+  ]
+}

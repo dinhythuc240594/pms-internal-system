@@ -1,0 +1,130 @@
+{
+  "date": "2026-11-14",
+  "pusher": "Loc",
+  "folder": "14_11_2026_Loc",
+  "title": "Dịch vụ, POS, thu chi và sổ quỹ + PMS provider, API client, layout và điều hướng",
+  "branch": "work/2026-11-14-loc-fullstack-07",
+  "backend_topic": "Dịch vụ, POS, thu chi và sổ quỹ",
+  "frontend_topic": "PMS provider, API client, layout và điều hướng",
+  "backend_count": 5,
+  "frontend_count": 16,
+  "commit_message": "feat(fullstack): ban giao 14/11/2026 - Loc",
+  "depends_on": [
+    "13_11_2026_Loc",
+    "13_11_2026_Thuc"
+  ],
+  "source_commit": "902a01f1ddfaca73a7466a3c5a3a06ddfbf84bb6",
+  "created_at": "2026-11-08T06:03:33+00:00",
+  "status": "prepared_not_pushed",
+  "file_count": 21,
+  "bytes": 190381,
+  "operation": "upsert_only",
+  "deletions": [],
+  "files": [
+    {
+      "path": "backend/pms_api/finance/__init__.py",
+      "sha256": "1e9358f6e763560979426d7e71ed690b671bb07945f2bbd0a9f9b39552d6a8dc",
+      "size": 49
+    },
+    {
+      "path": "backend/pms_api/finance/application.py",
+      "sha256": "bd98bae3b2d9ae264aa7464ab312a7ba8abaed130ca46820b0ef035957d2f491",
+      "size": 45234
+    },
+    {
+      "path": "backend/pms_api/finance/domain.py",
+      "sha256": "31fcda88818f32a65914b8622f5004770294f9fc45468a5e985350408bf2d658",
+      "size": 530
+    },
+    {
+      "path": "backend/pms_api/finance/urls.py",
+      "sha256": "27d1472954fecf38fe7c0c13f0445b2c7a434a56f79af1c90388912d7e6ebc5e",
+      "size": 4064
+    },
+    {
+      "path": "backend/tests/test_finance_values.py",
+      "sha256": "2f35d0e20704b8b10be1787d2ec054937ac5cb03045b27afa6cca4f15405ba69",
+      "size": 714
+    },
+    {
+      "path": "frontend/src/apps/pms/components/FormDialog.css",
+      "sha256": "929baecff5a64cccc8126c0d39eb174ae54e467197a0cd1ad4bd264fe5c54463",
+      "size": 1718
+    },
+    {
+      "path": "frontend/src/apps/pms/components/FormDialog.jsx",
+      "sha256": "c0adde99d31837d036d893f224b6c27183254baf478abc4ceae014ae3da22e9e",
+      "size": 1363
+    },
+    {
+      "path": "frontend/src/apps/pms/components/PmsControls.css",
+      "sha256": "ec8c90fda0534db879db04539000b7e682e53a4c6fdbb662b921991aff3ca408",
+      "size": 2310
+    },
+    {
+      "path": "frontend/src/apps/pms/components/UsageInfoModal.jsx",
+      "sha256": "c7f110a53ea1f7e7e41697522c34aca1493d58ed017642938fd2dcd9ede58a24",
+      "size": 2744
+    },
+    {
+      "path": "frontend/src/apps/pms/data/PmsProvider.jsx",
+      "sha256": "5bd932a0a16a321729beb6bbafa1f000db089ec9c950cc1bcc8bb66c3de70e00",
+      "size": 36325
+    },
+    {
+      "path": "frontend/src/apps/pms/data/PmsProvider.test.js",
+      "sha256": "8f8fdb50ebfda348f39f59d85f4ab88a8ee792fd8a8c74ea2544e4291dd0603a",
+      "size": 34903
+    },
+    {
+      "path": "frontend/src/apps/pms/data/model.js",
+      "sha256": "45ea391eb439aa01ac431a32b7a4933172a3345ce70050c76e7ecada4b7e6f93",
+      "size": 4230
+    },
+    {
+      "path": "frontend/src/apps/pms/data/model.test.js",
+      "sha256": "ada148c203a27dc7175d238dcb026d136a0c5552b0f9b2630ad083d2cf54bdf1",
+      "size": 7558
+    },
+    {
+      "path": "frontend/src/apps/pms/data/presentation.js",
+      "sha256": "57c37bfc9f00e1a66d7b36dd5e281156fb353fe7c409fa13852bd4876533d6a7",
+      "size": 1713
+    },
+    {
+      "path": "frontend/src/apps/pms/data/presentation.test.js",
+      "sha256": "f81cd9f4fe264c4ee2afa52851937cbc094358bf916218aee3c2388c48873dea",
+      "size": 1644
+    },
+    {
+      "path": "frontend/src/apps/pms/data/tenantNavigation.js",
+      "sha256": "37c222f06ecef2977ce02f0e80bb56dac21a28f2c4a5677123ae4edd9be66cd2",
+      "size": 669
+    },
+    {
+      "path": "frontend/src/apps/pms/data/tenantNavigation.test.js",
+      "sha256": "5fee62311d0378a47f49abbe99931c17b884f7aea3cfb71f2bf28c701d3ba17c",
+      "size": 3022
+    },
+    {
+      "path": "frontend/src/apps/pms/data/workspace.js",
+      "sha256": "ea108120d0e2f3c12e1992aa2c25db251a2a73b799fe0088cae6e432b57190f6",
+      "size": 20374
+    },
+    {
+      "path": "frontend/src/apps/pms/data/workspace.test.js",
+      "sha256": "466521c86cbac0de970992f733804e0da1340164fa30d59f917e612bc30aef11",
+      "size": 14631
+    },
+    {
+      "path": "frontend/src/apps/pms/data/workspaceSync.js",
+      "sha256": "9c742f46b2fe4d4a48745a37b2006741349d22ec25a98f1b3871c0ee67d9a0c7",
+      "size": 1435
+    },
+    {
+      "path": "frontend/src/apps/pms/data/workspaceSync.test.js",
+      "sha256": "81a50be929bbb6761bd0325ae098f46c053bfadbdd5055f2b64771e6bd7905ee",
+      "size": 5151
+    }
+  ]
+}

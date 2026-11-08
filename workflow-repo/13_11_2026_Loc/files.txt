@@ -1,0 +1,10 @@
+backend/pms_api/bookings/__init__.py
+backend/pms_api/bookings/room_stays.py
+backend/pms_api/bookings/routes.py
+backend/pms_api/bookings/urls.py
+backend/tests/test_booking_client_acceptance.py
+backend/tests/test_booking_integration.py
+backend/tests/test_booking_no_show.py
+frontend/src/apps/pms/auth/layouts/AuthLayout.css
+frontend/src/apps/pms/auth/layouts/AuthLayout.jsx
+frontend/src/apps/pms/auth/pages/Login.jsx

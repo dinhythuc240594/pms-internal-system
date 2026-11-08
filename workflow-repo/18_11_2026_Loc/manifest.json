@@ -1,0 +1,105 @@
+{
+  "date": "2026-11-18",
+  "pusher": "Loc",
+  "folder": "18_11_2026_Loc",
+  "title": "Chính sách giá, khuyến mãi và snapshot + Giá, tồn phòng, ARI và khuyến mãi",
+  "branch": "work/2026-11-18-loc-fullstack-11",
+  "backend_topic": "Chính sách giá, khuyến mãi và snapshot",
+  "frontend_topic": "Giá, tồn phòng, ARI và khuyến mãi",
+  "backend_count": 8,
+  "frontend_count": 8,
+  "commit_message": "feat(fullstack): ban giao 18/11/2026 - Loc",
+  "depends_on": [
+    "17_11_2026_Loc",
+    "17_11_2026_Thuc"
+  ],
+  "source_commit": "902a01f1ddfaca73a7466a3c5a3a06ddfbf84bb6",
+  "created_at": "2026-11-08T06:03:33+00:00",
+  "status": "prepared_not_pushed",
+  "file_count": 16,
+  "bytes": 89568,
+  "operation": "upsert_only",
+  "deletions": [],
+  "files": [
+    {
+      "path": "backend/pms_api/pricing/README.md",
+      "sha256": "90426550e0f5a630dcd82e28d1bfd8666fa1eb513146e16cde34d0eff8b27a0c",
+      "size": 3324
+    },
+    {
+      "path": "backend/pms_api/pricing/__init__.py",
+      "sha256": "da484e6e436f2ad3f8c251cf7710c6a3a8a4b413fab93f7a5303dd3e6be26aed",
+      "size": 84
+    },
+    {
+      "path": "backend/pms_api/pricing/application.py",
+      "sha256": "a8034fca143a01cf13a88b78e1609081336ecce9a4cb4d6797b53303daa6c421",
+      "size": 11927
+    },
+    {
+      "path": "backend/pms_api/pricing/domain.py",
+      "sha256": "2715707603ae02bb0322c901daf1071a42060e210e5f6801f6567641f0c39436",
+      "size": 2069
+    },
+    {
+      "path": "backend/pms_api/pricing/strategies.py",
+      "sha256": "4802613970e423be71e9cd6da0527973c8c2dc0a9ec5bc6fcbcc13efe49f716b",
+      "size": 1221
+    },
+    {
+      "path": "backend/pms_api/pricing/urls.py",
+      "sha256": "26867181bda42aad042078f55033443f3c7a9bdee28e5c13323ee64d4431e054",
+      "size": 1815
+    },
+    {
+      "path": "backend/tests/test_pricing_finance_snapshots.py",
+      "sha256": "2951382113dffc9925a81beb839c5871cda8c186faca27749fb1893e88751a05",
+      "size": 5976
+    },
+    {
+      "path": "backend/tests/test_pricing_reports.py",
+      "sha256": "a48870edba84c268b37da0a515e4325862419c2271db03cbf7f686934de7276b",
+      "size": 12000
+    },
+    {
+      "path": "frontend/src/apps/pms/rates-inventory/RatesInventory.css",
+      "sha256": "18516afb52b68ce3a80e11b71642b12fc45d6c8df91e1c85555779d74de905bc",
+      "size": 12779
+    },
+    {
+      "path": "frontend/src/apps/pms/rates-inventory/pages/ARI.css",
+      "sha256": "09c0a8d12c2d5767c00b4a8e5e9568dc53074a1a56ad8813a753eb741174e80b",
+      "size": 3878
+    },
+    {
+      "path": "frontend/src/apps/pms/rates-inventory/pages/ARI.jsx",
+      "sha256": "8de94d5254474db55780eacf392415c673e139657c376ffe4d3a8fab122b2b51",
+      "size": 15629
+    },
+    {
+      "path": "frontend/src/apps/pms/rates-inventory/pages/NightlyRates.jsx",
+      "sha256": "a77929ad4c0eefa90b7bbde99e1492f658bef95459cebfe4239c439afc8a1fc4",
+      "size": 10093
+    },
+    {
+      "path": "frontend/src/apps/pms/rates-inventory/pages/Promotions.jsx",
+      "sha256": "5d04e650ebcec2e24f929175c337c9aa4edb4d22297fdff8b171c8e4bb557a6e",
+      "size": 147
+    },
+    {
+      "path": "frontend/src/apps/pms/rates-inventory/pages/Rates.jsx",
+      "sha256": "e4edff7c619e93261b40724894cb97708043c04d9d45e04796a1ac7e15b3ceaf",
+      "size": 4725
+    },
+    {
+      "path": "frontend/src/apps/pms/rates-inventory/pages/RatesARI.jsx",
+      "sha256": "12d1589e17f60cfdc25960936322f8cfdde42fa72c29ba6fbe0a407d8849e2c4",
+      "size": 3758
+    },
+    {
+      "path": "frontend/src/apps/pms/rates-inventory/pages/Vouchers.jsx",
+      "sha256": "ffe181ed32c8c0d137110570bceb33a939fc8e45b43ac7ed6b91f5459682241f",
+      "size": 143
+    }
+  ]
+}

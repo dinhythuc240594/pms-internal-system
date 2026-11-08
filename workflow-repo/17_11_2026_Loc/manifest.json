@@ -1,0 +1,75 @@
+{
+  "date": "2026-11-17",
+  "pusher": "Loc",
+  "folder": "17_11_2026_Loc",
+  "title": "Kho, chứng từ và biến động tồn + Chi tiết booking, tab và thay đổi lưu trú",
+  "branch": "work/2026-11-17-loc-fullstack-10",
+  "backend_topic": "Kho, chứng từ và biến động tồn",
+  "frontend_topic": "Chi tiết booking, tab và thay đổi lưu trú",
+  "backend_count": 6,
+  "frontend_count": 4,
+  "commit_message": "feat(fullstack): ban giao 17/11/2026 - Loc",
+  "depends_on": [
+    "16_11_2026_Loc",
+    "16_11_2026_Thuc"
+  ],
+  "source_commit": "902a01f1ddfaca73a7466a3c5a3a06ddfbf84bb6",
+  "created_at": "2026-11-08T06:03:33+00:00",
+  "status": "prepared_not_pushed",
+  "file_count": 10,
+  "bytes": 76604,
+  "operation": "upsert_only",
+  "deletions": [],
+  "files": [
+    {
+      "path": "backend/pms_api/inventory/__init__.py",
+      "sha256": "82ff51579ae35fdeae1c6664a17b75f13280a40df104a8f165d63c1d23e10753",
+      "size": 57
+    },
+    {
+      "path": "backend/pms_api/inventory/models.py",
+      "sha256": "9851739f1cea99409ee21d35079a1e47b014eb77d6a4f6a09503e9cfada18f58",
+      "size": 7695
+    },
+    {
+      "path": "backend/pms_api/inventory/routes.py",
+      "sha256": "0529186d971aa7cdb8ee9b52444caacb5facff78cca0cbe42b2fdb24c9cc76ed",
+      "size": 2342
+    },
+    {
+      "path": "backend/pms_api/inventory/urls.py",
+      "sha256": "d5fc3257dc382b309f2b6303ed13a05f7356196a592aadde94cd4767e38f9799",
+      "size": 2080
+    },
+    {
+      "path": "backend/tests/test_inventory_integration.py",
+      "sha256": "531764a2260e8236350a0f95368dc265e43f9d91336399a247896f8699f51eb5",
+      "size": 30204
+    },
+    {
+      "path": "backend/tests/test_inventory_values.py",
+      "sha256": "76afca6af4650302d226e05e95b7faa812cbb8f35a824aa84c992f1d07595298",
+      "size": 1294
+    },
+    {
+      "path": "frontend/src/apps/pms/reservations/components/BookingTabs.jsx",
+      "sha256": "190d0a0df2293faad100951495ee1e1bb3df18dbdd58311ec243c1613a3bdbb1",
+      "size": 13524
+    },
+    {
+      "path": "frontend/src/apps/pms/reservations/components/BookingTabsFormats.test.js",
+      "sha256": "7d9eacf6b4bd21c243ac74be25e2b1d599cac428d3f596f22d314f26d9a2e71b",
+      "size": 1897
+    },
+    {
+      "path": "frontend/src/apps/pms/reservations/components/StayChangeForm.jsx",
+      "sha256": "a0d699d01ae11a12e65bf282d8ac8256ee1f126e0c4f21e57dc50de3d11986f5",
+      "size": 6678
+    },
+    {
+      "path": "frontend/src/apps/pms/reservations/components/StayChangeForm.test.js",
+      "sha256": "ca7efa1cdd601d9e3b6840cbf6f729d17f54f32a7a90b1c17c0fb0741310d149",
+      "size": 10833
+    }
+  ]
+}

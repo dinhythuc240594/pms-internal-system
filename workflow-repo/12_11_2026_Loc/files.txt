@@ -1,0 +1,4 @@
+backend/pms_api/bookings/models.py
+frontend/src/apps/marketing/Home.css
+frontend/src/apps/marketing/Home.jsx
+frontend/src/apps/marketing/Pricing.jsx

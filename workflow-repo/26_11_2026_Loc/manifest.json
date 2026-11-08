@@ -1,0 +1,75 @@
+{
+  "date": "2026-11-26",
+  "pusher": "Loc",
+  "folder": "26_11_2026_Loc",
+  "title": "Quản trị kênh, Airbnb và thống kê nhà cung cấp + Màn hình mapping, onboarding và lịch sử OTA",
+  "branch": "work/2026-11-26-loc-fullstack-19",
+  "backend_topic": "Quản trị kênh, Airbnb và thống kê nhà cung cấp",
+  "frontend_topic": "Màn hình mapping, onboarding và lịch sử OTA",
+  "backend_count": 4,
+  "frontend_count": 6,
+  "commit_message": "feat(fullstack): ban giao 26/11/2026 - Loc",
+  "depends_on": [
+    "25_11_2026_Loc",
+    "25_11_2026_Thuc"
+  ],
+  "source_commit": "902a01f1ddfaca73a7466a3c5a3a06ddfbf84bb6",
+  "created_at": "2026-11-08T06:03:33+00:00",
+  "status": "prepared_not_pushed",
+  "file_count": 10,
+  "bytes": 127503,
+  "operation": "upsert_only",
+  "deletions": [],
+  "files": [
+    {
+      "path": "backend/pms_api/admin/channex_airbnb.py",
+      "sha256": "156cd847a0b73aa32967738e8af7a35bbae696379731d4a2c184e45d8dbdcb82",
+      "size": 1133
+    },
+    {
+      "path": "backend/pms_api/admin/channex_channels_application.py",
+      "sha256": "8f07b354a201cdd629df1fc8c727ffd7fb2c7f23cb685fb8a88e904a46a263e3",
+      "size": 35105
+    },
+    {
+      "path": "backend/pms_api/admin/channex_insights_application.py",
+      "sha256": "36d2a6790fa0af659a9e29fc381ba311cded8e2a67af57e9e8c696ec320dcf94",
+      "size": 13381
+    },
+    {
+      "path": "backend/tests/test_channex_airbnb.py",
+      "sha256": "2f3b4b9126849623970fa72dece7f7fcd41eddfb79215fef49b54fdb1016e337",
+      "size": 18570
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/pages/ChannexSourcePicker.jsx",
+      "sha256": "5d746647757fc1d5a1653839f29cbfc638aed9c2c07398118bd4b44c84657c7e",
+      "size": 6715
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/pages/ClientChannels.css",
+      "sha256": "719f25906ccede21b0884c43ecd5679d800d48cccb41e876b2b3d00713a3016a",
+      "size": 1766
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/pages/ClientChannels.jsx",
+      "sha256": "e5c9f9d604f08e6cec126f023c7ad819c11100b501779129a942783644817658",
+      "size": 7253
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/pages/IntegrationWorkspace.jsx",
+      "sha256": "00f22a28a6501982865e1d9773b8cfe399b8f7caaaf9d340545e3a9f18f2087d",
+      "size": 9544
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/pages/OTA.jsx",
+      "sha256": "00b9a7727cdc726e804ba2a6c8b2177e7064c768c894767159231234bfcca846",
+      "size": 31526
+    },
+    {
+      "path": "frontend/src/apps/pms/channel-manager/pages/mappingForm.test.js",
+      "sha256": "606476099aa7b35b0ce0d24a4f91dccb323f38f8d544d836058b703221636178",
+      "size": 2510
+    }
+  ]
+}

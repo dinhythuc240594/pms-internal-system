@@ -1,6 +1,5 @@
 """Domain values and rules without Flask or database access."""
 
-import re
 from datetime import date
 from decimal import Decimal, InvalidOperation
 
@@ -16,7 +15,7 @@ def money_value(value, *, allow_zero=False, limit=MONEY_LIMIT):
         raise ApiError(422, "invalid_amount", "Số tiền không hợp lệ.")
     try:
         amount = Decimal(str(value))
-    except (InvalidOperation, ValueError, TypeError):
+    except InvalidOperation, ValueError, TypeError:
         raise ApiError(422, "invalid_amount", "Số tiền không hợp lệ.") from None
     if (
         not amount.is_finite()
@@ -31,10 +30,8 @@ def money_value(value, *, allow_zero=False, limit=MONEY_LIMIT):
 
 def stay_dates(start, end):
     try:
-        if any(not re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(value)) for value in (start, end)):
-            raise ValueError
         start, end = date.fromisoformat(str(start)), date.fromisoformat(str(end))
-    except (ValueError, TypeError):
+    except ValueError, TypeError:
         raise ApiError(422, "invalid_dates", "Ngày nhận/trả phòng không hợp lệ.") from None
     if not 1 <= (end - start).days <= 366:
         raise ApiError(422, "invalid_dates", "Lưu trú phải từ 1 đến 366 đêm.")

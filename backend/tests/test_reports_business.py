@@ -35,7 +35,7 @@ class BusinessReportTests(DomainTestCase):
 
     def update_booking(self, key, **changes):
         with self.app.app_context():
-            set_context(is_system=True)
+            set_context(is_system=True, is_service=True)
             row = db.session.get(Reservation, key)
             for field, value in changes.items():
                 setattr(row, field, value)
@@ -50,7 +50,7 @@ class BusinessReportTests(DomainTestCase):
         self.seed_stay("foreign", tenant=self.other_tenant_id, price="888.8888")
         self.seed_stay("boundary", start=self.day + timedelta(days=1), price="777.7777")
         with self.app.app_context():
-            set_context(is_system=True)
+            set_context(is_system=True, is_service=True)
             booking = db.session.get(Reservation, "usd")
             booking.base_currency, booking.base_amount, booking.exchange_rate = (
                 "VND",
@@ -90,7 +90,7 @@ class BusinessReportTests(DomainTestCase):
             )
         self.assertEqual(self.report().json["rows"][0]["label"], "Direct")
         with self.app.app_context():
-            set_context(is_system=True)
+            set_context(is_system=True, is_service=True)
             self.assertEqual(db.session.scalar(select(func.count(LedgerEntry.id))), before)
 
     def test_multi_room_type_joins_never_duplicate_nightly_amounts(self):
@@ -114,6 +114,7 @@ class BusinessReportTests(DomainTestCase):
                     reservation_id="multi",
                     room_id="room-a-101",
                     room_number="101",
+                    room_type_id="rt-a",
                     date=self.day,
                     price=Decimal("33.3333"),
                     base_currency="VND",
@@ -276,7 +277,7 @@ class BusinessReportTests(DomainTestCase):
         for query in (
             "report=unknown&end=2026-10-05",
             "report=source&basis=bad&end=2026-10-05",
-            "report=source&currency=EUR&end=2026-10-05",
+            "report=source&currency=XXX&end=2026-10-05",
             "report=source&end=2026-10-04",
         ):
             response = self.request("GET", "/reports/business?start=2026-10-04&" + query)
@@ -293,7 +294,7 @@ class BusinessReportTests(DomainTestCase):
             403,
         )
         with self.app.app_context():
-            set_context(is_system=True)
+            set_context(is_system=True, is_service=True)
             db.session.get(Plan, "default-pro").features = {"REPORTS_ADVANCED": False}
             db.session.commit()
         response = self.report()

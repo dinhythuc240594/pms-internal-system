@@ -26,14 +26,14 @@ class HousekeepingWorkerTests(DomainTestCase):
 
     def dirty_rooms(self):
         with self.app.app_context():
-            set_context(is_system=True)
+            set_context(is_system=True, is_service=True)
             for suffix in ("a", "b"):
                 db.session.get(PhysicalRoom, f"room-{suffix}-101").condition = "dirty"
             db.session.commit()
 
     def snapshot(self):
         with self.app.app_context():
-            set_context(is_system=True)
+            set_context(is_system=True, is_service=True)
             result = (
                 [
                     (row.tenant_id, row.date, row.kind, row.reservation_id)
@@ -66,7 +66,7 @@ class HousekeepingWorkerTests(DomainTestCase):
     def test_local_day_per_hotel_noop_is_silent_and_later_arrivals_are_generated(self):
         self.dirty_rooms()
         with self.app.app_context():
-            set_context(is_system=True)
+            set_context(is_system=True, is_service=True)
             db.session.get(Tenant, self.tenant_id).settings = {"timezone": "Pacific/Kiritimati"}
             db.session.get(Tenant, self.other_tenant_id).settings = {"timezone": "Pacific/Honolulu"}
             db.session.commit()
@@ -104,7 +104,7 @@ class HousekeepingWorkerTests(DomainTestCase):
         ):
             with self.subTest(blocked=blocked):
                 with self.app.app_context():
-                    set_context("admin", is_system=True)
+                    set_context("admin", is_system=True, is_service=True)
                     tenant = db.session.get(Tenant, self.tenant_id)
                     subscription = db.session.get(Subscription, "sub-a")
                     plan = db.session.get(Plan, "default-pro")
@@ -144,7 +144,7 @@ class HousekeepingWorkerTests(DomainTestCase):
                 self.assertEqual(result.exit_code, 0, result.output)
                 self.assertEqual(self.snapshot(), before)
         with self.app.app_context():
-            set_context("admin", is_system=True)
+            set_context("admin", is_system=True, is_service=True)
             db.session.get(TenantFeatureOverride, (self.tenant_id, "HOUSEKEEPING")).enabled = True
             db.session.commit()
         result = self.poll("--tenant", self.tenant_id)

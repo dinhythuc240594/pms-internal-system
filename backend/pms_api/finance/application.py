@@ -2,7 +2,6 @@
 
 from datetime import date
 from decimal import Decimal
-from types import SimpleNamespace
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import func, or_, select, text
@@ -10,9 +9,10 @@ from sqlalchemy import func, or_, select, text
 from pms_api.bookings.application import (
     ACTIVE,
     MONEY_LIMIT,
-    begin_money,
+    begin_write,
     decimal_text,
     find_reservation,
+    finish_write,
     iso,
     master,
     money_value,
@@ -21,9 +21,10 @@ from pms_api.bookings.application import (
 )
 from pms_api.ports import runtime
 
-from ..bookings.models import Charge, IdempotencyRecord, LedgerEntry
+from ..bookings.models import Charge, LedgerEntry
 from ..catalog.models import Master
 from ..core_models import Tenant, User, utcnow
+from ..currencies import is_hotel_currency
 from ..extensions import db
 from ..pricing.engine import exchange_snapshot, money_json, snapshot_money
 from ..security import ApiError, audit
@@ -32,8 +33,6 @@ from .domain import line_amount as line_amount
 from .models import CashDocument, PosInvoice, PosInvoiceItem, PosPayment, PosRefund
 
 PREFIX = "/api/tenants/<tenant_id>"
-
-
 SNAPSHOT_LIMIT = 100
 
 
@@ -55,7 +54,7 @@ def local_date(timestamp=None):
 def parse_date(value):
     try:
         return date.fromisoformat(str(value))
-    except (ValueError, TypeError):
+    except ValueError, TypeError:
         raise ApiError(422, "invalid_dates", "Ngày không hợp lệ.") from None
 
 
@@ -111,18 +110,17 @@ def ensure_available(tenant_id, fund_id, currency, amount):
 
 
 def finish(tenant_id, key, fingerprint, response, status=201):
-    db.session.add(
-        IdempotencyRecord(tenant_id=tenant_id, key=key, fingerprint=fingerprint, response=response)
-    )
-    db.session.flush()
-    return response, status
+    return finish_write(tenant_id, key, fingerprint, response, status=status)
 
 
 def begin(tenant_id, data):
-    return begin_money(SimpleNamespace(tenant_id=tenant_id), data)
+    return begin_write(tenant_id, data, legacy_money=True)
 
 
 def ledger(tenant_id, fund_id, currency, amount, kind, description, *, source=None, **references):
+    from ..reconciliation.business_days import posting_date
+
+    booked_at = posting_date(tenant_id, references.pop("booked_at", local_date()))
     snapshot = snapshot_money(tenant_id, currency, amount, source)
     if "base_amount" in references:
         snapshot["base_amount"] = references.pop("base_amount")
@@ -135,7 +133,7 @@ def ledger(tenant_id, fund_id, currency, amount, kind, description, *, source=No
             kind=kind,
             description=description,
             user_id=runtime().state.user.id,
-            booked_at=references.pop("booked_at", local_date()),
+            booked_at=booked_at,
             **snapshot,
             **references,
         )
@@ -1032,16 +1030,13 @@ def handle_cashbook(tenant_id):
     currency = runtime().request.args.get(
         "currency", (runtime().state.tenant.settings or {}).get("currency", "VND")
     )
-    if currency not in {"VND", "USD"}:
+    if not is_hotel_currency(currency):
         raise ApiError(422, "invalid_currency", "Loại tiền tệ không hợp lệ.")
-    start = (
-        parse_date(runtime().request.args["startDate"])
-        if runtime().request.args.get("startDate")
-        else None
-    )
+    start_value, end_value = runtime().date_range(aliases=("startDate", "endDate"))
+    start = parse_date(start_value) if start_value else None
     end = (
-        parse_date(runtime().request.args["endDate"])
-        if runtime().request.args.get("endDate")
+        parse_date(end_value)
+        if end_value
         else None
         if runtime().request.args.get("documentId")
         else local_date()

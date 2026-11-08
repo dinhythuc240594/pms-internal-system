@@ -1,4 +1,4 @@
-import { t as tUi, useI18n } from '../../shared/i18n/useI18n.js';
+import { tr as labelUi, t as tUi, useI18n } from '../../shared/i18n/useI18n.js';
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, ArrowUpRight, Check, Copy, MessageSquare, ShieldCheck } from 'lucide-react';
@@ -61,9 +61,9 @@ export default function Contact() {
     <>
       <section className="loha-page-intro">
         <div className="loha-container">
-          <span className="loha-kicker">BẮT ĐẦU TỪ MỘT CUỘC TRAO ĐỔI</span>
-          <h1>Khách sạn của bạn.<br />Câu chuyện của bạn.</h1>
-          <p>Chia sẻ nhu cầu vận hành, những điều đang vướng hoặc câu hỏi về LOHA. Một lời nhắn rõ ràng giúp cuộc trao đổi dễ bắt đầu hơn.</p>
+          <span className="loha-kicker">{labelUi("BẮT ĐẦU TỪ MỘT CUỘC TRAO ĐỔI")}</span>
+          <h1>{labelUi("Khách sạn của bạn.")}<br />{labelUi("Câu chuyện của bạn.")}</h1>
+          <p>{labelUi("Chia sẻ nhu cầu vận hành, những điều đang vướng hoặc câu hỏi về LOHA. Một lời nhắn rõ ràng giúp cuộc trao đổi dễ bắt đầu hơn.")}</p>
         </div>
       </section>
 
@@ -71,30 +71,30 @@ export default function Contact() {
         <div className="loha-container loha-contact-grid">
           <aside className="loha-contact-guidance" aria-labelledby="loha-contact-guidance-title">
             <span className="loha-contact-symbol"><MessageSquare size={28} aria-hidden="true" /></span>
-            <h2 id="loha-contact-guidance-title">Cùng tìm cách<br />vận hành gọn hơn.</h2>
-            <p>Bạn có thể bắt đầu bằng quy mô cơ sở lưu trú, công việc cần quản lý và điều bạn mong muốn cải thiện.</p>
+            <h2 id="loha-contact-guidance-title">{labelUi("Cùng tìm cách")}<br />{labelUi("vận hành gọn hơn.")}</h2>
+            <p>{labelUi("Bạn có thể bắt đầu bằng quy mô cơ sở lưu trú, công việc cần quản lý và điều bạn mong muốn cải thiện.")}</p>
             <div className="loha-contact-route">
-              <h3>Đang tìm gói phù hợp?</h3>
-              <p>Xem các gói dịch vụ hiện có và đối chiếu với nhu cầu của đội ngũ.</p>
-              <Link className="loha-text-link" to="/pricing">Xem bảng giá <ArrowRight size={17} aria-hidden="true" /></Link>
+              <h3>{labelUi("Đang tìm gói phù hợp?")}</h3>
+              <p>{labelUi("Xem các gói dịch vụ hiện có và đối chiếu với nhu cầu của đội ngũ.")}</p>
+              <Link className="loha-text-link" to="/pricing">{labelUi("Xem bảng giá")}{" "}<ArrowRight size={17} aria-hidden="true" /></Link>
             </div>
             <div className="loha-contact-route">
-              <h3>Đã có tài khoản LOHA?</h3>
-              <p>Mở không gian làm việc để tiếp tục quản lý khách sạn của bạn.</p>
+              <h3>{labelUi("Đã có tài khoản LOHA?")}</h3>
+              <p>{labelUi("Mở không gian làm việc để tiếp tục quản lý khách sạn của bạn.")}</p>
               <Link className="loha-text-link" to="/id/login">{tUi("auth.title")}{' '}<ArrowUpRight size={17} aria-hidden="true" /></Link>
             </div>
-            <div className="loha-contact-privacy"><ShieldCheck size={20} aria-hidden="true" /><p>Không cần đưa mật khẩu, mã truy cập hay thông tin riêng của khách lưu trú vào lời nhắn.</p></div>
+            <div className="loha-contact-privacy"><ShieldCheck size={20} aria-hidden="true" /><p>{labelUi("Không cần đưa mật khẩu, mã truy cập hay thông tin riêng của khách lưu trú vào lời nhắn.")}</p></div>
           </aside>
 
           <div className="loha-contact-form-panel">
-            <span className="loha-kicker">MỘT VÀI THÔNG TIN ĐỂ BẮT ĐẦU</span>
-            <h2>Chuẩn bị lời nhắn của bạn.</h2>
-            <p id="loha-contact-form-help" className="loha-contact-form-help">Chuẩn bị nội dung để trao đổi với đội ngũ LOHA. Biểu mẫu chưa gửi trực tiếp.</p>
+            <span className="loha-kicker">{labelUi("MỘT VÀI THÔNG TIN ĐỂ BẮT ĐẦU")}</span>
+            <h2>{labelUi("Chuẩn bị lời nhắn của bạn.")}</h2>
+            <p id="loha-contact-form-help" className="loha-contact-form-help">{labelUi("Chuẩn bị nội dung để trao đổi với đội ngũ LOHA. Biểu mẫu chưa gửi trực tiếp.")}</p>
             <form onSubmit={prepareMessage} aria-describedby="loha-contact-form-help" onChange={() => { setPreparedMessage(''); setCopyStatus(''); }}>
               <div className="loha-contact-field-row">
                 <div className="loha-contact-field">
                   <label htmlFor="loha-contact-name">{tUi("common.fullName")}{' '}<span aria-hidden="true">*</span></label>
-                  <input id="loha-contact-name" name="name" type="text" autoComplete="name" required maxLength={120} pattern=".*\S.*" placeholder="Tên của bạn" />
+                  <input id="loha-contact-name" name="name" type="text" autoComplete="name" required maxLength={120} pattern=".*\S.*" placeholder={labelUi("Tên của bạn")} />
                 </div>
                 <div className="loha-contact-field">
                   <label htmlFor="loha-contact-email">Email <span aria-hidden="true">*</span></label>
@@ -102,22 +102,22 @@ export default function Contact() {
                 </div>
               </div>
               <div className="loha-contact-field">
-                <label htmlFor="loha-contact-hotel">Khách sạn / cơ sở lưu trú <small>(không bắt buộc)</small></label>
-                <input id="loha-contact-hotel" name="hotel" type="text" autoComplete="organization" maxLength={180} placeholder="Tên khách sạn của bạn" />
+                <label htmlFor="loha-contact-hotel">{labelUi("Khách sạn / cơ sở lưu trú")}{" "}<small>{labelUi("(không bắt buộc)")}</small></label>
+                <input id="loha-contact-hotel" name="hotel" type="text" autoComplete="organization" maxLength={180} placeholder={labelUi("Tên khách sạn của bạn")} />
               </div>
               <div className="loha-contact-field">
-                <label htmlFor="loha-contact-message">Bạn muốn trao đổi điều gì? <span aria-hidden="true">*</span></label>
-                <textarea id="loha-contact-message" name="message" rows={5} required maxLength={4000} onInput={event => event.currentTarget.setCustomValidity('')} placeholder="Ví dụ: Tôi quản lý một khách sạn 20 phòng và muốn tìm hiểu cách theo dõi đặt phòng, dịch vụ và thanh toán với LOHA." />
+                <label htmlFor="loha-contact-message">{labelUi("Bạn muốn trao đổi điều gì?")}{" "}<span aria-hidden="true">*</span></label>
+                <textarea id="loha-contact-message" name="message" rows={5} required maxLength={4000} onInput={event => event.currentTarget.setCustomValidity('')} placeholder={labelUi("Ví dụ: Tôi quản lý một khách sạn 20 phòng và muốn tìm hiểu cách theo dõi đặt phòng, dịch vụ và thanh toán với LOHA.")} />
               </div>
-              <p className="loha-contact-required">* Thông tin cần điền để tạo lời nhắn.</p>
-              <button className="loha-button loha-button-primary loha-contact-submit" type="submit">Tạo nội dung liên hệ <ArrowRight size={18} aria-hidden="true" /></button>
+              <p className="loha-contact-required">{labelUi("* Thông tin cần điền để tạo lời nhắn.")}</p>
+              <button className="loha-button loha-button-primary loha-contact-submit" type="submit">{labelUi("Tạo nội dung liên hệ")}{" "}<ArrowRight size={18} aria-hidden="true" /></button>
             </form>
 
             {preparedMessage && <div className="loha-contact-prepared">
-              <label htmlFor="loha-contact-preview">Nội dung đã chuẩn bị</label>
-              <p>Kiểm tra rồi sao chép nội dung để sử dụng trong cuộc trao đổi. Lời nhắn này chưa được gửi.</p>
+              <label htmlFor="loha-contact-preview">{labelUi("Nội dung đã chuẩn bị")}</label>
+              <p>{labelUi("Kiểm tra rồi sao chép nội dung để sử dụng trong cuộc trao đổi. Lời nhắn này chưa được gửi.")}</p>
               <textarea ref={previewRef} id="loha-contact-preview" rows={9} readOnly value={preparedMessage} />
-              <button className="loha-text-link loha-contact-copy" type="button" disabled={copying} onClick={copyMessage}><Copy size={16} aria-hidden="true" />{copying ? 'Đang sao chép…' : 'Sao chép nội dung'}</button>
+              <button className="loha-text-link loha-contact-copy" type="button" disabled={copying} onClick={copyMessage}><Copy size={16} aria-hidden="true" />{copying ? labelUi("Đang sao chép…") : labelUi("Sao chép nội dung")}</button>
               <p className="loha-contact-copy-status" role="status">{copyStatus && <>{copyStatus.startsWith('Đã') && <Check size={16} aria-hidden="true" />}{copyStatus}</>}</p>
             </div>}
           </div>

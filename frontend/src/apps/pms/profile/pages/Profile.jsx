@@ -1,22 +1,24 @@
-import { getIntlLocale } from '../../../../shared/i18n/store.js';
+import { formatDateTime } from '../../../../shared/lib/date.js';
 import { t as tUi, tr as labelUi, useI18n } from '../../../../shared/i18n/useI18n.js';
 import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { User, Save, Shield, LogOut, Receipt } from 'lucide-react';
 import { usePms } from '../../data/usePms';
 import { profileName, passwordChangeInput } from './profileForm';
+import OwnerBilling from './OwnerBilling.jsx';
 import './Profile.css';
 
 const emptyPasswords = { currentPassword: '', newPassword: '', confirm: '' };
 
 export default function Profile() {
-  const { authGeneration, user } = usePms();
-  return <ProfileWorkspace key={`${authGeneration}:${user?.id}`} />;
+  const { authGeneration, user, tenantId } = usePms();
+  return <ProfileWorkspace key={`${authGeneration}:${user?.id}:${tenantId}`} />;
 }
 
 function ProfileWorkspace() {
   useI18n();
-  const { user, tenant, logout, changePassword, saveOwnProfile, getOwnSessions, revokeOtherSessions } = usePms();
+  const { user, tenant, access, logout, changePassword, saveOwnProfile, getOwnSessions, revokeOtherSessions } = usePms();
+  const canViewBilling = access('billing.view', undefined, false).allowed;
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = ['security', 'orders'].includes(searchParams.get('tab')) ? searchParams.get('tab') : 'info';
   const [isEditing, setIsEditing] = useState(false), [name, setName] = useState(user?.name || '');
@@ -72,7 +74,7 @@ function ProfileWorkspace() {
       <nav className="pms-profile-tabs" aria-label={tUi("nav.profile")}>
         <button type="button" aria-pressed={activeTab === 'info'} disabled={busy} onClick={() => selectTab('info')}><User size={18} aria-hidden="true" />{tUi("profile.info")}</button>
         <button type="button" aria-pressed={activeTab === 'security'} disabled={busy} onClick={() => selectTab('security')}><Shield size={18} aria-hidden="true" />{tUi("profile.password")}</button>
-        <button type="button" aria-pressed={activeTab === 'orders'} disabled={busy} onClick={() => selectTab('orders')}><Receipt size={18} aria-hidden="true" />{tUi("profile.orders")}</button>
+        {canViewBilling && <button type="button" aria-pressed={activeTab === 'orders'} disabled={busy} onClick={() => selectTab('orders')}><Receipt size={18} aria-hidden="true" />{tUi("profile.orders")}</button>}
       </nav>
       <div className="pms-profile-body">
         {error && <p className="pms-profile-feedback is-error" role="alert">{error}</p>}
@@ -102,11 +104,11 @@ function ProfileWorkspace() {
         <section className="pms-profile-actions" aria-label={tUi("profile.sessions")}>
           <div className="pms-profile-section-heading"><div><h2>{tUi("profile.session")}</h2><p>{tUi("profile.activeSessions")}</p></div></div>
           {sessionError && <p className="pms-profile-feedback is-error" role="alert">{sessionError}</p>}
-          {!sessions ? <p role="status">{tUi("profile.loadingSessions")}</p> : <ul style={{ width: '100%', padding: 0, listStyle: 'none', display: 'grid', gap: 12 }}>{sessions.map((session, index) => <li key={session.createdAt + ':' + index} style={{ padding: 16, background: 'var(--bg-main)', borderRadius: 8 }}><strong>{session.current ? tUi("profile.currentSession") : tUi("profile.otherSession")}</strong><p>{tUi("profile.signedIn")}{' '}{new Date(session.createdAt).toLocaleString(getIntlLocale())}{' '}{tUi("profile.expires")}{' '}{new Date(session.expiresAt).toLocaleString(getIntlLocale())}</p></li>)}</ul>}
+          {!sessions ? <p role="status">{tUi("profile.loadingSessions")}</p> : <ul style={{ width: '100%', padding: 0, listStyle: 'none', display: 'grid', gap: 12 }}>{sessions.map((session, index) => <li key={session.createdAt + ':' + index} style={{ padding: 16, background: 'var(--bg-main)', borderRadius: 8 }}><strong>{session.current ? tUi("profile.currentSession") : tUi("profile.otherSession")}</strong><p>{tUi("profile.signedIn")}{' '}{formatDateTime(session.createdAt)}{' '}{tUi("profile.expires")}{' '}{formatDateTime(session.expiresAt)}</p></li>)}</ul>}
           <button type="button" className="pms-profile-button" disabled={busy || !sessions} onClick={() => { setSessions(null); setRevision(value => value + 1); }}>{tUi("profile.reloadSessions")}</button>
           <button type="button" className="pms-profile-button is-danger" disabled={busy || !sessions?.some(session => !session.current)} onClick={() => run(async () => { await revokeOtherSessions(); if (mounted.current) { setSessions(null); setRevision(value => value + 1); } }, 'Đã đăng xuất các phiên khác. Phiên hiện tại vẫn hoạt động.')}><LogOut size={16} aria-hidden="true" />{tUi("profile.revokeOthers")}</button>
         </section></>}
-        {activeTab === 'orders' && <div className="pms-profile-empty"><Receipt size={40} aria-hidden="true" /><h2>{tUi("profile.noOrders")}</h2><p>{tUi("profile.ordersHint")}</p></div>}
+        {activeTab === 'orders' && (canViewBilling ? <OwnerBilling /> : <p className="pms-profile-feedback is-error" role="alert">{tUi('billing.denied')}</p>)}
       </div>
     </section>
   </div>;

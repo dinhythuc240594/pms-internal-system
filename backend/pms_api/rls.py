@@ -6,6 +6,24 @@ from alembic import op
 
 SYSTEM = "coalesce(current_setting('app.is_system', true),'') = 'true'"
 TENANT = "tenant_id = nullif(current_setting('app.tenant_id', true),'')"
+SERVICE = "coalesce(current_setting('app.is_service', true),'') = 'true'"
+
+
+def pms_scope(table):
+    """PMS scope for new policies; SYSTEM is only for SaaS metadata.
+
+    Background jobs/webhooks can use an explicit tenant without a user. HTTP
+    actors must still hold a current, active membership in that tenant.
+    protect_table below is retained for reproducible historical migrations.
+    """
+    if not re.fullmatch(r"[a-z_]+", table):
+        raise ValueError("Invalid migration identifier")
+    return f"""({SERVICE} OR ({TENANT} AND (
+        nullif(current_setting('app.user_id', true),'') IS NULL OR EXISTS (
+            SELECT 1 FROM tenant_users m JOIN users u ON u.id=m.user_id
+            WHERE m.tenant_id={table}.tenant_id
+            AND m.user_id=nullif(current_setting('app.user_id', true),'')
+            AND m.active AND u.active))))"""
 
 
 def protect_table(table):

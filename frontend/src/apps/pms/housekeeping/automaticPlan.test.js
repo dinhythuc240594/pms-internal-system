@@ -16,11 +16,11 @@ test('automatic plans reject invalid dates, reverse ranges and more than 31 incl
 });
 
 test('shift reads cover the full inclusive selection with a single bounded request', () => {
-  assert.deepEqual(automaticPlanShiftPaths('2026-10-01', '2026-10-31'), ['/housekeeping/shifts?start=2026-10-01&end=2026-11-01']);
-  assert.deepEqual(automaticPlanShiftPaths('2026-12-31', '2027-01-01'), ['/housekeeping/shifts?start=2026-12-31&end=2027-01-02']);
+  assert.deepEqual(automaticPlanShiftPaths('2026-10-01', '2026-10-31'), ['/housekeeping/shifts?start_date=2026-10-01&end_date=2026-11-01']);
+  assert.deepEqual(automaticPlanShiftPaths('2026-12-31', '2027-01-01'), ['/housekeeping/shifts?start_date=2026-12-31&end_date=2027-01-02']);
   assert.deepEqual(automaticPlanShiftPaths('2026-10-01', '2026-11-01'), []);
   assert.deepEqual(automaticPlanShiftPaths('9999-12-31', '9999-12-31'), ['/housekeeping/shifts?date=9999-12-31']);
-  assert.deepEqual(automaticPlanShiftPaths('9999-12-30', '9999-12-31'), ['/housekeeping/shifts?start=9999-12-30&end=9999-12-31', '/housekeeping/shifts?date=9999-12-31']);
+  assert.deepEqual(automaticPlanShiftPaths('9999-12-30', '9999-12-31'), ['/housekeeping/shifts?start_date=9999-12-30&end_date=9999-12-31', '/housekeeping/shifts?date=9999-12-31']);
 });
 
 test('daily payload keeps explicit no-shift and room choices, excluding deselected dates and staff', () => {

@@ -4,13 +4,13 @@ from concurrent.futures import ThreadPoolExecutor, TimeoutError
 from threading import Event
 from unittest.mock import patch
 
-from domain_fixture import TEST_PASSWORD, DomainTestCase
 from sqlalchemy import select
 from werkzeug.security import check_password_hash
 
 from pms_api.core_models import AuditLog, AuthSession, User
 from pms_api.extensions import db
 from pms_api.security import set_context
+from tests.domain_fixture import TEST_PASSWORD, DomainTestCase
 
 
 class ManagerUserTests(DomainTestCase):
@@ -57,7 +57,7 @@ class ManagerUserTests(DomainTestCase):
         with self.app.app_context():
             user = db.session.get(User, response.json["id"])
             self.assertTrue(check_password_hash(user.password_hash, TEST_PASSWORD))
-            set_context(is_system=True)
+            set_context(is_system=True, is_service=True)
             entries = db.session.scalars(
                 select(AuditLog).where(AuditLog.entity_id == user.id)
             ).all()

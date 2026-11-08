@@ -1,4 +1,5 @@
 import re
+from decimal import Decimal
 
 from sqlalchemy import func, select, text
 from werkzeug.security import generate_password_hash
@@ -19,6 +20,7 @@ from ..core_models import (
     utcnow,
 )
 from ..extensions import db
+from ..plan_pricing import calculate_plan_amount, default_pricing_rules, pricing_rules_value
 from ..security import GLOBAL_ROLES, ROLES, ApiError, audit
 from ..subscriptions import (
     default_features,
@@ -28,11 +30,18 @@ from ..subscriptions import (
     lock_tenant,
     plan_code,
     plan_json,
+    subscription_history_json,
     subscription_json,
     timestamp,
 )
 from .client_models import TenantClientProfile
-from .customers import CLIENT_FIELDS, client_values, customer_tenants
+from .customers import (
+    CLIENT_FIELDS,
+    client_values,
+    customer_accounts,
+    customer_tenants,
+    hotel_currency,
+)
 from .feature_models import FEATURE_CATALOG
 
 
@@ -143,6 +152,18 @@ def handle_tenants():
     return runtime().json_response(tenants=customer_tenants())
 
 
+def handle_customer_accounts():
+    if (
+        set(runtime().request.args) - {"search"}
+        or len(runtime().request.args.getlist("search")) != 1
+    ):
+        raise ApiError(422, "invalid_search", "Chỉ tìm tài khoản theo tên hoặc email.")
+    search = runtime().request.args["search"].strip()
+    if not 2 <= len(search) <= 254 or any(ord(char) < 32 or ord(char) == 127 for char in search):
+        raise ApiError(422, "invalid_search", "Từ khóa tìm kiếm cần từ 2 đến 254 ký tự.")
+    return runtime().json_response(users=customer_accounts(search))
+
+
 def handle_create_tenant():
     data = runtime().payload()
     if set(data) - {
@@ -151,20 +172,40 @@ def handle_create_tenant():
         "ownerName",
         "ownerEmail",
         "ownerPassword",
+        "ownerUserId",
+        "currency",
         *CLIENT_FIELDS,
     }:
         raise ApiError(422, "unsupported_field", "Thông tin khách sạn chứa trường không hỗ trợ.")
     values = client_values(data)
+    currency = hotel_currency(data.get("currency", "VND"))
     status = data.get("status", "active")
     if status not in ("active", "suspended"):
         raise ApiError(422, "invalid_status", "Trạng thái không hợp lệ.")
+    if "ownerUserId" in data:
+        owner_id = data["ownerUserId"]
+        if (
+            not isinstance(owner_id, str)
+            or not owner_id.strip()
+            or owner_id != owner_id.strip()
+            or len(owner_id) > 40
+            or {"ownerName", "ownerEmail", "ownerPassword"}.intersection(data)
+        ):
+            raise ApiError(
+                422, "invalid_owner", "Chọn tài khoản đã có hoặc nhập thông tin tài khoản mới."
+            )
+        owner = db.session.scalar(select(User).where(User.id == owner_id).with_for_update())
+        if owner is None:
+            raise ApiError(404, "not_found", "Không tìm thấy tài khoản quản lý khách sạn.")
+        if not owner.active or owner.global_role != "USER":
+            raise ApiError(422, "invalid_owner", "Chọn tài khoản khách hàng đang hoạt động.")
+    else:
+        owner = new_user(data, prefix="owner")
     tenant = Tenant(name=name_value(data.get("name")), status=status)
     db.session.add(tenant)
     db.session.flush()
-    from ..catalog.models import ensure_default_units
-
-    ensure_default_units(tenant.id)
-    owner = new_user(data, prefix="owner")
+    tenant.settings = {**tenant.settings, "currency": currency}
+    db.session.execute(text("SELECT pms_provision_units(:tenant)"), {"tenant": tenant.id})
     db.session.add(TenantUser(tenant_id=tenant.id, user_id=owner.id, role="HOTEL_OWNER"))
     db.session.add(
         TenantClientProfile(
@@ -208,7 +249,33 @@ def handle_update_tenant(tenant_id):
 def handle_customer_history(tenant_id):
     if not db.session.get(Tenant, tenant_id):
         raise ApiError(404, "not_found", "Không tìm thấy khách sạn.")
-    return audit_response(tenant_id)
+    return audit_response(tenant_id, system_only=True)
+
+
+# SaaS support history contains commercial/account changes, never hotel activity.
+SAAS_AUDIT_EVENTS = {
+    "tenant.created",
+    "tenant.updated",
+    "subscription.updated",
+    "system_user.created",
+    "system_user.updated",
+    "plan.created",
+    "plan.updated",
+    "plan.deleted",
+    "feature.updated",
+    "feature_override.upserted",
+    "feature_override.deleted",
+    "channex.property.created",
+}
+
+
+def require_owner_grantor():
+    # System privileges must never be used to manufacture or restore PMS access,
+    # even when the actor also received an owner membership.
+    if runtime().state.user.global_role in GLOBAL_ROLES or runtime().state.role != "HOTEL_OWNER":
+        raise ApiError(
+            403, "owner_grant_required", "Chỉ chủ khách sạn được cấp hoặc thu hồi quyền PMS."
+        )
 
 
 def tenant_users_json(tenant_id):
@@ -237,7 +304,10 @@ def handle_tenant_users(tenant_id):
 
 
 def handle_create_tenant_user(tenant_id):
+    require_owner_grantor()
     data = runtime().payload()
+    if set(data) - {"name", "email", "password", "role", "active", "userId"}:
+        raise ApiError(403, "forbidden", "Thông tin cấp quyền khách sạn không hợp lệ.")
     role = data.get("role", "FRONT_DESK")
     if role not in ROLES:
         raise ApiError(422, "invalid_role", "Vai trò khách sạn không hợp lệ.")
@@ -246,15 +316,48 @@ def handle_create_tenant_user(tenant_id):
     active = data.get("active", True)
     if not isinstance(active, bool):
         raise ApiError(422, "invalid_membership", "Trạng thái không hợp lệ.")
+    if "userId" in data:
+        if not isinstance(data["userId"], str) or set(data) - {"userId", "role", "active"}:
+            raise ApiError(422, "invalid_membership", "Chỉ chọn tài khoản, vai trò và trạng thái.")
+        user = db.session.get(User, data["userId"])
+        if user is None:
+            raise ApiError(404, "not_found", "Không tìm thấy tài khoản.")
+    else:
+        email = validate_email(data.get("email"))
+        user = db.session.scalar(select(User).where(User.email == email))
+    if user is not None:
+        if "password" in data or "name" in data:
+            raise ApiError(
+                403,
+                "profile_restricted",
+                "Cấp quyền tài khoản đã có không được đổi hồ sơ hoặc mật khẩu.",
+            )
+        if "role" not in data:
+            raise ApiError(422, "invalid_role", "Chọn rõ vai trò được cấp tại khách sạn.")
+        if db.session.scalar(
+            select(TenantUser).where(
+                TenantUser.tenant_id == tenant_id, TenantUser.user_id == user.id
+            )
+        ):
+            raise ApiError(
+                409,
+                "membership_exists",
+                "Tài khoản đã có quyền; cập nhật hoặc thu hồi quyền hiện tại.",
+            )
+    else:
+        user = new_user(data)
     ensure_quota(tenant_id, "users", 1 if active else 0)
-    user = new_user(data)
     db.session.add(TenantUser(tenant_id=tenant_id, user_id=user.id, role=role, active=active))
     audit("membership.created", "user", user.id, {"role": role})
     db.session.flush()
-    return runtime().json_response(user_json(user)), 201
+    return runtime().json_response(
+        next(row for row in tenant_users_json(tenant_id) if row["id"] == user.id)
+    ), 201
 
 
 def handle_update_tenant_user(tenant_id, user_id):
+    require_owner_grantor()
+    # Serialize owner changes to ensure a hotel always has an active owner.
     db.session.execute(select(Tenant).where(Tenant.id == tenant_id).with_for_update()).scalar_one()
     membership = db.session.scalar(
         select(TenantUser).where(TenantUser.tenant_id == tenant_id, TenantUser.user_id == user_id)
@@ -262,6 +365,8 @@ def handle_update_tenant_user(tenant_id, user_id):
     if not membership:
         raise ApiError(404, "not_found", "Không tìm thấy nhân viên.")
     data = runtime().payload()
+    if not data or set(data) - {"role", "active", "name", "email", "password", "globalRole"}:
+        raise ApiError(422, "unsupported_field", "Thông tin cập nhật quyền khách sạn không hợp lệ.")
     role, active = data.get("role", membership.role), data.get("active", membership.active)
     if role not in ROLES or not isinstance(active, bool):
         raise ApiError(422, "invalid_membership", "Vai trò hoặc trạng thái không hợp lệ.")
@@ -294,10 +399,7 @@ def handle_update_tenant_user(tenant_id, user_id):
         )
     if "name" in data and data["name"] != user.name:
         # A global user profile can belong to multiple hotels.
-        if (
-            user.id != runtime().state.user.id
-            and runtime().state.user.global_role not in GLOBAL_ROLES
-        ):
+        if user.id != runtime().state.user.id:
             raise ApiError(
                 403, "profile_restricted", "Chỉ người dùng hoặc Admin được đổi hồ sơ cá nhân."
             )
@@ -307,24 +409,28 @@ def handle_update_tenant_user(tenant_id, user_id):
     membership.role, membership.active = role, active
     audit("membership.updated", "user", user_id, {"role": role, "active": active})
     db.session.flush()
-    return runtime().json_response(user_json(user))
+    return runtime().json_response(
+        next(row for row in tenant_users_json(tenant_id) if row["id"] == user.id)
+    )
 
 
 def handle_system_audit():
-    return audit_response()
+    return audit_response(system_only=True)
 
 
 def handle_tenant_audit(tenant_id):
     return audit_response(tenant_id)
 
 
-def audit_response(tenant_id=None):
-    allowed = {"userId", "start", "end", "event", "page", "pageSize"}
+def audit_response(tenant_id=None, *, system_only=False):
+    allowed = {"userId", "start", "end", "start_date", "end_date", "event", "page", "pageSize"}
     if tenant_id is None:
         allowed.add("tenantId")
     if set(runtime().request.args) - allowed:
         raise ApiError(422, "invalid_filter", "Bộ lọc nhật ký không được hỗ trợ.")
     conditions = []
+    if system_only:
+        conditions.append(AuditLog.event.in_(SAAS_AUDIT_EVENTS))
     if tenant_id is not None:
         conditions.append(AuditLog.tenant_id == tenant_id)
     for name, column in (
@@ -338,14 +444,9 @@ def audit_response(tenant_id=None):
             if not value.strip() or len(value) > limit:
                 raise ApiError(422, "invalid_filter", f"{name} phải từ 1 đến {limit} ký tự.")
             conditions.append(column == value)
-    start = (
-        timestamp(runtime().request.args["start"], "start")
-        if "start" in runtime().request.args
-        else None
-    )
-    end = (
-        timestamp(runtime().request.args["end"], "end") if "end" in runtime().request.args else None
-    )
+    start_value, end_value = runtime().date_range()
+    start = timestamp(start_value, "start") if start_value is not None else None
+    end = timestamp(end_value, "end") if end_value is not None else None
     if start is not None and end is not None and start >= end:
         raise ApiError(422, "invalid_dates", "end phải sau start.")
     if start is not None:
@@ -426,6 +527,7 @@ def plan_values(data, plan=None):
         "name",
         "price",
         "priceYear",
+        "pricingRules",
         "currency",
         "maxRooms",
         "maxUsers",
@@ -455,6 +557,15 @@ def plan_values(data, plan=None):
     )
     if code == "FREE" and (price != 0 or annual != 0):
         raise ApiError(422, "invalid_price", "Gói Miễn Phí phải có giá bằng 0.")
+    pricing_rules = pricing_rules_value(
+        data.get(
+            "pricingRules", plan_json(plan)["pricingRules"] if plan else default_pricing_rules()
+        )
+    )
+    if code == "FREE" and any(
+        Decimal(pricing_rules[field]) != 0 for field in ("extraRoomPrice", "extraRoomPriceYear")
+    ):
+        raise ApiError(422, "invalid_price", "Gói Miễn Phí không có phụ thu phòng.")
     currency = data.get("currency", plan.currency if plan else "VND")
     if not isinstance(currency, str) or currency not in {"VND", "USD"}:
         raise ApiError(422, "invalid_currency", "Tiền tệ phải là VND hoặc USD.")
@@ -502,6 +613,7 @@ def plan_values(data, plan=None):
             409, "quota_below_subscription", "Giới hạn thấp hơn số phòng đã đăng ký của khách sạn."
         )
     plan = plan or Plan()
+    plan.pricing_rules = pricing_rules
     plan.name, plan.code, plan.price, plan.price_year, plan.currency = (
         name,
         code,
@@ -566,24 +678,7 @@ def history_json(tenant_id):
         .limit(200)
     ).all()
     return [
-        {
-            "id": row.id,
-            "planId": row.plan_id,
-            "planName": row.plan_name or plan.name,
-            "planCode": row.plan_code or plan_code(plan),
-            "previousPlanId": row.previous_plan_id,
-            "action": row.action,
-            "amount": format(row.amount, ".4f") if row.amount is not None else None,
-            "currency": row.currency,
-            "cycle": row.cycle,
-            "status": row.status,
-            "roomCount": row.room_count,
-            "effectiveDate": row.effective_date.isoformat(),
-            "endDate": row.end_date.isoformat() if row.end_date else None,
-            "actorId": row.user_id,
-            "actorName": actor,
-            "createdAt": row.created_at.isoformat(),
-        }
+        subscription_history_json(row, plan, actor_name=actor, include_actor=True)
         for row, plan, actor in rows
     ]
 
@@ -649,19 +744,19 @@ def handle_update_subscription(tenant_id):
         raise ApiError(
             409, "deleted_plan", "Gói đã ngừng bán; chỉ có thể gia hạn khách sạn đang sử dụng."
         )
+    plan_data = plan_json(plan)
+    room_cap = plan_data["maxRooms"]
+    default_rooms = min(plan_data["pricingRules"]["baseRooms"], room_cap or 1000000)
     room_count = integer_limit(
-        data.get("roomCount", sub.room_count if sub else None), "Số phòng đăng ký"
+        data.get("roomCount", sub.room_count if sub else default_rooms), "Số phòng đăng ký"
     )
     if room_count is None:
         raise ApiError(422, "invalid_quota", "Cần nhập số phòng đăng ký.")
-    room_cap = plan_json(plan)["maxRooms"]
     if room_cap is not None and room_count > room_cap:
         raise ApiError(
             409, "quota_exceeded", "Số phòng đăng ký vượt giới hạn gói.", {"limit": room_cap}
         )
-    from ..subscriptions import quota_used
-
-    used = quota_used(tenant_id, "rooms")
+    used = db.session.scalar(text("SELECT pms_room_quota_used(:tenant)"), {"tenant": tenant_id})
     if room_count < used:
         raise ApiError(
             409,
@@ -690,10 +785,12 @@ def handle_update_subscription(tenant_id):
     currency = data.get("currency", plan.currency)
     if currency != plan.currency:
         raise ApiError(422, "currency_mismatch", "Tiền tệ thanh toán phải cùng loại với gói.")
-    amount = money_value(data["amount"], allow_zero=True) if "amount" in data else None
-    cycle = data.get("cycle")
-    if cycle is not None and (not isinstance(cycle, str) or cycle not in {"monthly", "yearly"}):
+    if "amount" in data:
+        money_value(data["amount"], allow_zero=True)
+    cycle = data.get("cycle", "monthly")
+    if not isinstance(cycle, str) or cycle not in {"monthly", "yearly"}:
         raise ApiError(422, "invalid_cycle", "Chu kỳ phải là monthly hoặc yearly.")
+    amount = calculate_plan_amount(plan_data, room_count, cycle)
     if previous is None:
         action = "created"
     elif previous != plan_id:

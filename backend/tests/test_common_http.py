@@ -103,6 +103,15 @@ class CommonHTTPTests(unittest.TestCase):
                 self.assertEqual(caught.exception.status, 422)
                 self.assertEqual(caught.exception.code, "invalid_json")
 
+    def test_deeply_nested_json_is_rejected_as_invalid_input(self):
+        app = Flask(__name__)
+        body = '{"nested":' + "[" * 100000 + "0" + "]" * 100000 + "}"
+        with app.test_request_context(method="POST", data=body, content_type="application/json"):
+            with self.assertRaises(ApiError) as caught:
+                ItemView.payload()
+            self.assertEqual(caught.exception.status, 422)
+            self.assertEqual(caught.exception.code, "invalid_json")
+
     def test_shared_formatters_keep_nullable_dates_and_four_decimal_places(self):
         self.assertIsNone(ValueFormatter.iso(None))
         self.assertEqual(ValueFormatter.iso(date(2026, 10, 8)), "2026-10-08")

@@ -319,6 +319,36 @@
   min-width: 640px;
 }
 
+.manager-plan-pricing-heading,
+.manager-plan-pricing-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.manager-plan-pricing-heading h2 { display: flex; align-items: center; gap: 8px; font-size: 18px; }
+.manager-plan-pricing-dialog > p { color: var(--manager-muted); font-size: 13px; line-height: 1.6; }
+.manager-plan-pricing-dialog form { display: grid; gap: 16px; }
+.manager-plan-pricing-fields { display: grid; gap: 14px; min-width: 0; margin: 0; padding: 16px; border: 1px solid var(--manager-line); border-radius: 10px; }
+.manager-plan-pricing-fields legend { font-size: 13px; font-weight: 650; }
+.manager-plan-pricing-fields label { display: grid; gap: 6px; min-width: 0; font-size: 13px; }
+.manager-plan-pricing-fields small { color: var(--manager-muted); line-height: 1.6; font-size: 12px; }
+.manager-plan-pricing-fields :where(input, select) { width: 100%; min-height: 40px; padding: 10px 12px; border: 1px solid var(--manager-line); border-radius: 8px; background: var(--manager-surface); color: var(--manager-ink); font: inherit; }
+.manager-plan-pricing-thresholds { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.manager-plan-pricing-summary { color: var(--manager-muted); font-size: 13px; }
+.manager-plan-price-breakdown { display: grid; gap: 10px; margin: 0; padding: 16px; border: 1px solid var(--manager-line); border-radius: 10px; background: var(--manager-soft); font-size: 13px; }
+.manager-plan-price-breakdown > div { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 6px 16px; }
+.manager-plan-price-breakdown dt { color: var(--manager-muted); }
+.manager-plan-price-breakdown dd { margin: 0; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.manager-plan-price-breakdown > div:last-child { border-top: 1px solid var(--manager-line); padding-top: 12px; font-weight: 700; }
+
+@media (max-width: 640px) {
+  .manager-plan-pricing-thresholds { grid-template-columns: minmax(0, 1fr); }
+  .manager-plan-pricing-fields { padding: 12px; }
+}
+
 @media (min-width: 641px) and (max-width: 1200px) {
   .manager-invoice-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .manager-invoice-filter-actions { grid-column: 1 / -1; justify-content: flex-end; }

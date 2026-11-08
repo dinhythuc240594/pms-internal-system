@@ -7,7 +7,7 @@
   min-height: min(480px, 65dvh);
   padding: 40px 20px;
   color: var(--manager-ink, var(--text-primary, #122b44));
-  font-family: Inter, 'Be Vietnam Pro', sans-serif;
+  font-family: var(--font-sans);
   box-sizing: border-box;
 }
 .loha-loading-full { min-height: 100dvh; background: var(--manager-soft, var(--bg-main, #f3f7fb)); }

@@ -34,6 +34,8 @@ class PhysicalRoom(db.Model):
     tenant_id = db.Column(db.String(40), db.ForeignKey("tenants.id"), nullable=False, index=True)
     room_type_id = db.Column(db.String(40), nullable=False)
     number = db.Column(db.String(40), nullable=False)
+    floor = db.Column(db.String(120))
+    area = db.Column(db.String(120))
     condition = db.Column(db.String(20), nullable=False, default="clean")
     housekeeping_revision = db.Column(db.Integer, nullable=False, default=0)
     active = db.Column(db.Boolean, nullable=False, default=True)
@@ -42,6 +44,12 @@ class PhysicalRoom(db.Model):
         UniqueConstraint("tenant_id", "number", name="uq_physical_rooms_tenant_number"),
         ForeignKeyConstraint(
             ["tenant_id", "room_type_id"], ["room_types.tenant_id", "room_types.id"]
+        ),
+        CheckConstraint(
+            "floor IS NULL OR (floor = btrim(floor) AND length(floor) > 0)", name="valid_floor"
+        ),
+        CheckConstraint(
+            "area IS NULL OR (area = btrim(area) AND length(area) > 0)", name="valid_area"
         ),
         CheckConstraint(
             "condition IN ('clean', 'dirty', 'inspection', 'maintenance')", name="valid_condition"

@@ -14,8 +14,28 @@ _registered_views = WeakKeyDictionary()
 
 class RequestData:
     @staticmethod
+    def date_range(*, aliases=("start", "end")):
+        """Read canonical date bounds without changing their format or semantics."""
+        bounds = []
+        for canonical, alias in zip(("start_date", "end_date"), aliases, strict=True):
+            values = []
+            for key in dict.fromkeys((canonical, alias)):
+                if key in request.args:
+                    supplied = request.args.getlist(key)
+                    if len(supplied) != 1:
+                        raise ApiError(422, "invalid_dates", "Tham số khoảng ngày bị lặp.")
+                    values.extend(supplied)
+            if len(set(values)) > 1:
+                raise ApiError(422, "invalid_dates", "Tham số khoảng ngày không nhất quán.")
+            bounds.append(values[0] if values else None)
+        return tuple(bounds)
+
+    @staticmethod
     def payload():
-        value = request.get_json(silent=True)
+        try:
+            value = request.get_json(silent=True)
+        except RecursionError:
+            value = None
         if not isinstance(value, dict):
             raise ApiError(422, "invalid_json", "Nội dung phải là một JSON object.")
         return value

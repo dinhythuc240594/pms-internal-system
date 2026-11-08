@@ -76,7 +76,7 @@ class ClientSettingsTests(DomainTestCase):
 
     def test_commission_recipient_rejects_missing_cross_tenant_and_inactive_types(self):
         with self.app.app_context():
-            set_context(is_system=True)
+            set_context(is_system=True, is_service=True)
             db.session.add(
                 Master(
                     id="commission-other",

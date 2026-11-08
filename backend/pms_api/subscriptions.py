@@ -10,6 +10,7 @@ from .admin.feature_models import FEATURE_CATALOG, FeatureControl, TenantFeature
 from .catalog.models import PhysicalRoom
 from .core_models import Plan, Subscription, Tenant, TenantUser, utcnow
 from .extensions import db
+from .plan_pricing import default_pricing_rules
 from .security import ApiError
 
 ACTION_FEATURES = {
@@ -32,6 +33,8 @@ ACTION_FEATURES = {
     "inventory.view": "INVENTORY_WAREHOUSE",
     "inventory.write": "INVENTORY_WAREHOUSE",
     "reports.view": "REPORTS_BASIC",
+    "reconciliation.view": "REPORTS_BASIC",
+    "reconciliation.confirm": "REPORTS_BASIC",
     "reports.advanced.view": "REPORTS_ADVANCED",
 }
 CORE_FEATURES = {
@@ -73,7 +76,7 @@ def timestamp(value, label):
         if parsed is None or parsed.tzinfo is None or parsed.utcoffset() is None:
             raise ValueError
         return parsed
-    except (ValueError, TypeError):
+    except ValueError, TypeError:
         raise ApiError(422, "invalid_dates", f"{label} phải là thời điểm ISO có múi giờ.") from None
 
 
@@ -114,6 +117,7 @@ def plan_json(plan):
             ".4f",
         ),
         "currency": plan.currency,
+        "pricingRules": getattr(plan, "pricing_rules", None) or default_pricing_rules(),
         "maxRooms": plan.max_rooms
         if plan.max_rooms is not None
         else 30
@@ -190,7 +194,7 @@ def effective_features(tenant_id=None, *, for_write=False):
             code: (plan.features or {}).get(code, True) is not False if plan else True
             for code in FEATURE_CATALOG
         }
-        if not blocked:
+        if not blocked or blocked == "expired" and operational_access(tenant_id):
             now = utcnow()
             for row in db.session.scalars(
                 select(TenantFeatureOverride).where(TenantFeatureOverride.tenant_id == tenant_id)
@@ -209,7 +213,95 @@ def feature_enabled(code, *, for_write=False):
     return effective_features(for_write=for_write).get(code, True)
 
 
-def enforce_entitlements(action):
+def operational_access(tenant_id, *, include_inactive=False):
+    """Latest explicit decision; expiry recovery never revives a suspended hotel or plan."""
+    from .saas_billing.models import SaaSOperationalAccess
+
+    row = db.session.execute(
+        select(SaaSOperationalAccess, Subscription, Plan, Tenant)
+        .join(
+            Subscription,
+            (Subscription.id == SaaSOperationalAccess.subscription_id)
+            & (Subscription.tenant_id == SaaSOperationalAccess.tenant_id),
+        )
+        .join(Plan, Plan.id == Subscription.plan_id)
+        .join(Tenant, Tenant.id == SaaSOperationalAccess.tenant_id)
+        .where(SaaSOperationalAccess.tenant_id == tenant_id)
+        .order_by(SaaSOperationalAccess.created_at.desc(), SaaSOperationalAccess.id.desc())
+        .limit(1)
+    ).one_or_none()
+    if row is None:
+        return None
+    access, sub, plan, tenant = row
+    now = utcnow()
+    active = bool(
+        access.until
+        and access.until > now
+        and tenant.status == "active"
+        and plan.active
+        and sub.status == "active"
+        and sub.start_date <= now
+        and sub.end_date
+        and sub.end_date <= now
+        and sub.end_date == access.subscription_end
+        and sub.plan_id == access.plan_id
+    )
+    if not include_inactive and not active:
+        return None
+    return {
+        "id": access.id,
+        "until": access.until.isoformat() if access.until else None,
+        "reason": access.reason,
+        "createdAt": access.created_at.isoformat(),
+        "active": active,
+    }
+
+
+def completion_allowed(action, access, *, operation=None):
+    if not access:
+        return False
+    endpoint = request.endpoint
+    if action == "channels.write":
+        return endpoint in {
+            "channels.webhook",
+            "channels.resolve_booking_review",
+            "channels.incident_action",
+            "channels.support_incident_action",
+        } or operation in {"pull_bookings", "ack_revision"}
+    if endpoint == "housekeeping.change_task_status":
+        return True
+    if endpoint not in {
+        "booking.add_charge",
+        "booking.add_payment",
+        "booking.refund_payment",
+        "booking.adjust_closed_stay",
+        "booking.change_status",
+    }:
+        return False
+    from .bookings.models import Reservation
+
+    booking = db.session.scalar(
+        select(Reservation).where(
+            Reservation.tenant_id == g.tenant.id,
+            Reservation.id == (request.view_args or {}).get("reservation_id"),
+        )
+    )
+    if booking is None or booking.created_at > datetime.fromisoformat(access["createdAt"]):
+        return False
+    if endpoint == "booking.change_status":
+        data = request.get_json(silent=True)
+        return (
+            booking.status == "IN_HOUSE"
+            and isinstance(data, dict)
+            and data.get("status") == "CHECKED_OUT"
+        )
+    return booking.status == "IN_HOUSE" or (
+        endpoint in {"booking.refund_payment", "booking.adjust_closed_stay"}
+        and booking.status in {"CHECKED_OUT", "CANCELLED", "NO_SHOW"}
+    )
+
+
+def enforce_entitlements(action, *, operation=None):
     value = entitlement()
     feature = (
         "POS_SALES"
@@ -223,7 +315,14 @@ def enforce_entitlements(action):
             "Tính năng đã bị tắt trong gói của khách sạn.",
             {"feature": feature},
         )
-    if request.method not in {"GET", "HEAD", "OPTIONS"} and value["blockedReason"]:
+    if (
+        request.method not in {"GET", "HEAD", "OPTIONS"}
+        and value["blockedReason"]
+        and not (
+            value["blockedReason"] == "expired"
+            and completion_allowed(action, operational_access(g.tenant.id), operation=operation)
+        )
+    ):
         raise ApiError(
             403,
             "subscription_inactive",
@@ -301,7 +400,31 @@ def subscription_json(sub, plan):
         "effectiveActive": reason is None,
         "blockedReason": reason,
         "planFeatures": dict(plan.features or {}),
+        "operationalAccess": operational_access(sub.tenant_id, include_inactive=True),
     }
+
+
+def subscription_history_json(row, plan, *, actor_name=None, include_actor=False):
+    """Keep operator and owner history on the same immutable plan snapshots."""
+    value = {
+        "id": row.id,
+        "planId": row.plan_id,
+        "planName": row.plan_name or plan.name,
+        "planCode": row.plan_code or plan_code(plan),
+        "previousPlanId": row.previous_plan_id,
+        "action": row.action,
+        "amount": format(row.amount, ".4f") if row.amount is not None else None,
+        "currency": row.currency,
+        "cycle": row.cycle,
+        "status": row.status,
+        "roomCount": row.room_count,
+        "effectiveDate": row.effective_date.isoformat(),
+        "endDate": row.end_date.isoformat() if row.end_date else None,
+        "createdAt": row.created_at.isoformat(),
+    }
+    if include_actor:
+        value.update(actorId=row.user_id, actorName=actor_name)
+    return value
 
 
 def workspace_entitlements(tenant_id):

@@ -7,6 +7,7 @@ from unittest.mock import Mock, patch
 from uuid import UUID
 
 from cryptography.fernet import Fernet
+from sqlalchemy import select
 
 from pms_api.channels.client import ProviderError
 from pms_api.channels.credentials import encrypt_credentials
@@ -15,6 +16,7 @@ from pms_api.core_models import AuditLog, Tenant, User, utcnow
 from pms_api.extensions import db
 from pms_api.security import set_context
 from tests.domain_fixture import DomainTestCase
+from tests.system_scope_fixture import grant_system_access, linked_property
 
 PROPERTY, ROOM, RATE = [str(UUID(int=i)) for i in range(1, 4)]
 
@@ -58,6 +60,7 @@ def catalog_entity(resource):
 class ChannexRemoteTests(DomainTestCase):
     def setUp(self):
         super().setUp()
+        grant_system_access(self)
         self.manager, self.manager_headers = self.login("manager@test.local")
         self.provider = Mock()
         self.provider.properties.return_value = {
@@ -69,7 +72,7 @@ class ChannexRemoteTests(DomainTestCase):
         self.provider.catalog_entity.side_effect = lambda resource, _: catalog_entity(resource)
         self.provider.write_catalog.side_effect = self.saved_catalog
         provider_patch = patch(
-            "pms_api.channels.factory.ChannexClient", return_value=self.provider
+            "pms_api.admin.channex_remote_application.channel_adapter", return_value=self.provider
         )
         self.factory = provider_patch.start()
         self.addCleanup(provider_patch.stop)
@@ -93,6 +96,8 @@ class ChannexRemoteTests(DomainTestCase):
         client=None,
         headers=None,
     ):
+        if path.startswith("/properties/"):
+            linked_property(self, PROPERTY)
         url = "/api/admin/channex" + path
         if method == "GET" and path != "/accounts":
             url += ("&" if "?" in url else "?") + "accountId=" + account
@@ -106,8 +111,10 @@ class ChannexRemoteTests(DomainTestCase):
 
     def connection(self, *, environment="staging", encrypted=False):
         with self.app.app_context():
-            set_context("manager", is_system=True)
-            row = ChannelConnection(
+            set_context("manager", is_system=True, is_service=True)
+            row = db.session.scalar(select(ChannelConnection).where(
+                ChannelConnection.tenant_id == self.tenant_id
+            )) or ChannelConnection(
                 tenant_id=self.tenant_id,
                 environment=environment,
                 property_id=PROPERTY,
@@ -116,6 +123,7 @@ class ChannexRemoteTests(DomainTestCase):
                 actor_id="manager",
                 active=False,
             )
+            row.environment = environment
             if encrypted:
                 row.secrets_ciphertext = encrypt_credentials(
                     self.tenant_id, environment, PROPERTY, "fixture-encrypted-key", "w" * 32
@@ -204,7 +212,7 @@ class ChannexRemoteTests(DomainTestCase):
         self.assertNotIn("private-provider-field", str(response.json))
         self.assertNotIn("owner@example.test", str(response.json))
         with self.app.app_context():
-            set_context("manager", is_system=True)
+            set_context("manager", is_system=True, is_service=True)
             self.assertEqual(db.session.query(Tenant).count(), 2)
             self.assertEqual(db.session.query(ChannelConnection).count(), 0)
             event = db.session.query(AuditLog).filter_by(event="channex.property.created").one()
@@ -235,6 +243,17 @@ class ChannexRemoteTests(DomainTestCase):
                     )
                     self.assertEqual(response.status_code, 201, response.json)
                     self.assertEqual(response.json["environment"], environment)
+
+    def test_property_create_forwards_common_staging_currencies_without_conversion(self):
+        self.provider.create_property.side_effect = self.saved_property
+        for currency in ("EUR", "GBP", "JPY", "KRW", "SGD", "THB", "AUD", "AED"):
+            with self.subTest(currency=currency):
+                response = self.remote(
+                    "/properties", method="POST", body={**self.property_body(), "currency": currency}
+                )
+                self.assertEqual(response.status_code, 201, response.json)
+                self.assertEqual(response.json["property"]["currency"], currency)
+                self.assertEqual(self.provider.create_property.call_args.args[0]["currency"], currency)
 
     def test_property_create_requires_session_system_role_and_csrf_before_provider_calls(self):
         for email in ("owner-a@test.local", "frontdesk@test.local", "hk@test.local"):
@@ -273,7 +292,7 @@ class ChannexRemoteTests(DomainTestCase):
             {"name": "x" * 256},
             {"name": "test\x00hotel"},
             {"name": 12},
-            {"currency": "EUR"},
+            {"currency": "XXX"},
             {"currency": "vnd"},
             {"currency": ["VND"]},
             {"timezone": "Mars/Olympus"},
@@ -288,6 +307,9 @@ class ChannexRemoteTests(DomainTestCase):
             {"email": "bad\x7f@example.test"},
             {"email": "a" * 250 + "@e.test"},
             {"phone": "1" * 33},
+            {"phone": "098210910A"},
+            {"phone": "090+123"},
+            {"phone": "---"},
             {"phone": 900000000},
             {"country": None},
             {"property_type": "apartment"},
@@ -357,7 +379,7 @@ class ChannexRemoteTests(DomainTestCase):
             self.assertEqual(response.status_code, 502, response.json)
             self.assertNotIn("property", response.json)
         with self.app.app_context():
-            set_context("manager", is_system=True)
+            set_context("manager", is_system=True, is_service=True)
             self.assertEqual(
                 db.session.query(AuditLog).filter_by(event="channex.property.created").count(), 0
             )
@@ -378,6 +400,7 @@ class ChannexRemoteTests(DomainTestCase):
         self.factory.assert_not_called()
 
     def test_system_roles_only_and_disabled_sessions_fail_closed(self):
+        grant_system_access(self, "admin")
         for email, expected in (("admin@test.local", 200), ("owner-a@test.local", 403)):
             client, headers = self.login(email)
             for path in ("/accounts", "/properties", f"/properties/{PROPERTY}/catalog"):
@@ -388,7 +411,7 @@ class ChannexRemoteTests(DomainTestCase):
         with patch("pms_api.security.authenticate", return_value=Mock(global_role="UNKNOWN_ROLE")):
             self.assertEqual(self.remote().status_code, 403)
         with self.app.app_context():
-            set_context("manager", is_system=True)
+            set_context("manager", is_system=True, is_service=True)
             db.session.get(User, "manager").active = False
             db.session.commit()
         self.assertEqual(self.remote().status_code, 401)
@@ -423,7 +446,7 @@ class ChannexRemoteTests(DomainTestCase):
             self.factory.assert_called_once_with("staging", "fixture-encrypted-key")
             self.assertNotIn("fixture-encrypted-key", str(response.json))
             with self.app.app_context():
-                set_context("manager", is_system=True)
+                set_context("manager", is_system=True, is_service=True)
                 db.session.query(
                     ChannelConnection
                 ).first().secrets_ciphertext = "private-damaged-token"
@@ -578,11 +601,11 @@ class ChannexRemoteTests(DomainTestCase):
         self.assertNotIn("capacity", values)
         self.assertNotIn("room_kind", values)
         with self.app.app_context():
-            set_context("manager", is_system=True)
+            set_context("manager", is_system=True, is_service=True)
             events = db.session.query(AuditLog).filter(AuditLog.event.like("channex.%")).all()
             self.assertEqual(len(events), 2)
             self.assertTrue(
-                all(row.tenant_id is None and row.user_id == "manager" for row in events)
+                all(row.tenant_id == self.tenant_id and row.user_id == "manager" for row in events)
             )
             self.assertTrue(
                 all(set(row.details) == {"propertyId", "environment"} for row in events)
@@ -706,7 +729,7 @@ class ChannexRemoteTests(DomainTestCase):
     def test_linked_mapping_guards_room_capacity_rate_currency_and_pending_closeout(self):
         self.connection()
         with self.app.app_context():
-            set_context("manager", is_system=True)
+            set_context("manager", is_system=True, is_service=True)
             db.session.add(
                 ChannelMapping(
                     tenant_id=self.tenant_id,
@@ -735,7 +758,7 @@ class ChannexRemoteTests(DomainTestCase):
         self.assertEqual(response.status_code, 409, response.json)
         self.provider.write_catalog.assert_not_called()
         with self.app.app_context():
-            set_context("manager", is_system=True)
+            set_context("manager", is_system=True, is_service=True)
             db.session.get(Tenant, self.tenant_id).settings = {"currency": "USD"}
             db.session.query(ChannelMapping).first().pause_requested = True
             db.session.commit()
@@ -749,7 +772,7 @@ class ChannexRemoteTests(DomainTestCase):
         self.provider.write_catalog.assert_not_called()
 
         with self.app.app_context():
-            set_context("manager", is_system=True)
+            set_context("manager", is_system=True, is_service=True)
             db.session.query(ChannelMapping).first().pause_requested = False
             db.session.commit()
         response = self.remote(

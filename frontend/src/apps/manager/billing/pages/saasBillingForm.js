@@ -1,8 +1,17 @@
 import { addDays } from '../../../pms/data/model.js';
+import { parseIsoDate } from '../../../../shared/lib/date.js';
+
+export function nonnegativeMoneyInput(value) {
+  const amount = value.trim();
+  if (!/^\d{1,15}(?:\.\d{1,4})?$/.test(amount)) {
+    throw new Error('Số tiền phải không âm, tối đa 4 chữ số thập phân.');
+  }
+  return amount;
+}
 
 export function positiveMoneyInput(value) {
-  const amount = value.trim();
-  if (!/^\d{1,15}(?:\.\d{1,4})?$/.test(amount) || /^0+(?:\.0+)?$/.test(amount)) {
+  const amount = nonnegativeMoneyInput(value);
+  if (/^0+(?:\.0+)?$/.test(amount)) {
     throw new Error('Số tiền phải lớn hơn 0, tối đa 15 chữ số nguyên và 4 chữ số thập phân. Dùng dấu chấm cho phần thập phân.');
   }
   return amount;
@@ -10,7 +19,7 @@ export function positiveMoneyInput(value) {
 
 export function dateFilterRange(start, through) {
   for (const value of [start, through]) {
-    if (value && (!/^\d{4}-\d{2}-\d{2}$/.test(value) || !Number.isFinite(Date.parse(value)) || new Date(value).toISOString().slice(0, 10) !== value)) {
+    if (value && !Number.isFinite(parseIsoDate(value))) {
       throw new Error('Vui lòng chọn ngày hợp lệ.');
     }
   }

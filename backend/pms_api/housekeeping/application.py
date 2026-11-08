@@ -14,6 +14,7 @@ from ..catalog.models import PhysicalRoom
 from ..core_models import TenantUser, User, uid, utcnow
 from ..extensions import db
 from ..security import ApiError, audit
+from ..validation import phone_value
 from .domain import known_fields as known_fields
 from .domain import plan_day_values as plan_day_values
 from .domain import revision_value as revision_value
@@ -91,14 +92,12 @@ def member_link(tenant_id, user_id):
         select(User).where(User.id == user_id, User.active.is_(True)).with_for_update(read=True)
     )
     member = db.session.scalar(
-        select(TenantUser)
-        .where(
+        select(TenantUser).where(
             TenantUser.tenant_id == tenant_id,
             TenantUser.user_id == user_id,
             TenantUser.active.is_(True),
             TenantUser.role == "HOUSEKEEPING",
         )
-        .with_for_update(read=True)
     )
     if not user or not member:
         raise ApiError(
@@ -129,7 +128,9 @@ def staff_values(tenant_id, data, row=None):
     known_fields(data, {"name", "phone", "userId", "active"})
     row = row or HousekeepingStaff(tenant_id=tenant_id)
     row.name = text_value(data.get("name", row.name), "Tên nhân viên", 160)
-    row.phone = text_value(data.get("phone", row.phone or ""), "Điện thoại", 40, empty=True)
+    row.phone = phone_value(
+        text_value(data.get("phone", row.phone or ""), "Điện thoại", 40, empty=True)
+    )
     user_id = data.get("userId", row.user_id)
     active = bool_value(data.get("active", row.active if row.active is not None else True))
     if user_id is not None:
@@ -176,14 +177,12 @@ def own_staff_ids(tenant_id):
 
 def calendar_range():
     """Optional inclusive start/exclusive end, shared by task and shift calendars."""
-    if "start" not in runtime().request.args and "end" not in runtime().request.args:
+    start_value, end_value = runtime().date_range()
+    if start_value is None and end_value is None:
         return None
     if "date" in runtime().request.args:
         raise ApiError(422, "invalid_range", "Chỉ chọn ngày hoặc khoảng ngày.")
-    start, end = (
-        parse_date(runtime().request.args.get("start")),
-        parse_date(runtime().request.args.get("end")),
-    )
+    start, end = parse_date(start_value), parse_date(end_value)
     if not 1 <= (end - start).days <= 31:
         raise ApiError(422, "invalid_range", "Khoảng lịch phải từ 1 đến 31 ngày.")
     return start, end
@@ -748,19 +747,13 @@ def cancel_reservation_tasks(reservation, rooms, reason):
         .with_for_update()
     )
     for task in tasks:
-        details = {"reason": reason}
-        if reason == "stay_changed":
-            # Free the obsolete planning key so a later move back to this room
-            # can create a fresh intent, while retaining the cancelled task/log.
-            details["sourceKey"] = task.source_key
-            task.source_key = f"superseded:{task.id}"
         task.status = "cancelled"
         task.revision += 1
         work_log(
             "housekeeping.task_superseded",
             task=task,
             room=room_map.get(task.room_id),
-            details=details,
+            details={"reason": reason},
         )
 
 

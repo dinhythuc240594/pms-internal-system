@@ -13,13 +13,14 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from pms_api.bookings.models import Reservation, ReservationNight
 from pms_api.channels.client import ProviderError
-from pms_api.channels.models import ChannelJob, ChannelRevision
+from pms_api.channels.models import ChannelConnection, ChannelJob, ChannelRevision
 from pms_api.channels.routes import expected_refs
 from pms_api.channels.service import process_jobs
-from pms_api.core_models import Plan, Tenant, TenantUser, utcnow
+from pms_api.core_models import Plan, Tenant, TenantUser, User, utcnow
 from pms_api.extensions import db
 from pms_api.security import set_context
 from tests.domain_fixture import DomainTestCase
+from tests.system_scope_fixture import linked_property
 
 PROPERTY, REMOTE_ROOM, REMOTE_RATE, BOOKING = [str(UUID(int=i)) for i in range(1, 5)]
 
@@ -81,6 +82,14 @@ class ChannelTestCase(DomainTestCase):
         )
         self.env.start()
         self.addCleanup(self.env.stop)
+        self.provider = Mock()
+        self.provider.feed.return_value = []
+        self.provider.catalog.side_effect = self.catalog
+        self.provider.restrictions.side_effect = self.stored_restrictions
+        self.provider.availability.side_effect = self.stored_availability
+        route_provider = patch("pms_api.channels.application.channel_adapter", return_value=self.provider)
+        route_provider.start()
+        self.addCleanup(route_provider.stop)
         self.config = {
             "environment": "staging",
             "propertyId": PROPERTY,
@@ -88,6 +97,7 @@ class ChannelTestCase(DomainTestCase):
             "webhookSecretRef": webhook,
             "active": False,
         }
+        linked_property(self, PROPERTY)
         result = self.request("put", "/channels/config", json=self.config)
         self.assertEqual(result.status_code, 200, result.json)
         result = self.request(
@@ -103,15 +113,33 @@ class ChannelTestCase(DomainTestCase):
         self.assertEqual(result.status_code, 200, result.json)
         self.config["active"] = True
         self.assertEqual(self.request("put", "/channels/config", json=self.config).status_code, 200)
+        # Existing channel tests start with an already reconciled hotel.
+        with self.app.app_context():
+            set_context(self.owner_id, self.tenant_id)
+            row = db.session.scalar(select(ChannelConnection))
+            row.inventory_reconciled_at = utcnow()
+            row.pending_ari_start = row.pending_ari_end = row.pending_ari_since = None
+            db.session.commit()
         self.clear_push_jobs()
-        self.provider = Mock()
-        self.provider.feed.return_value = []
-        self.provider.catalog.side_effect = self.catalog
         self.patch_provider = patch(
-            "pms_api.channels.factory.ChannexClient", return_value=self.provider
+            "pms_api.channels.service.channel_adapter", return_value=self.provider
         )
         self.patch_provider.start()
         self.addCleanup(self.patch_provider.stop)
+
+    def stored_restrictions(self, *_args):
+        result = {}
+        for value in self.provider.push_restrictions.call_args.args[0]:
+            result.setdefault(value["rate_plan_id"], {})[value["date"]] = {
+                key: value[key] for key in ("rate", "stop_sell") if key in value
+            }
+        return result
+
+    def stored_availability(self, *_args):
+        result = {}
+        for value in self.provider.push_availability.call_args.args[0]:
+            result.setdefault(value["room_type_id"], {})[value["date"]] = value["availability"]
+        return result
 
     def catalog(self, resource, property_id):
         self.assertEqual(property_id, PROPERTY)
@@ -196,6 +224,49 @@ class ChannelTestCase(DomainTestCase):
 
 
 class ChannelIntegrationTests(ChannelTestCase):
+    def test_revisions_preserve_pms_companions_when_price_or_primary_contact_changes(self):
+        booking = self.import_booking()[0]
+        path = f"/reservations/{booking['id']}"
+        primary = self.request("get", path).json["guests"][0]
+        attached = self.request(
+            "patch",
+            path,
+            {
+                "guests": [
+                    {"id": primary["id"]},
+                    {
+                        "name": "PMS Companion",
+                        "identityNumber": "COMPANION-ID",
+                        "nationality": "VN",
+                    },
+                ]
+            },
+        )
+        self.assertEqual(attached.status_code, 200, attached.json)
+        companion = attached.json["guests"][1]
+
+        for number, contact_changed in ((11, False), (12, True)):
+            self.clear_push_jobs()
+            self.assertEqual(self.run_jobs(), 1)
+            changed = revision(number, "modified", amount="240")
+            changed["attributes"]["rooms"][0]["days"] = {
+                "2030-01-01": "120",
+                "2030-01-02": "120",
+            }
+            if contact_changed:
+                changed["attributes"]["customer"].update(name="Updated", phone="0456")
+            self.import_booking(changed)
+            saved = self.request("get", path).json
+            self.assertEqual(saved["total"], "240.0000")
+            self.assertEqual(len(saved["guests"]), 2)
+            self.assertEqual(saved["guests"][1], companion)
+            if contact_changed:
+                self.assertEqual(saved["guest"], "Updated Guest")
+                self.assertEqual(saved["phone"], "0456")
+                self.assertNotEqual(saved["guests"][0]["id"], primary["id"])
+            else:
+                self.assertEqual(saved["guests"][0], primary)
+
     def test_import_snapshots_exact_active_ota_rate_and_keeps_it_on_revision(self):
         source = self.request("post", "/masters/bookingSources", {"name": "BookingCom", "type": "OTA", "commission": "15"})
         self.assertEqual(source.status_code, 201, source.json)
@@ -389,7 +460,7 @@ class ChannelIntegrationTests(ChannelTestCase):
                 for j in self.jobs()
                 if j["kind"] == "pull_bookings" and j["errorCode"] == "room_unavailable"
             )["status"],
-            "failed",
+            "needs_review",
         )
         self.provider.ack.assert_not_called()
 
@@ -458,7 +529,7 @@ class ChannelIntegrationTests(ChannelTestCase):
         self.assertEqual(self.jobs()[0]["errorCode"], "booking_amount_mismatch")
         self.assertEqual(self.local_bookings(), [])
         self.import_booking(revision(11))
-        self.run_jobs()
+        self.run_jobs(5)
         with self.app.app_context():
             set_context(self.owner_id, self.tenant_id)
             row = db.session.scalar(select(Reservation))
@@ -485,6 +556,34 @@ class ChannelIntegrationTests(ChannelTestCase):
         self.assertEqual(self.provider.revision.call_count, 1)
         self.assertEqual(self.provider.ack.call_count, 2)
 
+    def test_support_jobs_work_without_membership_and_recheck_system_role(self):
+        for actor in ("admin", "manager"):
+            client, headers = self.login(actor + "@test.local")
+            prefix = f"/api/admin/channex/tenants/{self.tenant_id}/channels"
+            saved = self.request("PUT", prefix + "/config", self.config, client=client, headers=headers)
+            self.assertEqual(saved.status_code, 200, saved.json)
+            self.clear_push_jobs()
+            queued = self.request("POST", prefix + "/jobs", {"kind": "pull_bookings"}, client=client, headers=headers)
+            self.assertEqual(queued.status_code, 202, queued.json)
+            self.run_jobs(limit=10)
+            with self.app.app_context():
+                set_context(self.owner_id, self.tenant_id)
+                job = db.session.get(ChannelJob, queued.json["id"])
+                self.assertEqual(job.status, "succeeded", job.error_code)
+            queued = self.request("POST", prefix + "/jobs", {"kind": "pull_bookings"}, client=client, headers=headers)
+            self.assertEqual(queued.status_code, 202, queued.json)
+            with self.app.app_context():
+                set_context("admin", is_system=True, is_service=True)
+                db.session.get(User, actor).global_role = "USER"
+                db.session.commit()
+            self.run_jobs()
+            with self.app.app_context():
+                set_context(self.owner_id, self.tenant_id)
+                job = db.session.get(ChannelJob, queued.json["id"])
+                self.assertEqual(job.status, "failed")
+                self.assertEqual(job.error_code, "channel_actor_revoked")
+            self.assertEqual(client.get(f"/api/tenants/{self.tenant_id}/workspace").status_code, 403)
+
     def test_worker_rechecks_owner_feature_and_tenant_status(self):
         for blocked, code in (
             ("membership", "channel_actor_revoked"),
@@ -494,7 +593,7 @@ class ChannelIntegrationTests(ChannelTestCase):
             with self.subTest(blocked=blocked):
                 self.request("post", "/channels/jobs", json={"kind": "pull_bookings"})
                 with self.app.app_context():
-                    set_context(self.owner_id, self.tenant_id)
+                    set_context(self.owner_id, self.tenant_id, is_service=True)
                     member = db.session.scalar(
                         select(TenantUser).where(
                             TenantUser.user_id == self.owner_id,
@@ -513,7 +612,7 @@ class ChannelIntegrationTests(ChannelTestCase):
                     db.session.commit()
                 self.run_jobs()
                 with self.app.app_context():
-                    set_context(self.owner_id, self.tenant_id)
+                    set_context(self.owner_id, self.tenant_id, is_service=True)
                     self.assertTrue(
                         db.session.scalar(
                             select(ChannelJob.id).where(ChannelJob.error_code == code)
@@ -709,19 +808,20 @@ class ChannelIntegrationTests(ChannelTestCase):
 
 
 class ChannelRecoveryTests(ChannelTestCase):
-    def test_manual_poll_recovers_failed_revision_after_provider_data_is_corrected(self):
+    def test_individual_retry_recovers_review_after_provider_data_is_corrected(self):
         self.import_booking(revision(amount="250"))
         failed_id = self.jobs()[0]["id"]
         self.assertEqual(self.jobs()[0]["errorCode"], "booking_amount_mismatch")
         self.provider.feed.return_value = [revision()]
         self.provider.revision.return_value = revision()
 
-        response = self.request("post", "/channels/jobs", json={"kind": "pull_bookings"})
+        response = self.request("post", f"/channels/jobs/{failed_id}/retry", json={})
         self.assertEqual(response.status_code, 202, response.json)
         with self.app.app_context():
             set_context(self.owner_id, self.tenant_id)
             self.assertEqual(
-                db.session.get(ChannelJob, response.json["id"]).payload, {"retryFailed": True}
+                db.session.get(ChannelJob, response.json["id"]).payload,
+                {"revisionId": revision()["id"], "retryReview": True},
             )
         self.run_jobs(10)
 
@@ -746,7 +846,7 @@ class ChannelRecoveryTests(ChannelTestCase):
         self.enqueue_revision(revision())
 
         failed = next(j for j in self.jobs() if j["id"] == failed_id)
-        self.assertEqual((failed["status"], failed["attempts"]), ("failed", 1))
+        self.assertEqual((failed["status"], failed["attempts"]), ("needs_review", 1))
         self.assertEqual(self.local_bookings(), [])
         self.provider.ack.assert_not_called()
         self.assertEqual(self.provider.revision.call_count, 1)
@@ -795,9 +895,9 @@ class ChannelRecoveryTests(ChannelTestCase):
         self.run_jobs(5)
 
         repeated = next(j for j in self.jobs() if j["id"] == failed["id"])
-        self.assertEqual((repeated["status"], repeated["errorCode"]), ("failed", "booking_requires_review"))
+        self.assertEqual((repeated["status"], repeated["errorCode"]), ("needs_review", "booking_requires_review"))
         self.provider.ack.assert_not_called()
-        self.assertEqual(self.provider.revision.call_count, 3)
+        self.assertEqual(self.provider.revision.call_count, 2)
         with self.app.app_context():
             set_context(self.owner_id, self.tenant_id)
             self.assertEqual(db.session.scalar(select(Reservation.currency)), "USD")
@@ -812,7 +912,9 @@ class ChannelRecoveryTests(ChannelTestCase):
         from pms_api.core_models import User
         from pms_api.security import ApiError
 
-        self.import_booking(revision(amount="250"))
+        self.enqueue_revision(revision())
+        self.provider.revision.side_effect = ProviderError("provider_rejected")
+        self.run_jobs()
         failed_id = self.jobs()[0]["id"]
         with self.app.app_context():
             set_context(self.owner_id, self.tenant_id)
@@ -896,7 +998,7 @@ class ChannelRecoveryTests(ChannelTestCase):
             self.assertEqual(logger.level, logging.INFO)
             output = stream.getvalue()
             for expected in ("kind=pull_bookings", "revision=" + revision()["id"],
-                             "status=failed", "error=booking_amount_mismatch", "status=succeeded"):
+                             "status=needs_review", "error=booking_amount_mismatch", "status=succeeded"):
                 self.assertIn(expected, output)
             for secret in ("fixture-sensitive-card", "fixture-api-key",
                            "fixture-webhook-secret-32-characters", "guest@test.local"):

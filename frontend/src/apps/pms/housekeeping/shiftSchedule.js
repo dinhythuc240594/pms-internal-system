@@ -1,7 +1,9 @@
+import { parseIsoDate } from '../../../shared/lib/date.js';
+
 export function shiftCreationDates(value, period = 'day') {
-  if (!['day', 'week', 'month'].includes(period) || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return [];
-  const first = new Date(`${value}T00:00:00Z`);
-  if (!Number.isFinite(first.getTime()) || first.toISOString().slice(0, 10) !== value || first.getUTCFullYear() < 1) return [];
+  if (!['day', 'week', 'month'].includes(period)) return [];
+  const first = new Date(parseIsoDate(value));
+  if (!Number.isFinite(first.getTime()) || first.getUTCFullYear() < 1) return [];
   let count = period === 'day' ? 1 : 7;
   if (period === 'month') {
     const lastCurrent = new Date(first), lastNext = new Date(first);

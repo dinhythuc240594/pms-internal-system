@@ -4,9 +4,8 @@ from concurrent.futures import ThreadPoolExecutor
 from threading import Event, get_ident
 from unittest.mock import patch
 
-from domain_fixture import TEST_PASSWORD, DomainTestCase
-
 from pms_api.security import authenticate
+from tests.domain_fixture import TEST_PASSWORD, DomainTestCase
 
 
 class ManagerProfileTests(DomainTestCase):

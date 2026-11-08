@@ -1,7 +1,8 @@
-from sqlalchemy import CheckConstraint, ForeignKeyConstraint, UniqueConstraint
+from sqlalchemy import CheckConstraint, ForeignKeyConstraint, UniqueConstraint, column
 from sqlalchemy.dialects.postgresql import JSONB
 
 from ..core_models import uid, utcnow
+from ..currencies import HOTEL_CURRENCIES
 from ..extensions import db
 
 
@@ -106,7 +107,9 @@ class ExchangeRate(db.Model):
         UniqueConstraint("tenant_id", "id"),
         UniqueConstraint("tenant_id", "currency", name="uq_exchange_rates_currency"),
         CheckConstraint(
-            "currency IN ('VND','USD') AND base_currency IN ('VND','USD')", name="currencies"
+            column("currency").in_(HOTEL_CURRENCIES)
+            & column("base_currency").in_(HOTEL_CURRENCIES),
+            name="currencies",
         ),
         CheckConstraint("rate > 0", name="rate"),
     )

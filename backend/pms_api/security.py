@@ -2,6 +2,7 @@
 
 import hashlib
 import hmac
+import re
 from functools import wraps
 from urllib.parse import urlsplit
 
@@ -49,6 +50,8 @@ ROLE_ACTIONS = {
         "cashbook.reverse",
         "reports.view",
         "reports.advanced.view",
+        "reconciliation.view",
+        "reconciliation.confirm",
         "payments.write",
         "rates.view",
         "inventory.view",
@@ -68,19 +71,28 @@ def digest(token):
     return hashlib.sha256(token.encode()).hexdigest()
 
 
-def set_context(user_id="", tenant_id="", is_system=False):
-    if db.session.info.get("flushing"):
-        pass  # avoid recursive flush if this was called somehow during a flush
-    else:
-        try:
-            db.session.flush()
-        except Exception:
-            pass  # if flush fails, we might be rolling back, ignore
+def set_context(
+    user_id="", tenant_id="", is_system=False, *, is_service=False, channel_support=False
+):
+    """Set transaction-local scope; SaaS administration never implies PMS access.
+
+    is_service is reserved for trusted background/maintenance work, never derived
+    from a user's global role. Reset every flag when switching scope.
+    """
+    db.session.flush()
     db.session.execute(
         text(
-            "SELECT set_config('app.user_id',:user,true), set_config('app.tenant_id',:tenant,true), set_config('app.is_system',:system,true)"
+            "SELECT set_config('app.user_id',:user,true), set_config('app.tenant_id',:tenant,true), "
+            "set_config('app.is_system',:system,true), set_config('app.is_service',:service,true), "
+            "set_config('app.channel_support',:channel_support,true)"
         ),
-        {"user": user_id, "tenant": tenant_id, "system": "true" if is_system else "false"},
+        {
+            "user": user_id,
+            "tenant": tenant_id,
+            "system": "true" if is_system else "false",
+            "service": "true" if is_service else "false",
+            "channel_support": "true" if channel_support else "false",
+        },
     )
 
 
@@ -106,7 +118,7 @@ def authenticate():
     if not user or not user.active:
         raise ApiError(401, "unauthenticated", "Vui lòng đăng nhập lại.")
     g.user, g.auth_session = user, session
-    set_context(user.id, is_system=user.global_role in GLOBAL_ROLES)
+    set_context(user.id)
     if request.method not in ("GET", "HEAD", "OPTIONS"):
         check_origin()
         supplied_csrf = request.headers.get("X-CSRF-Token", "")
@@ -127,6 +139,7 @@ def require_system(super_only=False):
             allowed = {"SUPER_ADMIN"} if super_only else GLOBAL_ROLES
             if user.global_role not in allowed:
                 raise ApiError(403, "forbidden", "Bạn không có quyền quản trị hệ thống.")
+            set_context(user.id, is_system=True)
             return view(*args, **kwargs)
 
         return wrapped
@@ -146,20 +159,31 @@ def require_tenant(action):
                     TenantUser.active.is_(True),
                 )
             ).scalar_one_or_none()
-            if user.global_role not in GLOBAL_ROLES and not membership:
+            if not membership:
                 raise ApiError(403, "tenant_denied", "Bạn không có quyền vào khách sạn này.")
             tenant = db.session.get(Tenant, tenant_id)
             if not tenant:
                 raise ApiError(404, "not_found", "Không tìm thấy khách sạn.")
-            role = "HOTEL_OWNER" if user.global_role in GLOBAL_ROLES else membership.role
+            role = membership.role
             if role != "HOTEL_OWNER" and action not in ROLE_ACTIONS.get(role, set()):
                 raise ApiError(403, "forbidden", "Bạn không có quyền thực hiện thao tác này.")
-            set_context(user.id, tenant_id, user.global_role in GLOBAL_ROLES)
+            set_context(user.id, tenant_id)
             from .subscriptions import enforce_entitlements, lock_tenant
 
             # All tenant mutations share this order, including quota checks and renewals.
             if request.method not in ("GET", "HEAD", "OPTIONS"):
                 tenant = lock_tenant(tenant_id)
+                role = db.session.scalar(
+                    select(TenantUser.role).where(
+                        TenantUser.tenant_id == tenant_id,
+                        TenantUser.user_id == user.id,
+                        TenantUser.active.is_(True),
+                    )
+                )
+                if role is None:
+                    raise ApiError(403, "tenant_denied", "Bạn không có quyền vào khách sạn này.")
+                if role != "HOTEL_OWNER" and action not in ROLE_ACTIONS.get(role, set()):
+                    raise ApiError(403, "forbidden", "Bạn không có quyền thực hiện thao tác này.")
                 if tenant.status != "active":
                     raise ApiError(403, "tenant_suspended", "Khách sạn đang bị tạm ngưng.")
             g.tenant, g.role = tenant, role
@@ -186,6 +210,20 @@ def audit(event, entity_type, entity_id, details=None):
 
     services().events.publish(entry)
     return entry
+
+
+def _log_database_failure(error, phase):
+    sqlstate = getattr(error.orig, "sqlstate", None)
+    if not isinstance(sqlstate, str) or not re.fullmatch(r"[A-Z0-9]{5}", sqlstate):
+        sqlstate = "unknown"
+    current_app.logger.warning(
+        "database_failure endpoint=%s method=%s phase=%s sqlstate=%s driver_error=%s",
+        request.endpoint or "unmatched",
+        request.method,
+        phase,
+        sqlstate,
+        type(error.orig).__name__,
+    )
 
 
 def register_security(app):
@@ -220,9 +258,9 @@ def register_security(app):
                     }
                 )
                 response.status_code = 409
-            except DBAPIError:
+            except DBAPIError as error:
                 db.session.rollback()
-                app.logger.warning("Database transaction failed")
+                _log_database_failure(error, "transaction")
                 response = jsonify(
                     error={
                         "code": "database_unavailable",
@@ -237,6 +275,14 @@ def register_security(app):
 
     @app.errorhandler(ApiError)
     def api_error(error):
+        if error.status in {401, 403, 429}:
+            app.logger.warning(
+                "security_denied code=%s endpoint=%s method=%s actor=%s",
+                error.code,
+                request.endpoint or "unmatched",
+                request.method,
+                getattr(getattr(g, "user", None), "id", "anonymous"),
+            )
         body = {"code": error.code, "message": error.message}
         if error.details is not None:
             body["details"] = error.details
@@ -253,6 +299,7 @@ def register_security(app):
 
     @app.errorhandler(DBAPIError)
     def database_error(error):
+        _log_database_failure(error, "query")
         return jsonify(
             error={
                 "code": "database_unavailable",

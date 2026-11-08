@@ -63,7 +63,7 @@ export function translate(locale, key, values = {}) {
 
 // For existing, fixed UI metadata such as role labels. Never apply to guest/hotel names or input values.
 export function translateLabel(locale, label) {
-  return sourceKeys.has(label) ? translate(locale, sourceKeys.get(label)) : label;
+  return translateUiText(locale, label);
 }
 
 export function translateUiText(locale, source) {
@@ -84,13 +84,21 @@ export function translateApiText(locale, source) {
   if (typeof source === 'string' && source.startsWith('i18n:')) {
     return translate(locale, source.slice('i18n:'.length));
   }
-  return translateUiText(locale, source);
+  return source;
 }
 
+// API data is opaque unless the server explicitly marks it as UI copy.
 export function translateApiValue(locale, value) {
   if (typeof value === 'string') return translateApiText(locale, value);
   if (value && typeof value === 'object' && typeof value.$i18n === 'string') {
     return translate(locale, value.$i18n, value.values ?? {});
   }
   return value;
+}
+
+// Only use for known message envelopes, never names, notes, or other business data.
+export function translateApiMessage(locale, value) {
+  return typeof value === 'string' && !value.startsWith('i18n:')
+    ? translateUiText(locale, value)
+    : translateApiValue(locale, value);
 }

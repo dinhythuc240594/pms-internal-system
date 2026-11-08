@@ -4,6 +4,7 @@ from copy import deepcopy
 from unittest.mock import patch
 
 from pms_api.channels.client import ProviderError
+from tests.system_scope_fixture import grant_system_access
 from tests.test_channels_integration import PROPERTY, REMOTE_RATE, REMOTE_ROOM, ChannelTestCase
 
 BOOKING = "11111111-1111-4111-8111-111111111111"
@@ -13,8 +14,9 @@ CHANNEL = "33333333-3333-4333-8333-333333333333"
 class ChannexInsightsTests(ChannelTestCase):
     def setUp(self):
         super().setUp()
+        grant_system_access(self, "manager", "admin")
         self.client, self.headers = self.login("manager@test.local")
-        provider = patch("pms_api.channels.factory.ChannexClient", return_value=self.provider)
+        provider = patch("pms_api.admin.channex_remote_application.channel_adapter", return_value=self.provider)
         provider.start()
         self.addCleanup(provider.stop)
         self.provider.property.return_value = {
@@ -161,6 +163,7 @@ class ChannexInsightsTests(ChannelTestCase):
                     "code": "BookingCom",
                     "currency": "USD",
                     "active": True,
+                    "supportsLoadFutureReservations": False,
                     "mappedRateCount": 1,
                     "propertyCount": 1,
                 }
@@ -171,6 +174,9 @@ class ChannexInsightsTests(ChannelTestCase):
             self.assertNotIn(private, response.get_data(as_text=True))
         self.provider.feed.assert_not_called()
         self.provider.ack.assert_not_called()
+        self.channel["attributes"]["actions"] = ["load_future_reservations"]
+        loaded = self.get("channels")
+        self.assertTrue(loaded.json["channels"][0]["supportsLoadFutureReservations"])
 
     def test_native_channels_reject_foreign_property_and_malformed_fields(self):
         for change in (
@@ -179,6 +185,8 @@ class ChannexInsightsTests(ChannelTestCase):
             {"is_active": "true"},
             {"currency": "usd"},
             {"rate_plans": [{"rate_plan_id": "not-a-uuid"}]},
+            {"actions": {"load_future_reservations": True}},
+            {"actions": [1]},
         ):
             original = deepcopy(self.channel)
             self.channel["attributes"].update(change)

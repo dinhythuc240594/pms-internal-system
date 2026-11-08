@@ -8,8 +8,10 @@ from sqlalchemy import select
 
 from pms_api.auth.application import validate_email
 from pms_api.catalog.application import money_value
+from pms_api.composition import channel_adapter
 from pms_api.ports import runtime
 
+from ..channels.access import authorize_channel_support
 from ..channels.client import ProviderError, remote_id
 from ..channels.credentials import load_credentials, valid_secret
 from ..channels.models import ChannelConnection, ChannelMapping
@@ -20,15 +22,18 @@ from ..channels.service import (
     catalog_values,
     supported_rate_plan,
 )
-from ..composition import channel_adapter
 from ..core_models import Tenant
+from ..currencies import is_hotel_currency
 from ..extensions import db
-from ..security import ApiError, audit
+from ..security import (
+    ApiError,
+    audit,
+    set_context,
+)
 from ..subscriptions import lock_tenant
+from ..validation import phone_value
 
 PAGE_SIZE = 25
-
-
 MANAGER_KEYS = {
     "system:staging": ("staging", "CHANNEX_MANAGER_API_KEY_STAGING", "Channex Staging"),
     "system:production": ("production", "CHANNEX_MANAGER_API_KEY_PRODUCTION", "Channex Production"),
@@ -66,16 +71,56 @@ def provider_error(error, *, mutation=False):
     ) from None
 
 
-def account_client(account_id):
+def support_hotels():
+    return [
+        SimpleNamespace(tenant_id=tenant_id)
+        for tenant_id in db.session.scalars(select(Tenant.id).order_by(Tenant.id))
+    ]
+
+
+def hotel_access(tenant_id, action):
+    authorize_channel_support(tenant_id, action)
+
+
+def authorize_remote_property(client, property_id):
+    environment = getattr(client, "_pms_environment", None)
+    if not isinstance(environment, str):
+        # Channel routes construct their client after tenant or support authorization.
+        return
+    action = client._pms_action
+    account_tenant = client._pms_tenant_id
+    candidates = [account_tenant] if account_tenant else [row.tenant_id for row in support_hotels()]
+    for tenant_id in candidates:
+        set_context(runtime().state.user.id, tenant_id, is_system=True, channel_support=True)
+        linked = db.session.scalar(
+            select(ChannelConnection.id).where(
+                ChannelConnection.tenant_id == tenant_id,
+                ChannelConnection.environment == environment,
+                ChannelConnection.property_id == property_id,
+            )
+        )
+        if linked:
+            hotel_access(tenant_id, action)
+            return
+    raise ApiError(403, "tenant_denied", "Bạn không có quyền thực hiện thao tác này.")
+
+
+def account_client(account_id, *, action=None):
     if not isinstance(account_id, str) or not account_id:
         raise ApiError(422, "channex_account_required", "Vui lòng chọn nguồn Channex.")
+    action = action or (
+        "channels.view" if runtime().request.method in {"GET", "HEAD"} else "channels.write"
+    )
+    account_tenant = None
     try:
         if account_id in MANAGER_KEYS:
             environment, key_name, _ = MANAGER_KEYS[account_id]
             key = runtime().config.get(key_name)
         elif account_id.startswith("hotel:"):
+            account_tenant = account_id[6:]
+            hotel_access(account_tenant, action)
             connection = db.session.scalar(
-                select(ChannelConnection).where(ChannelConnection.tenant_id == account_id[6:])
+                select(ChannelConnection).where(ChannelConnection.tenant_id == account_tenant)
             )
             if connection is None:
                 raise ApiError(
@@ -87,7 +132,11 @@ def account_client(account_id):
             raise ApiError(404, "channex_account_not_found", "Không tìm thấy nguồn Channex này.")
         if not valid_secret(key):
             raise ProviderError("credentials_unavailable")
-        return environment, channel_adapter(environment, key)
+        client = channel_adapter(environment, key)
+        client._pms_environment = environment
+        client._pms_action = action
+        client._pms_tenant_id = account_tenant
+        return environment, client
     except ProviderError as error:
         provider_error(error)
 
@@ -160,7 +209,7 @@ def property_values(entity):
     if values["timezone"]:
         try:
             ZoneInfo(values["timezone"])
-        except (ZoneInfoNotFoundError, ValueError):
+        except ZoneInfoNotFoundError, ValueError:
             raise ProviderError("provider_invalid_response") from None
     return values
 
@@ -170,6 +219,7 @@ def verify_property(client, property_id):
         identifier = remote_id(property_id)
     except ProviderError:
         raise ApiError(422, "invalid_property_id", "Property ID Channex không hợp lệ.") from None
+    authorize_remote_property(client, identifier)
     entity = client.property(identifier)
     if property_values(entity)["id"] != identifier:
         raise ProviderError("provider_invalid_response")
@@ -178,14 +228,22 @@ def verify_property(client, property_id):
 
 def property_json(entity, environment):
     values = property_values(entity)
-    hotel = db.session.execute(
-        select(Tenant.id, Tenant.name)
-        .join(ChannelConnection, ChannelConnection.tenant_id == Tenant.id)
-        .where(
-            ChannelConnection.environment == environment,
-            ChannelConnection.property_id == values["id"],
+    hotel = None
+    for membership in support_hotels():
+        set_context(
+            runtime().state.user.id, membership.tenant_id, is_system=True, channel_support=True
         )
-    ).first()
+        hotel = db.session.execute(
+            select(Tenant.id, Tenant.name)
+            .join(ChannelConnection, ChannelConnection.tenant_id == Tenant.id)
+            .where(
+                Tenant.id == membership.tenant_id,
+                ChannelConnection.environment == environment,
+                ChannelConnection.property_id == values["id"],
+            )
+        ).first()
+        if hotel is not None:
+            break
     values["linkedHotel"] = {"tenantId": hotel.id, "name": hotel.name} if hotel else None
     return values
 
@@ -221,11 +279,21 @@ def handle_remote_accounts():
                 "errorCode": None if configured else "credentials_unavailable",
             }
         )
-    for connection, name in db.session.execute(
-        select(ChannelConnection, Tenant.name)
-        .join(Tenant, Tenant.id == ChannelConnection.tenant_id)
-        .order_by(Tenant.name, Tenant.id)
-    ):
+    for membership in support_hotels():
+        try:
+            hotel_access(membership.tenant_id, "channels.view")
+        except ApiError as error:
+            if error.status != 403:
+                raise
+            continue
+        row = db.session.execute(
+            select(ChannelConnection, Tenant.name)
+            .join(Tenant, Tenant.id == ChannelConnection.tenant_id)
+            .where(Tenant.id == membership.tenant_id)
+        ).first()
+        if row is None:
+            continue
+        connection, name = row
         try:
             configured = valid_secret(load_credentials(connection).get("apiKey"))
             error_code = None if configured else "credentials_unavailable"
@@ -248,6 +316,23 @@ def handle_remote_properties():
     page = page_number(args.get("page", "1"))
     environment, client = account_client(args.get("accountId"))
     try:
+        if client._pms_tenant_id:
+            connection = db.session.scalar(
+                select(ChannelConnection).where(
+                    ChannelConnection.tenant_id == client._pms_tenant_id
+                )
+            )
+            rows = [verify_property(client, connection.property_id)] if page == 1 else []
+            return {
+                "environment": environment,
+                "properties": [property_json(row, environment) for row in rows],
+                "pagination": {
+                    "page": page,
+                    "pageSize": PAGE_SIZE,
+                    "totalItems": 1,
+                    "totalPages": 1,
+                },
+            }
         rows, pagination = read_page(client.properties(page), page)
         return {
             "environment": environment,
@@ -304,8 +389,8 @@ def property_input():
                     422, "invalid_channex_property", "Nhập tên, tiền tệ và múi giờ khách sạn."
                 )
             continue
-        if source == "currency" and value not in {"VND", "USD"}:
-            raise ApiError(422, "invalid_channex_currency", "Chọn tiền tệ VND hoặc USD.")
+        if source == "currency" and not is_hotel_currency(value):
+            raise ApiError(422, "invalid_channex_currency", "Tiền tệ không được hỗ trợ.")
         if source == "country" and (
             len(value) != 2 or not value.isascii() or not value.isalpha() or not value.isupper()
         ):
@@ -313,8 +398,10 @@ def property_input():
         if source == "timezone":
             try:
                 ZoneInfo(value)
-            except (ZoneInfoNotFoundError, ValueError):
+            except ZoneInfoNotFoundError, ValueError:
                 raise ApiError(422, "invalid_channex_timezone", "Múi giờ không hợp lệ.") from None
+        if source == "phone":
+            value = phone_value(value)
         values[target] = validate_email(value) if source == "email" else value
     return account, values
 

@@ -6,6 +6,7 @@ from uuid import uuid4
 from sqlalchemy.dialects.postgresql import JSONB
 
 from .extensions import db
+from .plan_pricing import default_pricing_rules
 
 
 def uid():
@@ -102,6 +103,7 @@ class Plan(db.Model):
     code = db.Column(db.String(12))
     price = db.Column(db.Numeric(19, 4), nullable=False)
     price_year = db.Column(db.Numeric(19, 4))
+    pricing_rules = db.Column(JSONB, nullable=False, default=default_pricing_rules)
     currency = db.Column(db.String(3), nullable=False, default="VND")
     max_rooms = db.Column(db.Integer)
     max_users = db.Column(db.Integer)

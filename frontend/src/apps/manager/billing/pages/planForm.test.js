@@ -14,6 +14,7 @@ test('custom plan form retains exact decimal prices and distinguishes plan ceili
   assert.equal(input.priceYear, '0.0000');
   assert.equal(input.maxRooms, null);
   assert.equal(input.maxUsers, 5);
+  assert.equal(input.pricingRules.baseRooms, 15);
   assert.equal(planRoomLabel(input), 'Số phòng theo đăng ký');
   assert.equal(planRoomLabel({ maxRooms: 10 }), 'Đăng ký tối đa 10 phòng');
 });
@@ -36,6 +37,7 @@ test('FREE keeps its zero prices and ceilings while unsupported currencies are r
   const free = { ...customPlan, code: 'FREE', price: '0', priceYear: '0', maxRooms: '30', maxUsers: '5' };
   assert.equal(planFormInput(free).maxRooms, 30);
   assert.throws(() => planFormInput({ ...free, price: '0.0001' }));
+  assert.throws(() => planFormInput({ ...free, pricingRules: { ...planFormInput(free).pricingRules, extraRoomPrice: '1' } }), /giá phòng thêm/);
   assert.throws(() => planFormInput({ ...free, maxRooms: '' }));
   assert.throws(() => planFormInput({ ...customPlan, currency: 'EUR' }));
 });

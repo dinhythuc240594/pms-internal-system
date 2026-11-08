@@ -12,9 +12,10 @@ export default function LinkedChannexTools({ pms, connection }) {
   const account = { id: 'hotel:' + pms.tenantId, environment: connection.environment };
   const property = { id: connection.propertyId, name: pms.tenant?.name, timezone: pms.settings.timezone, currency: pms.settings.currency };
   const props = { account, property };
-  return <section className="manager-panel channex-surface" aria-label="Dữ liệu Channex của khách sạn đang chọn">
-    <nav className="channex-tabs" aria-label="Dữ liệu Channex nâng cao">{tabs.map(([id, label, Icon]) => <button key={id} type="button" aria-pressed={tab === id} className={tab === id ? 'is-active' : ''} onClick={() => setTab(id)}><Icon size={16} aria-hidden="true" />{labelUi(label)}</button>)}</nav>
-    {tab === 'catalog' && <CatalogView {...props} />}
+  const canWrite = pms.access('channels.write', 'OTA_SYNC', true).allowed;
+  return <section className="manager-panel channex-surface" aria-label={labelUi("Dữ liệu Channex của khách sạn đang chọn")}>
+    <nav className="channex-tabs" aria-label={labelUi("Dữ liệu Channex nâng cao")}>{tabs.map(([id, label, Icon]) => <button key={id} type="button" aria-pressed={tab === id} className={tab === id ? 'is-active' : ''} onClick={() => setTab(id)}><Icon size={16} aria-hidden="true" />{labelUi(label)}</button>)}</nav>
+    {tab === 'catalog' && <CatalogView {...props} canWrite={canWrite} />}
     {tab === 'bookings' && <BookingsView {...props} />}
     {tab === 'inventory' && <InventoryView {...props} />}
   </section>;

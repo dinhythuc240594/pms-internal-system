@@ -6,13 +6,33 @@ from common import CommonURL
 
 
 class URL(CommonURL):
+    @classmethod
+    def register(cls, target, rule, view_class, *, endpoint=None, methods=None, **options):
+        result = super().register(
+            target, rule, view_class, endpoint=endpoint, methods=methods, **options
+        )
+        if rule.startswith("/api/tenants/<tenant_id>/channels"):
+            super().register(
+                target, rule.replace("/api/tenants/", "/api/admin/channex/tenants/", 1),
+                view_class, endpoint="support_" + endpoint, methods=methods, **options,
+            )
+        return result
+
     SNAPSHOT = "/api/tenants/<tenant_id>/channels"
     CATALOG = "/api/tenants/<tenant_id>/channels/catalog"
+    ARI_PREVIEW = "/api/tenants/<tenant_id>/channels/ari-preview"
+    BOOKING_REVIEWS = "/api/tenants/<tenant_id>/channels/booking-reviews"
+    RESOLVE_BOOKING_REVIEW = "/api/tenants/<tenant_id>/channels/booking-reviews/<review_id>/resolve"
+    INCIDENTS = "/api/tenants/<tenant_id>/channels/incidents"
+    INCIDENT_ACTION = "/api/tenants/<tenant_id>/channels/incidents/<incident_id>/actions"
     SAVE_CONFIG = "/api/tenants/<tenant_id>/channels/config"
     SAVE_MAPPING = "/api/tenants/<tenant_id>/channels/mappings"
     CREATE_JOB = "/api/tenants/<tenant_id>/channels/jobs"
+    JOBS = "/api/tenants/<tenant_id>/channels/jobs"
+    JOB_DETAIL = "/api/tenants/<tenant_id>/channels/jobs/<job_id>"
     RETRY_JOB = "/api/tenants/<tenant_id>/channels/jobs/<job_id>/retry"
     WEBHOOK = "/api/channex/webhooks/<tenant_id>"
+    RECONCILE_INVENTORY = "/api/tenants/<tenant_id>/channels/onboarding/reconcile"
 
     REMOTE_CHANNELS = "/api/tenants/<tenant_id>/channels/remote"
     REMOTE_CREATE_CHANNEL = "/api/tenants/<tenant_id>/channels/remote"
@@ -34,12 +54,49 @@ class URL(CommonURL):
 
 channels = Blueprint("channels", __name__)
 
+CommonURL.register(
+    channels,
+    "/api/admin/channex/tenants/<tenant_id>/workspace",
+    "pms_api.admin.channex:ChannelSupportWorkspaceView",
+    endpoint="support_workspace",
+    methods=["GET"],
+)
+
+URL.register(
+    channels,
+    URL.RECONCILE_INVENTORY,
+    "pms_api.channels.routes:ReconcileInventoryView",
+    endpoint="reconcile_inventory",
+    methods=["POST"],
+)
+
 URL.register(
     channels,
     URL.SNAPSHOT,
     "pms_api.channels.routes:SnapshotView",
     endpoint="snapshot",
     methods=["GET"],
+)
+
+URL.register(
+    channels,
+    URL.BOOKING_REVIEWS,
+    "pms_api.channels.routes:BookingReviewsView",
+    endpoint="booking_reviews",
+    methods=["GET"],
+)
+
+CommonURL.register(
+    channels, URL.RESOLVE_BOOKING_REVIEW, "pms_api.channels.exceptions:ResolveBookingReviewView",
+    endpoint="resolve_booking_review", methods=["POST"],
+)
+URL.register(
+    channels, URL.INCIDENTS, "pms_api.channels.exceptions:IncidentsView",
+    endpoint="incidents", methods=["GET"],
+)
+URL.register(
+    channels, URL.INCIDENT_ACTION, "pms_api.channels.exceptions:IncidentActionView",
+    endpoint="incident_action", methods=["POST"],
 )
 
 URL.register(
@@ -60,6 +117,14 @@ URL.register(
 
 URL.register(
     channels,
+    URL.ARI_PREVIEW,
+    "pms_api.channels.preview:AriPreviewView",
+    endpoint="ari_preview",
+    methods=["GET"],
+)
+
+URL.register(
+    channels,
     URL.SAVE_MAPPING,
     "pms_api.channels.routes:SaveMappingView",
     endpoint="save_mapping",
@@ -72,6 +137,22 @@ URL.register(
     "pms_api.channels.routes:CreateJobView",
     endpoint="create_job",
     methods=["POST"],
+)
+
+URL.register(
+    channels,
+    URL.JOBS,
+    "pms_api.channels.history:JobsView",
+    endpoint="jobs",
+    methods=["GET"],
+)
+
+URL.register(
+    channels,
+    URL.JOB_DETAIL,
+    "pms_api.channels.history:JobDetailView",
+    endpoint="job_detail",
+    methods=["GET"],
 )
 
 URL.register(

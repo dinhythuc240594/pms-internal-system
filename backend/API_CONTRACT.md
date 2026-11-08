@@ -1,9 +1,21 @@
 # PMS API contract
 
-Hotel business routes live under `/api/tenants/<tenant_id>`; system SaaS billing
-uses `/api/billing` and `/api/manager`. Cookie authentication;
+Hotel business routes and owner SaaS billing reads live under `/api/tenants/<tenant_id>`;
+system SaaS billing management uses `/api/billing` and `/api/manager`. Cookie authentication;
 mutations require `X-CSRF-Token` from `/api/auth/session` or login. JSON camelCase.
 Errors `{error:{code,message,details?}}`. No automatic localStorage fallback.
+
+GET date-range query parameters use `start_date` and `end_date`. Each endpoint
+keeps its existing date/timestamp format, timezone, default bounds and inclusive
+or exclusive end; the parameter names do not change these rules. Legacy aliases
+remain accepted on the routes that previously used them: `start`/`end`,
+`startDate`/`endDate` for cashbook and commissions, and `dateFrom`/`dateTo` for
+channel job history. Repeating a range query key, even with identical values,
+returns 422. A canonical key and its legacy alias may appear together only when
+their values match exactly; conflicting values return 422. Clients send the
+canonical names. This applies to GET query parameters; mutation JSON fields,
+response fields such as `start`/`end`, and single-day `date` filters keep their
+existing names.
 
 Shared backend modules: `core_models.py`, `security.py`, `auth/routes.py`,
 `admin/routes.py`, `__init__.py`, `0002_identity.py`. Shared `security` exports:
@@ -12,6 +24,13 @@ Shared backend modules: `core_models.py`, `security.py`, `auth/routes.py`,
 `audit(event,entity_type,entity_id,details=None)`, `payload()` JSON-object validation.
 Successful mutations commit in after_request; routes MUST NOT commit independently.
 Flush when IDs/constraint checks needed. API uses transaction-local RLS context.
+
+System roles never imply PMS access. Every hotel business route requires an
+active membership and uses its hotel role, including for system accounts.
+Only an ordinary HOTEL_OWNER may grant, change or revoke memberships; system
+accounts cannot delegate access even with an owner membership. Existing sessions
+are checked against current grants on each request. Migration
+`0034_pms_tenant_authorization` applies the same boundary to PostgreSQL RLS.
 
 HTTP implementation uses `common.CommonMethodView` handlers and `CommonURL`
 registration in each module's `urls.py` (lazy `module:ViewClass`, explicit methods).
@@ -23,6 +42,22 @@ ORM models in `pms_api/model_registry.py` independently of handler imports.
 Core models: User(id String(40),name,email,password_hash,global_role,active);
 Tenant(id String(40),name,status,settings JSONB); TenantUser(id,tenant_id,user_id,role,active);
 AuditLog(id,tenant_id nullable,user_id,event,entity_type,entity_id,details,created_at).
+
+S03 operational health: `GET /api/admin/operations` requires a session with
+`SYSTEM_MANAGER` or `SUPER_ADMIN`; unauthenticated callers receive 401 and hotel
+roles receive 403. Response contains `checkedAt`, `workers.channels` and
+`workers.housekeeping` (`status: ok|missing|stale|partial`, `required`,
+`uncoveredTenantCount`, `instances`). Instances report tenant scope (null means
+all hotels), last heartbeat/success, age and stale threshold
+`max(120 seconds, 3 × polling interval)`. A successful polling pass does not
+imply all queued jobs succeeded. Channel enablement, job queue counts, booking
+review counts and pending inventory/rate publication are hotel operational data
+and are excluded from this SaaS response. Channel coverage describes only the
+tenant scopes reported by workers; housekeeping coverage uses active hotel
+metadata. Missing time values are null, not zero. No credentials, guest details
+or provider payloads are returned. This read-only snapshot remains separate from `/api/ready` so
+initial deploys can be database-ready before workers start. Migration
+`0027_worker_health` protects heartbeat rows with forced system-only RLS.
 All authenticated account roles may update their own display name through
 `PATCH /api/auth/profile` with `{name}` (1–160 trimmed characters). Email, roles,
 and another user's ID cannot be changed here. Migration `0019_self_service_audit`
@@ -34,7 +69,7 @@ it grants no additional audit read, update, or delete access. Migration
 GET `/api/audit` requires SUPER_ADMIN. Optional exact-match `tenantId`/`userId`
 filters are IDs (1–40 characters); `event` is an exact-match code (1–80 characters).
 Unknown IDs/events return an empty list. Optional
-`start`/`end` are ISO timestamps with timezone; start is inclusive and end exclusive.
+`start_date`/`end_date` are ISO timestamps with timezone; start is inclusive and end exclusive.
 With both supplied, end must follow start. Encode `+` offsets in query strings.
 `page` defaults to 1 (1–100000); `pageSize` defaults to 200 (1–200). Invalid filters
 return 422. Response keeps `auditLogs` and adds
@@ -57,12 +92,22 @@ policy, `unprotect_table(table)` disables; root migration owns identity RLS.
 
 Catalog: `catalog/models.py`, `catalog/routes.py`, `0003_catalog.py`.
 Models exports RoomType(id,tenant_id,name,base_price,capacity,active),
-PhysicalRoom(id,tenant_id,room_type_id,number,condition,active),
+PhysicalRoom(id,tenant_id,room_type_id,number,floor,area,condition,active),
 Master(id,tenant_id,catalog,name,data JSONB,active),
 DailyRate(id,tenant_id,room_type_id,date,price,stop_sell),
 RoomBlock(id,tenant_id,room_id,start_date,end_date,reason),
 RoomTypeAvailability(id,tenant_id,room_type_id,date,total_rooms,booked_rooms).
-PhysicalRoom is serialized as `{id:number,uuid:id,typeId:room_type_id,condition,active}`.
+PhysicalRoom is serialized as `{id:number,uuid:id,typeId:room_type_id,floor,area,condition,active}`.
+`floor` and `area` are independent, optional location labels (null or trimmed strings,
+maximum 120 characters). POST/PATCH `/masters/rooms` accepts both fields; omitted
+fields preserve existing values, while null or blank strings clear them to null.
+Locations come from configuration rather than room-number prefixes: room `1001`
+can use `floor:"10"`, and room `A101` can use `area:"Villa-A"`. Missing labels belong
+in an unassigned group. New rooms default to null; migration 0032 leaves legacy
+rooms unassigned and preserves their IDs, room types, bookings and other references.
+Updating a room type's `roomNumbers` preserves location metadata on existing rooms.
+Owners can change floor/area while a room has a booking; the physical room and
+reservation links remain the same. Migration downgrade refuses to discard saved locations.
 RoomType `{id,code,name,price:decimal-string,capacity,active}`. `id` is the immutable
 internal UUID; `code` is a tenant-unique business string (1–40 trimmed characters)
 and preserves values such as `2` and `02`. Legacy rows may have null code; omitted
@@ -81,9 +126,9 @@ Unit masters are persisted per tenant. New tenants and migration 0016 receive
 missing Cái, Gói, Chai, Lon, Hộp, Bộ, Kg, Lít, Lần and Đêm; custom or disabled units
 are preserved. Settings saves directly to the database through the existing API.
 POST/PATCH `/masters/<catalog>` (input id optional); POST `/masters/<catalog>/<id>/toggle`;
-PATCH `/settings`; GET `/rates?start=&end=`; PUT `/rates` with
+PATCH `/settings`; GET `/rates?start_date=&end_date=`; PUT `/rates` with
 `{roomTypeId,start,end,price,stopSell}`; POST/DELETE `/room-blocks[/<id>]`;
-GET `/availability?start=&end=&typeId=`; POST `/quote` accepts
+GET `/availability?start_date=&end_date=&typeId=`; POST `/quote` accepts
 `{checkIn,checkOut,rooms:[number,...]}` returns nightly rows and total decimal string.
 Exports `catalog_snapshot(tenant_id)` => `{rooms,masters,settings}`,
 `quote_stay(tenant_id,room_numbers,start_date,end_date)` returns JSON-ready quote,
@@ -97,6 +142,13 @@ PATCH `/settings` also accepts optional hotel profile fields `phone` (40),
 `bankAccount` (80), `bankAccountName` (160), and `defaultLanguage:vi|en`.
 Lengths are maximum trimmed string lengths; empty strings clear optional values.
 Email is normalized/validated. Website permits HTTP/HTTPS; logo requires HTTPS.
+Client contact writes use the same phone format as Manager: 7–15 ASCII digits,
+optional leading `+`, spaces, dots, hyphens and parentheses. This applies to hotel
+settings, guest profiles, housekeeping staff and suppliers; malformed values
+return 422 `invalid_phone`. Tax codes remain optional numeric strings with an
+optional three-digit branch suffix; existing per-field length limits apply.
+Guest/supplier/source emails are validated and normalized on manual writes;
+OTA provider payload ingestion keeps its existing import contract.
 URLs reject embedded credentials, whitespace/control characters, backslashes,
 invalid hosts and invalid ports. The server stores URLs without fetching them;
 this is not an upload endpoint. `defaultLanguage` records profile metadata rather
@@ -111,21 +163,30 @@ Booking JSON existing aliases `{id,guest,phone,room,source,checkIn,checkOut,tota
 plus `{rooms:[number],guests:[{id,name,phone,email}],nightlyRates,charges,payments,
 notes,history,paid,balance,currency}`. POST/PATCH `/reservations` (PATCH /<id>) accepts
 old single room/guest and multiroom `rooms`/`guests`. Source accepts master ID or name.
+POST `/reservations` requires a stable `Idempotency-Key` (8–128 printable ASCII
+characters without spaces). Reuse it after a lost response or failed workspace
+reload: replay returns the original 201 booking body and ID before checking room
+availability or redeeming a voucher again. Missing/invalid keys return 422
+`idempotency_required`. PATCH `/reservations/<id>`, POST
+`/reservations/<id>/status` and POST `/reservations/<id>/notes` also support keyed
+replay (200 for edit/status, 201 for notes); clients retrying these writes must
+preserve the key and original body, including `expectedVersion`. Replay precedes
+version/transition validation. Keys are unique per tenant; a changed HTTP method,
+path, actor or body returns 409 `idempotency_conflict`. The booking and accepted
+response commit atomically with inventory, voucher usage and audit changes.
 Guest objects with existing `id` and supplied profile fields update within the same
 reservation transaction. Failure rolls back both the profile and booking edit.
 Unchanged historical sources remain editable after source rename/deactivation.
-POST `/reservations/<id>/status` `{status}`; POST `/rooms/<number>/condition` `{condition}`.
-Stay and report dates require the calendar format `YYYY-MM-DD`; compact dates,
-ISO week dates and non-date JSON values return 422. Stay intervals are half-open.
-`CONFIRMED -> IN_HOUSE` requires the hotel's business date within the stay and
-every assigned physical room to be active and clean. Another `IN_HOUSE` stay in
-any assigned room returns 409 `room_occupied`, even if its scheduled checkout has
-passed. Checkout must complete and cleaning must finish before the next check-in.
-Changing a confirmed stay's dates/rooms cancels its open housekeeping tasks in
-the same transaction; contact-only edits preserve them. Replanning after moving
-back creates fresh work while retaining cancelled task history. Cancellation
-also cancels only that reservation's open tasks and preserves money history;
-fees and refunds remain explicit financial operations.
+Booking JSON includes a positive integer `version`. PATCH `/reservations/<id>` and
+POST `/reservations/<id>/status` require `expectedVersion` captured with the form;
+missing/invalid values return 422 `version_required`, an outdated version returns
+409 `stale_booking` without applying any change. Reload explicitly before retrying;
+never obtain a new version silently to resubmit the old form. Local/OTA booking
+updates and changes to linked guest profiles invalidate open booking forms.
+When creating a booking or attaching an existing guest, profile fields must match
+the selected current guest (409 `stale_guest` otherwise); editing a profile is done
+through a booking already linked to that guest.
+POST `/reservations/<id>/status` `{status,expectedVersion}`; POST `/rooms/<number>/condition` `{condition}`.
 `CONFIRMED -> NO_SHOW` is permitted only on or after check-in in the hotel's
 timezone. Booking JSON adds nullable `noShowAt`. NO_SHOW is terminal for stay
 edits/check-in; it releases room inventory and cancels this reservation's open
@@ -146,6 +207,7 @@ Optional guest emails must contain one `@`, nonempty local/domain parts, and no
 whitespace; invalid values return 422 `invalid_guest` and roll back the mutation.
 Money mutations use required Idempotency-Key (stable client intent, fingerprint,
 unique tenant/key, replay same response, 409 mismatch), reservation locked first.
+Existing money receipts from before method-aware fingerprints remain replayable.
 Payment `{amount,methodId,fundId,note}`; charge `{serviceId?,description,quantity,
 unitPrice,type:service|fee|tax|discount}`; refund `{amount,reason}`. No overpayment or
 over-refund; ledger same transaction and append-only. Checkout ONLY fully paid.
@@ -156,9 +218,6 @@ payments acquire a shared fund lock before writing ledger. Configuration edits t
 exclusive locks, so history guards serialize with first booking/payment creation.
 Booking lock order room numbers sorted then daily inventory. Edits retain original
 nightly snapshots if rooms/dates unchanged. RLS all tables, row exclusion/lock prevents races.
-OTA revisions use the same housekeeping invalidation on a changed stay or
-cancellation. Revisions that only refresh guest details retain assigned physical
-rooms and their tasks. Import, receipt and queued ACK commit before remote ACK.
 
 Root GET `/workspace` merges snapshots and `{users,tenant}`.
 For HOUSEKEEPING it omits catalog `price`/`commission`/`tax` and daily-rate `price`
@@ -171,7 +230,8 @@ User JSON `{id,name,email,globalRole,active,memberships:[{tenantId,role,active}]
 Tenant JSON `{id,name,status,...settings,rooms:number}`.
 Root staff GET/POST/PATCH `/users[/<id>]` `{name,email,password?,role,active}`.
 Root system GET/POST/PATCH `/api/tenants[/<id>]` creates hotel + owner
-`{name,ownerName,ownerEmail,ownerPassword,status?}`. GET `/api/audit` super admin.
+`{name,ownerName,ownerEmail,ownerPassword,status?}` or `{name,ownerUserId,status?}`
+for an existing active customer account. GET `/api/audit` super admin.
 
 ## System user administration
 
@@ -248,10 +308,11 @@ original and base-currency snapshots; new rates do not rewrite posted history.
 - POST `/cash-documents/<id>/reverse` with `{reason}` appends one linked reversal.
   Original documents/ledger remain immutable. Insufficient current funds returns
   409 and rolls back the entire operation.
-- GET `/cashbook?startDate=&endDate=&fundId=&fundType=&actorId=&currency=&categoryId=&documentId=&page=&pageSize=`
+- GET `/cashbook?start_date=&end_date=&fundId=&fundType=&actorId=&currency=&categoryId=&documentId=&page=&pageSize=`
   returns `{ledger,cashDocuments,summary,fundBalances,pagination}`. Fund type is
   cash or bank. Summary follows `opening + income - outflow = closing` across the
-  entire filtered period, independent of pagination. `fundBalances` are actual
+  entire filtered period, independent of pagination. Both date bounds are
+  inclusive business dates. `fundBalances` are actual
   current balances, independent of the period and actor filters.
 - POST `/reservations/<id>/adjustments` for a CHECKED_OUT, fully paid booking:
   `{type:'credit',amount,reason,paymentId}` appends a discount plus refund;
@@ -288,9 +349,10 @@ Migration `0021_booking_commissions` adds tenant-protected, append-only
 `commission_settlements` and `commission_payouts`. Reads require `cashbook.view`;
 settlement/payment require `cashbook.write`, the CASHBOOK entitlement and CSRF.
 
-- GET `/commissions?startDate=&endDate=&currency=&sourceId=&status=&page=&pageSize=` returns
+- GET `/commissions?start_date=&end_date=&currency=&sourceId=&status=&page=&pageSize=` returns
   `{items,candidates,summary:{accrued,paid,balance,currency},pagination:{page,pageSize,totalItems}}`.
-  Currency is VND/USD (default hotel currency). SQL pagination covers the combined
+  Currency uses the common hotel-currency catalog (default hotel currency).
+  SQL pagination covers the combined
   list of settled and pending bookings; summary covers the full filtered result.
   Dates use the frozen settlement business date, or actual checkout in hotel
   timezone for pending bookings, with scheduled checkout as a fallback; both date endpoints are inclusive. Omitted
@@ -333,7 +395,7 @@ writes; overpayment returns 409 `commission_overpayment`.
 
 ## BE-07: Housekeeping assignments and inspection
 
-The plan calendar reads `GET /housekeeping/tasks?start=YYYY-MM-DD&end=YYYY-MM-DD`
+The plan calendar reads `GET /housekeeping/tasks?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD`
 and `/housekeeping/shifts` with the same range (end exclusive, 1–31 days).
 The existing `date` query remains supported; it cannot be combined with a range.
 Range responses include all matching work and preserve the housekeeper's own-work scope.
@@ -426,6 +488,8 @@ and are exposed only to managers of housekeeping.
 runs one pass; add `--watch --interval 900` for a separate polling worker, or
 `--tenant <id>` to scope a pass. Actor must be an existing active SYSTEM_MANAGER
 or SUPER_ADMIN and is rechecked on each pass/tenant. The worker creates no account.
+This trusted CLI uses an explicit service context; that context is never granted
+to an authenticated HTTP user based on their system role.
 It uses each active hotel's local business date, checks current entitlements,
 takes the same tenant/reservation/room locks and reuses the manual planner's
 immutable task intents. Repeated passes do not duplicate tasks and can pick up
@@ -435,7 +499,7 @@ The HTTP API does not start or schedule this process automatically.
 ## BE-08: Operational and financial reports
 
 All report paths use the tenant prefix. Dates follow the hotel's timezone; periods
-include `start` and exclude `end`, with 1–366 days. Invalid dates return 422.
+include `start_date` and exclude `end_date`, with 1–366 days. Invalid dates return 422.
 Money is a four-place decimal string; currencies are never combined or converted.
 Omitting currency uses the tenant setting.
 
@@ -444,11 +508,11 @@ Omitting currency uses the tenant setting.
   or overdue for checkout), housekeeping alerts and a seven-day chart. Financial
   fields and booking balances are omitted for front desk. `financial` is null
   without financial permission or when REPORTS_BASIC is disabled.
-- GET `/reports/revenue?start=&end=&currency=` requires `reports.view`. Each row
+- GET `/reports/revenue?start_date=&end_date=&currency=` requires `reports.view`. Each row
   contains `{date,amount,nights,reserved,reservedRooms}`. Amount/nights/reserved
   follow the selected currency; `reservedRooms` counts distinct booked rooms across
   all currencies so occupancy does not change when the monetary filter changes.
-- GET `/reports/financial?start=&end=&currency=` requires `reports.view`. Returns
+- GET `/reports/financial?start_date=&end_date=&currency=` requires `reports.view`. Returns
   `{summary,rows,snapshot,asOf,timezone,currency,definitions}`. Summary contains
   forecastRoomRevenue, roomRevenue, servedNights, adr, realizedRevenue,
   cashReceived, cashRefunded, netReceipts, income, outflow, netCash, opening, closing.
@@ -465,10 +529,10 @@ yet snapshotted. Reports exposes these definitions to users.
 
 ### Advanced business reports
 
-GET `/reports/business?report=&start=&end=&currency=&basis=` requires
+GET `/reports/business?report=&start_date=&end_date=&currency=&basis=` requires
 `reports.advanced.view` and REPORTS_ADVANCED. Supported reports are source
 (default), room, roomType, cancellations, nationality and discounts. Date period
-is `[start,end)`, 1–366 days in hotel timezone. `basis=original|base` chooses
+is `[start_date,end_date)`, 1–366 days in hotel timezone. `basis=original|base` chooses
 original currency or saved base-currency amounts; no current FX revaluation.
 Response is `{report,start,end,currency,basis,timezone,asOf,rows,summary,definitions}`.
 
@@ -489,9 +553,17 @@ limits; nationality does not use the monetary currency filter.
 GET `/api/plans` is for system roles. POST `/api/plans`, PATCH and DELETE
 `/api/plans/<id>` are Super Admin only. FREE/PRO remain defaults; additional codes
 match `[A-Z][A-Z0-9_]{0,11}` and are unique and immutable once assigned. Plan fields
-are `{code,name,price,priceYear,currency,maxRooms,maxUsers,features,active,deleted}`;
+are `{code,name,price,priceYear,currency,maxRooms,maxUsers,features,active,deleted,pricingRules}`;
 features is a boolean object, nullable plan ceilings are positive integers.
 FREE has zero monthly/yearly price and at most 30 rooms/five active accounts.
+`pricingRules` is `{baseRooms:15,extraRoomPrice:"0",extraRoomPriceYear:"0",
+adjustments:[{aboveRooms:30,percent:"0"},{aboveRooms:50,percent:"0"},
+{aboveRooms:100,percent:"0"}]}` by default. It is persisted per plan and returned
+in public/admin catalogs. `baseRooms` is an integer from 1 to 1,000,000; extra
+room prices are nonnegative decimals with at most 15 integer/four fractional
+digits. FREE requires zero extra room prices. Each signed percentage is between
+-100 and 1000, with at most four fractional digits. All three thresholds must
+be present in that order. Omitted rules on PATCH preserve the current rules.
 DELETE archives the plan (`deleted=true`), removes it from sale and blocks new
 assignments without breaking existing subscriptions or immutable history.
 PATCH `{deleted:false}` restores it. `active=false` also disables existing access.
@@ -503,14 +575,21 @@ only enabled plan features appear and unavailable API data shows an error/retry.
 
 System roles may GET/PUT `/api/tenants/<id>/subscription` and GET its `/history`.
 PUT accepts `{planId,roomCount,status,startDate?,endDate?,amount?,currency?,cycle?}`.
-`roomCount` is a positive integer required for a new subscription; omission on an
-existing subscription preserves the registered quantity. It cannot exceed the
+`roomCount` is a positive integer; omission on a new subscription defaults to
+the plan's `baseRooms` (15 by default), capped by `maxRooms` when present. Omission
+on an existing subscription preserves the registered quantity. It cannot exceed the
 plan ceiling or fall below currently active rooms. Each assigned hotel has a
 finite allowance `min(roomCount,maxRooms)` (or roomCount when maxRooms is null).
 Registering 10 rooms permits at most 10 active rooms. Dates must include a timezone;
 end must follow start; an active plan other than FREE needs a future end.
-Cycle is monthly/yearly. Omit amount for configuration changes; a supplied amount
-must be a finite nonnegative exact decimal and its currency must match the plan.
+Cycle is monthly/yearly and defaults to monthly. The server calculates the amount
+as `(cycle base price + max(0, roomCount - baseRooms) * cycle extra room price)`
+times `(1 + percentage / 100)`. Only the highest strictly exceeded room threshold
+applies to the full subtotal; percentages do not accumulate. The result rounds
+half up to four decimal places and must fit the monetary limit. A legacy supplied
+`amount` is validated but cannot override the calculated value; currency must
+match the plan. The UI shows this calculated amount for renewals. This history
+amount does not create a SaaS invoice or payment.
 Subscription and append-only history commit atomically. History snapshots plan
 name/code, previous plan, roomCount, amount, currency, cycle, dates, status and actor, with
 actions created/changed_plan/renewed/changed_status/updated. History lists the latest
@@ -595,9 +674,9 @@ to every row. Documents/movements are immutable; mutations have audit and requir
   kind `opening|receipt|issue|transfer|count`; lines
   `{itemId,quantity,unitCost?,warehouseId?,expectedVersion?}`. Count quantity is
   absolute and requires a matching stock version.
-- GET `/documents?kind=&warehouseId=&start=&end=&page=&pageSize=` and `/documents/<id>`.
+- GET `/documents?kind=&warehouseId=&start_date=&end_date=&page=&pageSize=` and `/documents/<id>`.
 - POST `/documents/<id>/reverse`: `{reason}` creates compensating movements.
-- GET `/stock?warehouseId=&start=&end=`: stock quantities, costs, low-stock flags
+- GET `/stock?warehouseId=&start_date=&end_date=`: stock quantities, costs, low-stock flags
   and reconciliation. Dates inclusive; period closing is separate from current balance.
 - POST `/service-stock-links`: `{serviceId,warehouseId,active,lines:[{itemId,quantity}]}`.
 - POST `/pos/<invoice_id>/returns`: `{reason,lines:[{movementId,quantity}]}`;
@@ -610,6 +689,15 @@ transfers and reversals conserve value. Issues cannot produce negative stock.
 Only configured POS recipes consume stock; insufficient stock rolls back the
 invoice. Cancellation restores original quantities/costs. Money refunds alone
 do not return goods. All stock writes commit with the shared idempotency journal.
+
+## Day reconciliation timestamps
+
+Confirmation responses from POST tenant `/reconciliation/confirm` and GET
+`/reconciliation/history` serialize `createdAt` as ISO 8601 UTC (`+00:00`),
+independently of the database session timezone. The stored business `date`,
+`timezone` and snapshot are preserved; clients display the instant in that saved
+hotel timezone. Existing idempotency keys replay their recorded JSON unchanged.
+No migration or timestamp backfill is required for this serialization fix.
 
 ## BE-11 pricing and FX
 
@@ -629,12 +717,14 @@ require `MULTI_CURRENCY`.
   are base currency. Explicit voucher replaces promotions. Quota consumed atomically
   only on booking creation (including zero-value redemption); cancellation does
   not restore usage. Quote never reserves quota.
-- PUT `/pricing/exchange-rates`: `{currency:VND|USD,rate}`; one foreign unit equals
+- PUT `/pricing/exchange-rates`: `{currency,rate}` with a supported hotel currency;
+  one foreign unit equals
   rate hotel-base units (positive, 8 decimals).
 - POST `/quote` and `/reservations` accept additional `{currency?,voucherCode?}`.
   Missing currency defaults to VND for direct hotel bookings; guest nationality
   does not choose a currency. The client direct-booking form displays VND read-only.
-  OTA imports keep the currency and amounts supplied by Channex (currently VND/USD).
+  OTA imports keep the currency and amounts supplied by Channex when the currency
+  belongs to the common hotel-currency catalog.
   Different base currency requires a configured FX rate; no conversion rate is invented.
   Discounted nightly rates plus `pricingSnapshot,baseCurrency,exchangeRate,baseAmount`
   are saved by server at creation.
@@ -653,6 +743,9 @@ Channex is selected for BE-12. BE-10/11 make no live OTA requests.
 
 Manager remote views require `SYSTEM_MANAGER` or `SUPER_ADMIN`; inactive or unknown
 users fail closed. They use an explicit server-side `accountId` for every request.
+Operational property reads and writes use the system OTA support scope,
+with `OTA_SYNC` enabled and a matching saved property/environment.
+Property listing and system-source property creation remain SaaS operations.
 No automatic credential/environment fallback, hotel creation, mapping changes,
 booking import/ACK, or ARI publication happens from these views.
 
@@ -660,7 +753,8 @@ booking import/ACK, or ARI publication happens from these views.
   Optional `system:staging`/`system:production` sources read backend runtime
   `CHANNEX_MANAGER_API_KEY_STAGING`/`CHANNEX_MANAGER_API_KEY_PRODUCTION`.
   Existing `hotel:<tenantId>` connections use their saved encrypted or legacy
-  credentials, including paused connections. Listing sources makes no provider call.
+  credentials, including paused connections, through the system OTA support scope.
+  Listing sources makes no provider call.
   Keys, environment variable references, ciphertext, and private provider fields are never returned.
 - GET `/api/admin/channex/properties?accountId=&page=1`:
   `{environment,properties,pagination:{page,pageSize:25,totalItems,totalPages}}`.
@@ -673,9 +767,12 @@ booking import/ACK, or ARI publication happens from these views.
 - POST `/api/admin/channex/properties`:
   `{accountId,name,currency,timezone,country?,city?,address?,email?,phone?}`.
   Requires a system role and CSRF; only `system:staging` or `system:production`
-  sources may create. Name is 1–255 characters, currency is `VND`/`USD`, timezone
+  sources may create. Name is 1–255 characters, currency is an uppercase code from
+  the common hotel-currency catalog below, timezone
   is a valid IANA name; country is two uppercase letters, city/address at most
-  255 characters, email at most 254 and phone at most 32. Blank optional fields
+  255 characters, email at most 254 and phone at most 32. Phone uses the same
+  digit/separator format as Manager `contactPhone`; malformed phone returns 422
+  `invalid_phone` before any provider call. Blank optional fields
   are omitted. The backend creates `property_type=hotel` in the Channex user's
   default group, returning 201 `{environment,property}` with the safe property DTO
   above and `linkedHotel:null`. It does not create a PMS hotel, link it, or publish
@@ -697,7 +794,7 @@ booking import/ACK, or ARI publication happens from these views.
   allowlists display name, reference, source, dates, original amount/currency,
   room count and creation time. Contact details, cards, guarantees and notes are omitted.
   This endpoint never imports or acknowledges bookings.
-- GET `/api/admin/channex/properties/<property_id>/inventory?accountId=&start=&end=`:
+- GET `/api/admin/channex/properties/<property_id>/inventory?accountId=&start_date=&end_date=`:
   inclusive `YYYY-MM-DD` range, at most 31 days. Returns dates, room availability,
   and rate/stop-sell matrices. IDs must belong to this property/catalog and dates
   must stay in the requested range. Missing/null values mean unknown, not zero.
@@ -821,7 +918,8 @@ Provider errors contain safe local messages; they never echo response bodies or 
 
 GET `/api/admin/channex` requires `SYSTEM_MANAGER` or `SUPER_ADMIN` and returns
 `{hotels:[{tenantId,name,city,roomCount,status,connection,mappingCount,closingCount,roomTypeCount,latestJob}]}`.
-This roster uses local database aggregates only; no provider calls. `roomCount` is
+This roster uses local database aggregates only; no provider calls. It includes
+all hotels with `OTA_SYNC` enabled, independently of PMS membership. `roomCount` counts
 active physical rooms; `roomTypeCount` is active local room types. `mappingCount`
 counts active mappings to active local room types without a pending pause;
 `closingCount` counts all pending pauses, including inactive local room types.
@@ -837,6 +935,29 @@ Tenant prefix `/api/tenants/<tenant_id>/channels`:
   `verifiedAt`, `credentialError`, `credentialsConfigured`, `webhookConfigured`
   (secret readiness) and `webhookRegistered` (last successful registration).
   Secret values/ciphertext are never returned. Legacy reference names remain available.
+- GET `/jobs`: complete tenant history, filtered and paginated in SQL, with
+  `pageSize` (default 25, maximum 100), `status`, `kind`, `revisionId`, `start_date`,
+  `end_date` and opaque `cursor`. Status/kind accept the supported job enums;
+  `revisionId` is an exact match. Dates are strict `YYYY-MM-DD`, inclusive creation
+  dates in the hotel's configured timezone. Unknown/duplicate query parameters,
+  invalid filters and inverted date ranges return 422.
+  Returns `{items,pagination:{page,pageSize,totalItems,totalPages,currentCursor,
+  nextCursor,snapshotAt}}`; each item contains only
+  `{id,kind,channelId,revisionId,status,attempts,errorCode,start,end,createdAt,completedAt}`.
+  Ordering is `created_at DESC, id DESC`. Send `nextCursor` to continue, or save
+  `currentCursor` to revisit a page, repeating the same filters/page size. A cursor
+  fixes the creation-time cutoff so newly queued jobs do not move existing pages
+  or inflate totals. Job statuses remain live, so processing/retry can change
+  membership and totals for a status filter. Start without a cursor to include
+  newer jobs. Cursors are signed, bound to the login session, tenant, filters,
+  timezone and page size, and expire after 24 hours; invalid/mismatched/expired
+  cursors return 422 `invalid_cursor`.
+- GET `/jobs/<id>`: same safe job fields plus `availableAt`; requires
+  `channels.view`, like history. Jobs belonging to another tenant return 404
+  within an authorized tenant. History/detail never return raw payloads, provider
+  responses, guest/payment data, secrets, ciphertext, actor IDs or dedupe keys.
+  Structured values in public payload metadata fields are omitted. Migration
+  `0032_channel_job_history` adds tenant/history and tenant/revision lookup indexes.
 - GET `/catalog`: `{roomTypes:[{id,name}],ratePlans:[{id,name,roomTypeId,currency,supported}]}`.
   Loads credentials server-side and requests only the saved property's room types and
   rate plans. A configured paused connection can still load options for editing unused
@@ -852,7 +973,7 @@ Tenant prefix `/api/tenants/<tenant_id>/channels`:
   shape to link a property from `system:staging`, `system:production`, or the
   target hotel's own `hotel:<tenant_id>` source. Server credentials are verified
   and encrypted per hotel without being returned to the browser. Hotel sources
-  cannot be reused for another hotel or property. Tenant permissions, feature
+  cannot be reused for another hotel or property. PMS membership or Manager OTA support, feature
   entitlements, CSRF, property uniqueness and history protection still apply.
   A supplied key is verified against GET `/properties/{propertyId}` before saving
   tenant/property/environment-bound Fernet ciphertext with a generated webhook
@@ -863,11 +984,31 @@ Tenant prefix `/api/tenants/<tenant_id>/channels`:
   Shared `CHANNEX_ENCRYPTION_KEY` is required for new encrypted storage. Corrupt
   ciphertext or an unavailable/wrong master key fails closed without env fallback.
   The exact legacy shape `{environment,propertyId,credentialRef,webhookSecretRef,active}`
-  remains supported; references must match server-generated tenant names. Mixed
-  legacy/new shapes are rejected. A legacy request cannot replace encrypted secrets.
-- PUT `/mappings`: `{roomTypeId,channexRoomTypeId,channexRatePlanId,active}`.
-  One local room type maps to one remote room type/manual rate plan. Mapping responses
-  add `targetLocked` (remote identifiers protected) and `pauseRequested` (closing sales).
+  only preserves an existing property/environment binding; references must match
+  server-generated tenant names. Creating a binding or changing one without history
+  returns 422 `channel_api_key_required`, even when inactive or using a support alias;
+  changing a binding with history still returns 409 `channel_has_history`.
+  Provision new connections with a supplied API key or the authorized manager
+  `accountId` source flow. Mixed legacy/new shapes are rejected. A legacy request
+  cannot replace encrypted secrets.
+- GET `/ari-preview?start_date=&end_date=`: read-only `{start,end,currency,inventoryHeld,warning,rows}`;
+  same half-open window, reconciliation and remote-catalog validation as publication.
+  Rows include `date,roomTypeId,roomTypeName,priceSource:base|daily,rate,currency,`
+  `channexRoomTypeId,channexRatePlanId,availability,stopSell`. A closed zero-price date
+  has `rate:null`. It creates no jobs or provider writes. Preview is a current
+  outbound snapshot, not a promise of an OTA's displayed price or a publication lock.
+- PUT `/mappings`: `{roomTypeId,channexRoomTypeId,channexRatePlanId,active,inboundRatePlanIds?}`.
+  One local room type maps to one remote room and one primary manual/per-room
+  outbound plan. Up to 99 additional distinct UUIDs may explicitly receive bookings;
+  they may use derived/occupancy pricing. All must belong to the same remote room,
+  property and tenant currency. No implicit parent/name fallback is performed.
+  Omission preserves saved additional IDs; an explicit empty list clears only
+  unused IDs. Used mappings cannot lose accepted IDs. Mapping responses include
+  `inboundRatePlanIds`, `targetLocked` (remote identifiers protected) and
+  `pauseRequested` (closing sales). Saves validate the current catalog before
+  accepting new/active targets. Existing close requests remain possible when
+  the catalog is unavailable. Target/alias changes require renewed inventory
+  reconciliation. Primary IDs remain protected after use.
   Webhook jobs and empty booking polls do not lock unused mappings. Before ARI writes,
   the worker durably records each mapping's use and date windows; successful booking
   imports also record use. Protected mappings reject identifier changes with 409.
@@ -889,16 +1030,76 @@ Tenant prefix `/api/tenants/<tenant_id>/channels`:
   ARI within the same database transaction; the worker sends a fresh snapshot.
   The worker also polls booking feed every minute and schedules a daily 366-day
   baseline in 31-day jobs. ARI prices use base/DailyRate, not PMS LOS/promotions.
+  Open dates require a positive OTA rate. A zero base/daily rate fails the job
+  with `channel_rate_invalid` before either ARI write; correct the rate and retry.
+  Closed dates can retain a zero PMS rate: the worker sends zero availability
+  and stop-sell without publishing a zero rate.
+  Each publication first sends zero room availability and reads it back from
+  Channex, then sends the primary plan's rate/stop-sell and reads those values
+  back. It refreshes the catalog, locks the hotel and compares a fresh local
+  snapshot before sending the final availability. A mismatch leaves work retryable
+  with `channel_inventory_unverified`, `channel_rate_unverified` or
+  `channel_snapshot_changed`, without sending the final open. A request timeout
+  still has an uncertain upstream result; inspect upstream state/history.
+  The final opening holds the hotel mutation lock for at most the HTTP timeout
+  (15 seconds). These readbacks establish stored Channex state, not completed
+  delivery to each OTA. The extra close/readback requests briefly suspend sales
+  for affected room dates; failures may require operator recovery before reopening.
+  Any unresolved booking review or queued/processing/failed exact revision import
+  without a committed receipt sets `inventoryHeld:true`: all mapped rooms in the
+  outbound window get zero availability and stop-sell. Feed/ACK jobs and duplicate
+  revisions with receipts do not hold inventory. Final reopening rechecks this
+  condition under the hotel lock. Held publication remains queued with
+  `channel_bookings_pending`, retaining its full date window for a fresh retry;
+  if the retry budget expires, resolve the booking and retry the failed ARI job.
+  This prevents an unimported OTA stay from being sold again by a later ARI push;
+  it does not itself cancel the OTA stay or guarantee immediate closure everywhere.
   Migration `0023_channel_ari_pacing` persists a per-connection ARI cooldown:
   `push_ari` and `pause_mapping` attempts are spaced by at least 7 seconds, with
   at least 60 seconds after retryable failures (or longer job backoff). Booking
   reads and ACKs remain eligible during this cooldown. Worker polling interval
   can make the delay longer. Apply the migration before starting the new code.
 - POST `/jobs/<id>/retry`: `{}`; retries failed work, retaining its history row.
+- Snapshot includes `connection.inventoryReconciledAt` and `onboarding` with its
+  `revision`, `reconciledAt`, pending revision/load/ACK count, review count and the
+  latest `load_bookings` job for each remote channel (independent of the 50-job list).
+- POST `/remote/<channel_id>/load_bookings`: `{revision,confirm:true}`, where
+  `revision` is the remote channel revision. Requires a linked, active PMS connection
+  and an active, mapped, single-property channel advertising `load_future_reservations`.
+  Returns `{job}` with HTTP 202. The manager property channel-action endpoint supports
+  the same action, using the linked hotel's durable queue. Repeated requests for an
+  unchanged mapping target return the existing job; failed work may be retried manually.
+  A succeeded load job means the provider accepted a background request, not that all
+  bookings were imported. Timeouts, unknown results and abandoned processing claims
+  fail without automatic POST replay. New load requests/retries invalidate reconciliation.
+- POST `/onboarding/reconcile`: `{revision,confirm:true}`, where `revision` is the
+  onboarding revision. The operator attests that existing future bookings are imported
+  or entered manually and that inventory matches every OTA. Requires no pending load,
+  revision import, ACK or unresolved booking review. Generic feed polls do not block
+  this manual attestation, including when the queue is full. Returns `{onboarding}`.
 
-Read requires `channels.view` (owner/front desk); changes require
-`channels.write` (owner). Both require `OTA_SYNC`. Worker execution rechecks the
-actor, membership, tenant status and subscription before using credentials.
+Migration `0031_channel_onboarding` starts every connection unreconciled, including
+existing connections. Manual ARI creation returns 409 `channel_inventory_unreconciled`;
+workers hold queued ARI without spending attempts and preserve dirty inventory ranges.
+Booking pulls/ACKs, webhook setup and mapping closure remain available. Confirmation
+releases held inventory work. Reconnect/activation and mapping changes in LOHA invalidate the
+checkpoint; stale confirmations return 409. During an in-flight ARI publication,
+checkpoint-changing actions return 409 `channel_inventory_publishing`. Remote mutation
+invalidation is committed before the provider call so a crash/timeout cannot undo it.
+Stop old workers and deploy migration/API/frontend/worker together before reconciling.
+This gate does not retract inventory already stored upstream: Channex activation or
+mapping may itself synchronize that stored inventory; operators must check it first.
+
+PMS routes require `channels.view` (owner/front desk) or `channels.write` (owner),
+with active hotel membership. Manager support uses the equivalent channel routes
+under `/api/admin/channex/tenants/<tenant_id>/channels` and requires
+`SYSTEM_MANAGER` or `SUPER_ADMIN`, independently of hotel membership. Both
+surfaces enforce `OTA_SYNC`, subscription write gates, tenant status and CSRF.
+GET `/api/admin/channex/tenants/<tenant_id>/workspace` returns only
+`{tenant:{id,name,status},settings:{timezone,currency},subscription,features}`.
+The support namespace exposes no general PMS workspace, settings, users or reservations API.
+Workers recheck the live actor's owner membership or system role, tenant status
+and subscription before using credentials. Support jobs never create PMS membership.
 API origin is fixed to Channex staging/production; redirects are refused.
 Deactivating the connection pauses work; it does not close sales on remote OTAs.
 
@@ -917,13 +1118,40 @@ POST `/api/channex/webhooks/<tenant_id>` requires the configured
 webhook prices/guest data as an authoritative booking. The worker fetches booking
 revisions, saves the reservation/receipt and an ACK job atomically, then processes
 the ACK after commit. Repeated revisions cannot create a second reservation.
+Completed imports atomically reuse their queue slot for ACK work, retaining the
+500 pending-job cap. If older resolved reviews cannot all enqueue ACKs at once,
+later feed polls recover them from their committed receipts.
 
 Provider bookings need complete nightly prices, mapped rooms, supported currency
 and available physical rooms. Unsupported extras, ambiguous order and changes to
 settled/in-house stays remain unacknowledged for operator review. OTA prepaid flags
-do not create local payments. PMS LOS/promotions/vouchers are not translated into
+do not create local payments.
+OTA revisions update only the primary guest; companions entered in the PMS retain
+their links and profiles. PMS LOS/promotions/vouchers are not translated into
 unsupported OTA rate rules. This implementation requires Channex sandbox acceptance
 with real property mappings before live activation.
+
+Migration `0037_channel_rate_safety` is required before running this version.
+Accepted revision receipts contain an immutable, bounded `money_snapshot` with
+remote room/rate IDs, nightly prices, total, currency, frozen FX/base amounts and
+optional OTA commission. No card guarantee or arbitrary payload is retained.
+Nonempty `taxes`/`collected_taxes` return `booking_financial_extras_unsupported`
+for operator review; invalid commission returns `booking_commission_unsupported`.
+No ACK is sent for these cases. Missing commission on a changed-total revision
+of a booking with provider commission also requires review, rather than reusing
+a stale amount. Local changes of OTA dates, room category/count or booking source
+return 409 `channel_booking_requires_review`. Physical-room moves within the same
+categories and dates preserve existing nightly prices, FX and complete snapshot.
+
+A validated scalar `ota_commission` becomes `pricingSnapshot.commission.providerAmount`.
+Commission candidates expose `providerAmount`, `calculationBasis:provider_amount`
+and `percent:null`. Settlements freeze the exact amount and convert with the
+booking's frozen FX; existing percentage settlements retain `calculationBasis:percent`.
+Unresolved OTA booking reviews block commission payouts. An amount-based settlement
+does not prove an OTA has already withheld or paid anything; payments still require
+an explicit cashbook action. Existing hotel tax/remittance reconciliation remains
+an operator responsibility. Downgrade is refused when it would discard aliases,
+accepted monetary history or amount-based settlements.
 
 Retryable failures remain `queued` until their retry budget is exhausted. These
 attempts retain audit/history/log entries without sending an `OTA_SYNC_ERROR`
@@ -962,27 +1190,75 @@ enabled by this contract.
 System roles (`SUPER_ADMIN`, `SYSTEM_MANAGER`) manage SaaS customers at
 `/api/tenants`; hotel guest information is managed within tenant reservations.
 
-- GET `/api/tenants`: `{tenants:[...]}`. Each tenant now adds `contactName`,
+- GET `/api/tenants`: `{tenants:[...]}`. Each tenant contains `id,name,status,currency`, `contactName`,
   `contactEmail`, `contactPhone`, `address`, `city`, `taxId`, `domain`,
-  `customerNotes`, `rooms` (active physical rooms) and `createdAt` to the existing
-  tenant fields. For older hotels, missing contact name/email fall back to an
+  `customerNotes`, `createdAt` and `owner` (null or `{id,name,email,active,createdAt}`).
+  `owner` describes the login account independently of contact fields and never
+  includes password or session data. Hotel settings and physical-room counts are
+  excluded. For older hotels, missing contact name/email fall back to an
   Owner's identity. Explicit empty values stay empty.
-- POST `/api/tenants`: existing `name,status?,ownerName,ownerEmail,ownerPassword`
-  plus optional contact fields above. Creates the hotel, Owner membership and
-  private contact profile atomically. It does not assign a subscription.
+- GET `/api/admin/customer-accounts?search=<name-or-email>`: system roles only.
+  The trimmed search must contain 2–254 characters, with no control characters;
+  unknown or repeated query parameters return 422. Searches name/email literally,
+  case-insensitively (SQL wildcard characters are escaped), returning at most 20
+  active ordinary customer accounts, excluding system accounts. Response:
+  `{users:[{id,name,email,active,createdAt,memberships:[{tenantId,tenantName,role,active}]}]}`.
+  No hotel operational information, passwords or sessions are returned.
+- POST `/api/tenants`: `name,status?,currency?`, optional contact fields above, and either
+  `ownerName,ownerEmail,ownerPassword` to create an account or `ownerUserId` to
+  use an existing active ordinary account. Combining both modes returns 422;
+  an unknown account returns 404 and inactive/system accounts return 422.
+  Creates the hotel, Owner membership and private contact profile atomically,
+  preserving the existing account's name, email, password and other memberships.
+  Omitted contact name/email default to the selected Owner's identity.
+  `currency` is the hotel's canonical base currency, stored in hotel settings and
+  used by PMS, auth-session hotel metadata and Channex mapping checks. It defaults
+  to `VND`; string values are trimmed/uppercased and must belong to the common
+  hotel-currency catalog, otherwise return 422 `invalid_currency`.
+  The remaining default hotel settings are preserved.
+  Manager profile PATCH does not accept `currency`; existing tenant settings and
+  transaction-history guards govern later currency changes.
+  It does not assign a subscription.
+- The common hotel-currency catalog contains `VND`, `USD`, `EUR`, `GBP`, `JPY`,
+  `KRW`, `CNY`, `HKD`, `SGD`, `THB`, `AUD`, `CAD`, `CHF`, `NZD`, `MYR`, `IDR`,
+  `PHP`, `INR`, `AED` and `TWD`. These selected common codes were checked against
+  Channex's public [staging currency reference](https://staging.channex.io/api/v1/currencies)
+  on 2026-10-30. This is a subset of Channex's full catalog. It is shared by hotel
+  creation, operational settings/FX and admin Channex Property creation; rate-plan
+  mapping still requires an exact match with the hotel's configured currency.
+  SaaS plan and invoice currencies remain `VND`/`USD` independently of hotel currency.
+  Apply migration `0042_hotel_currencies` before enabling the new choices in a
+  deployed database (`python manage.py db upgrade`). It expands existing currency
+  and FX snapshot checks while retaining exact decimal amounts and historic rates.
+  Downgrade refuses to remove support while hotel settings or money/FX records
+  still use a currency outside `VND`/`USD`.
 - PATCH `/api/tenants/<id>`: nonempty subset of `name,status` and contact fields.
   Contact name/city <=160, email <=254, phone/tax ID <=40, address <=500,
   domain <=253, notes <=4000 characters. Values must be strings; empty strings
   clear optional fields. Email is normalized/validated; domain accepts a DNS
   hostname (not a URL). Storing it does not provision DNS, Tunnel or TLS.
+  On both POST and PATCH, a nonempty `contactPhone` must contain 7–15 ASCII digits
+  and may contain spaces, dots, hyphens, parentheses and a single leading `+`.
+  Letters and other characters return 422 `invalid_phone`. Formatting and leading
+  zeroes are preserved after trimming; an empty string clears the phone.
+  A nonempty `taxId` contains only ASCII digits with an optional hyphen followed
+  by a three-digit branch suffix. Leading zeroes are preserved; letters, decimal
+  points and exponent notation return 422 `invalid_tax_id`.
+  Login/contact emails are trimmed and normalized to lowercase; the local part
+  is 1–64 characters, cannot start/end with a dot or contain consecutive dots;
+  each domain label is 1–63 alphanumeric/hyphen characters without leading or
+  trailing hyphens. Existing single-label domains remain supported.
 - GET `/api/tenants/<id>/customer-history`: system roles only, including when
   the hotel is suspended. Same filtering, paging and response as tenant `/audit`;
-  URL fixes the tenant and `tenantId` query is rejected. Global SaaS payment
+  only SaaS account/commercial events are included. URL fixes the tenant and
+  `tenantId` query is rejected. Global SaaS payment
   events are excluded; invoice details hold their payment history.
-- Tenant `/users` continues its existing account contract: system roles may
-  create hotel accounts and change membership role/active state, subject to
-  quota, subscription, suspension and last-Owner guards. Contact email changes
-  never change an Owner's login identity.
+- Tenant `/users` requires an ordinary HOTEL_OWNER for membership writes, subject
+  to quota, subscription, suspension and last-Owner guards. POST may create an
+  ordinary account or grant an existing account using `{userId,role,active?}` or
+  `{email,role,active?}`. Granting an existing account cannot change its profile
+  or password. Responses contain only the selected hotel's membership.
+  Contact email changes never change an Owner's login identity.
 
 Profiles are stored in `tenant_client_profiles` with system-only FORCE RLS.
 Private contacts/CRM notes are not added to hotel `/workspace`, auth session
@@ -1009,7 +1285,7 @@ surviving session. No 2FA is implemented.
 All routes below require a system role. Hotel roles receive 403. Hotel revenue,
 POS invoices and ledger are separate from SaaS software invoices/payments.
 
-- GET `/api/billing/invoices?tenantId=&status=&start=&end=&page=&pageSize=`:
+- GET `/api/billing/invoices?tenantId=&status=&start_date=&end_date=&page=&pageSize=`:
   `{invoices,pagination:{page,pageSize,totalItems}}`. Status is
   `unpaid|partial|paid|void`. Dates are `YYYY-MM-DD` UTC creation dates:
   start inclusive, end exclusive; end must follow start. Paging uses the
@@ -1038,7 +1314,7 @@ balance,createdAt,voidedAt,voidReason,payments}`. Number displays `SAAS-000001`.
 Payment: `{id,amount,method,reference,note,createdAt}`. Money is serialized as
 decimal strings; void balance is zero. Dates/timestamps use ISO representation.
 
-GET `/api/manager/overview?start=&end=` uses the same half-open UTC date range,
+GET `/api/manager/overview?start_date=&end_date=` uses the same half-open UTC date range,
 defaulting to the current month. Returns:
 `{start,end,tenants:{total,active,suspended},users:{active},
 plans:{FREE,PRO,...customCodes,unassigned},currencies,recentPayments}`.
@@ -1050,10 +1326,12 @@ currency, amount and timestamp. Plan counts include only currently effective
 subscriptions to active plans, including custom and archived plans still serving
 existing subscribers; other hotels are unassigned.
 
-`saas_invoices`, `saas_payments`, `saas_idempotency_records` have system-only FORCE
-RLS. Payment records/cache are append-only. SaaS audit events have null tenant ID
-and tenant reference in system-only details, so Owner audit reads cannot expose
-software billing. Recording payment does not automatically grant/renew a plan;
+`saas_invoices`, `saas_payments`, `saas_idempotency_records` have FORCE RLS.
+Writes and idempotency records remain system-only; migration `0035_owner_saas_billing`
+adds SELECT-only access to invoices/payments for an active `HOTEL_OWNER` membership
+matching the current tenant and user. Payment records/cache are append-only.
+SaaS audit events have null tenant ID and tenant reference in system-only details;
+owner billing reads use the dedicated routes below. Recording payment does not automatically grant/renew a plan;
 subscription changes remain explicit at the existing subscription endpoint.
 
 Migrations `0015_plan_room_limits` then `0016_room_type_codes` follow
@@ -1064,3 +1342,202 @@ Run `python manage.py db upgrade` using the target environment's
 `DATABASE_MIGRATION_URL`, then check `/api/ready`. Downgrades refuse to discard
 stored billing or customer records. No production migrations run automatically
 from these feature changes.
+
+## Owner: read-only SaaS orders and internal documents
+
+The Profile → Orders tab reads only the selected hotel's billing. Each route uses
+the `billing.view` tenant policy: active hotel owners can read their tenant;
+`FRONT_DESK`, `HOUSEKEEPING`, and `ACCOUNTANT` receive 403, including staff who own
+another hotel. System accounts also need an active `HOTEL_OWNER` membership
+granted by the hotel's ordinary owner; global roles alone grant no access. Missing
+authentication returns 401; inaccessible tenant paths return 403. Billing reads
+remain available for expired/cancelled subscriptions, inactive plans and suspended
+hotels. They do not grant features, record payments, modify or renew subscriptions.
+
+- GET `/api/tenants/<tenant_id>/billing` returns
+  `{subscription,summary:[{currency,amount,paid,balance}]}`. Subscription uses the
+  Manager subscription shape, or null if absent. Summary covers all unvoided
+  invoices for this tenant, independent of pagination and list filters. Amounts
+  and collected payments come from the same SaaS records as Manager. Currencies
+  remain separate, monetary values are decimal strings with four fractional
+  digits, and an empty invoice history returns `summary:[]`.
+- GET `/api/tenants/<tenant_id>/billing/invoices?page=&pageSize=&status=&start_date=&end_date=`
+  returns `{invoices,pagination:{page,pageSize,totalItems}}` with the exact Manager
+  invoice/payment fields described above. Filters have the same semantics as
+  Manager; void invoices remain visible and have zero balance. A `tenantId` query
+  parameter cannot override the tenant in the URL.
+- GET `/api/tenants/<tenant_id>/billing/invoices/<invoice_id>` returns the same
+  invoice document including payment confirmations, reference, note and any void
+  reason. Unknown or foreign invoice IDs return the same 404. The Client offers
+  an escaped HTML download and print view labelled as an internal document,
+  not a tax invoice.
+- GET `/api/tenants/<tenant_id>/billing/history?page=&pageSize=` returns
+  `{history,pagination:{page,pageSize,totalItems}}`. History uses the same stored
+  plan snapshots and ordering as Manager, with system actor identity omitted.
+  Its `amount` is the note recorded when granting/renewing the plan; it is not
+  proof of payment and is never added to the collected-payment summary.
+
+Both lists use finance pagination: page 1–100000, pageSize 1–500, default 100;
+invalid pagination returns 422. Ordering is deterministic, and pages beyond the
+end return empty arrays with the true total. These four routes register GET only
+(with standard HEAD/OPTIONS). POST/PUT/PATCH/DELETE return 405, and all Manager
+billing and subscription write endpoints continue to deny hotel users.
+
+Deploy migration `0035_owner_saas_billing` with `python manage.py db upgrade`
+before using the Client billing tab, then check `/api/ready`. The migration adds
+read policies without changing billing records; downgrade revokes owner reads
+without deleting invoice/payment history.
+
+## P1 business completion — 29/10/2026
+
+Requires migration head `0041_operational_days` (after `0038_commission_review`,
+`0039_saas_recovery`, `0040_channel_exceptions`). Additions below extend the
+earlier contracts. All writes require CSRF and `Idempotency-Key`; retry with the
+same body/key to replay the saved result. Changed intent with the same key returns
+409. Tenant money uses decimal strings and preserves original/base currencies.
+
+### In-house stay changes
+
+Under `/api/tenants/<tenant_id>/reservations/<reservation_id>`:
+
+- POST `/stay-change/preview`: `{rooms:[roomNumber,...],effectiveDate,checkOut,
+  expectedVersion}`. Requires `reservations.write` and `IN_HOUSE`. Effective date
+  is today in the hotel's timezone. Room count stays fixed. Target rooms must be
+  active, clean for a move, available, within guest capacity and open for sale.
+- POST `/stay-change`: same fields plus `{previewToken,reason,confirmOta?}`.
+  Returns the updated reservation. Confirmation recomputes the quote under the
+  tenant/booking/inventory locks; a changed version or quote returns 409.
+
+Preview includes `bookingId,expectedVersion,effectiveDate,previousCheckOut,
+checkOut,rooms,previousRooms,nightlyRates,total,previousTotal,difference,paid,
+balance,refundRequired,currency,baseCurrency,exchangeRate,checkoutNow,otaLinked,
+previewToken`. Nightly rows retain the booking's original money snapshots for
+same-type existing nights; added nights/new room types use the current quote
+converted at the booking's frozen FX. Served nights remain unchanged. Missing
+overdue nights are quoted once and cannot be inserted into a closed day.
+
+No automatic early departure penalty. Refund surplus through the existing refund
+route before confirming (`refund_required`); same-day early checkout also requires
+the projected balance to be zero (`unpaid_balance`). Moves release/reallocate
+remaining inventory and create housekeeping work for vacated rooms. OTA-linked
+stays require `confirmOta:true`, record a reconciliation incident and queue normal
+inventory sync; they do not modify the provider booking. Ordinary post-check-in
+editing remains guarded. This new flow is unavailable under temporary expiry access.
+
+### Night Audit and closed hotel days
+
+- GET `/api/tenants/<tenant_id>/reconciliation/night-audit?date=YYYY-MM-DD`:
+  requires `reconciliation.view`. Returns `{date,timezone,lastClosedDay,
+  recognitionStart,periodLocked,blockers,entries,totals,previewToken}` for an open
+  date; closed dates return their stored snapshot plus `periodLocked:true,auditId`.
+- POST the same path: `{date,previewToken,reason}`, requires
+  `reconciliation.confirm` (Owner/Accountant). Returns the locked result (201)
+  with `auditId,actor,reason`. A different second close returns `period_closed`.
+
+Only dates before today in the hotel timezone can close. The first chosen date
+starts a new revenue book (`recognitionStart`); earlier revenue is not reposted.
+Afterwards dates must be consecutive (`audit_sequence`, `nextDate`). Unresolved
+arrivals, departures and OTA booking reviews block closure (`audit_unresolved`).
+Changed source data returns `preview_changed`. Close never auto checks in/out or
+marks no-show.
+
+Entries have `sourceKind:room|charge|pos,sourceId,sourceDate,amount,currency,
+baseAmount,baseCurrency,details,adjustment`. Room nights of in-house/checked-out
+stays, booking charges/discounts and standalone posted POS contribute once;
+booking-linked POS is represented by its booking charge. Later corrections or
+POS cancellation post a delta on the next open close. Revenue entries are
+append-only and do not create ledger/payment/refund rows. Closed room-night
+rewrites and backdated money are blocked in PostgreSQL, including direct SQL.
+New corrections use the current open day. GET `/reports/financial` now includes
+`recognizedRevenue` in summary and period rows, filtered by close business date;
+it is a separate measure from invoice revenue and cash receipts.
+
+The existing GET `/reconciliation`, POST `/reconciliation/confirm` and GET
+`/reconciliation/history` retain their nonlocking snapshot behavior.
+
+### Commission reconciliation and recovery
+
+Under `/api/tenants/<tenant_id>/commissions/<commission_id>`:
+
+- GET `/review` (`cashbook.view`): `{current,evidence,blockedByOta,roomSubtotal,
+  baseRoomSubtotal,charges,refunds,previewToken}`.
+- POST `/review` (`cashbook.write`): `{previewToken,allocations:[{chargeId,
+  roomAmount}],reason,providerAmount?}`. Explicitly allocate every fee/discount;
+  a room amount may be zero but must retain the original sign and stay within
+  the source amount. Original percentage/FX remain fixed. Only provider-amount
+  commissions accept `providerAmount`. Returns the revised commission (201).
+- POST `/recoveries` (`cashbook.write`): `{amount,fundId,categoryId?,note}`.
+  Returns the commission (201) and links an incoming cash receipt. Only the
+  current net overpayment may be recovered; the shared receipt reversal flow
+  restores the outstanding recovery.
+
+Original settlements/payments remain immutable. Results expose revised liability,
+review/recovery histories, net paid and `recoveryDue`; `OVERPAID` means money must
+be recovered. New charges/refunds/manual OTA resolutions invalidate the evidence
+and block further settlement/payment until re-reviewed. Resolve pending OTA
+reviews before commission review. Recovery records actual returned money; it does
+not initiate a transfer.
+
+### OTA money and incidents
+
+The importer supports documented room taxes and services: inclusive tax is split
+from the room amount, exclusive tax/services are separate booking charges, and
+the complete sum must equal provider `amount`. Provider nightly amounts and
+commission money remain snapshotted. Unsupported/ambiguous tax or service forms,
+withheld `collected_taxes`, cancellation fees, cancellations of bookings with
+existing charges, and closed-day changes remain
+durable reviews, unacknowledged. No provider receipt becomes a cash payment.
+
+- POST `/api/tenants/<tenant_id>/channels/booking-reviews/<review_id>/resolve`
+  is tenant Owner-only. Body `{reservationId,expectedVersion,providerTotal,
+  expectedTotal,reason,confirm:true}`. Re-fetches the authoritative Channex
+  revision; verifies identity/property/latest revision, booking version, currency,
+  status, dates and room count. Stores the explicit PMS/provider difference and
+  financial evidence without rewriting the booking total. Links the existing PMS
+  booking, saves a resolution/receipt, then queues ACK in the same transaction.
+  Superseded reviews or mismatched totals require a new review. This action has
+  no broad system-support write alias.
+- GET `/api/tenants/<tenant_id>/channels/incidents?status=open|resolved|all&page=&pageSize=`:
+  `{items,assignees,pagination}`. Default status `open`.
+- POST `/api/tenants/<tenant_id>/channels/incidents/<incident_id>/actions`:
+  `{action:assign|resolve|reopen,reason,assigneeId?,verified?}`. Assignment must
+  select an active authorized tenant member (or null to unassign). Resolving
+  requires `verified:true` after checking actual channel state. Reasons and
+  actions are audited. Scoped Manager support has equivalent incident-only
+  routes under `/api/admin/channex/tenants/<tenant_id>/channels/incidents`.
+
+Authenticated webhook events `sync_error,sync_warning,rate_error` create bounded,
+deduplicated tenant incidents. Registrations use `event_mask:'*',send_data:true`;
+unhandled authenticated events return 202. Booking events still trigger an
+authoritative pull. Existing shared-secret validation, encrypted credentials,
+safe payload filtering and durable receipt-before-ACK behavior remain required.
+Definitions follow [Channex booking revisions](https://docs.channex.io/api-v.1-documentation/bookings-collection)
+and [webhooks](https://docs.channex.io/api-v.1-documentation/webhook-collection).
+
+### SaaS refunds and temporary expiry access
+
+System roles only:
+
+- POST `/api/billing/invoices/<invoice_id>/payments/<payment_id>/refund`:
+  `{amount,reason}` returns the invoice (201). Amount is positive and capped at
+  that receipt's unrefunded amount; invoice locking serializes concurrent writes.
+  Invoice adds `refunded,refunds`; each payment adds `refunded,refundable`.
+  `paid` is net receipts minus refunds, so balance/status, overview, Owner summary
+  and internal documents reflect the same net amount. Histories stay append-only.
+  This records a completed correction/refund, not a banking instruction, and
+  does not change subscription dates or plans.
+- GET `/api/billing/tenants/<tenant_id>/operational-access`: `{access}` (or null).
+- POST same path: `{until:ISO-timestamp-with-zone|null,reason}` returns `{access}`
+  (201). Non-null expiry must be in the next seven days; null explicitly revokes.
+  Access is available only for an active hotel, active plan and active-status
+  subscription that has expired. Grants bind the exact plan and subscription end;
+  renewal/plan change invalidates the previous grant.
+
+`access` contains `id,until,reason,createdAt,active` and is also exposed as
+`subscription.operationalAccess`. Active grants allow payment/charge/refund and
+checkout for existing in-house bookings, corrections/refunds for closed existing
+stays, housekeeping task completion, OTA incoming booking handling, review and
+incident actions. They do not allow new direct bookings, POS sales, configuration,
+ordinary OTA publishing or plan renewal. Booking must predate the grant. Role,
+membership, feature flags, tenant suspension and worker checks still apply.
+Expiry is never bypassed automatically and no grant unlocks a suspended hotel.

@@ -1,4 +1,4 @@
-import { getIntlLocale } from '../../../shared/i18n/store.js';
+import { formatDateTime } from '../../../shared/lib/date.js';
 import { t as tUi, tr as labelUi, useI18n } from '../../../shared/i18n/useI18n.js';
 import { X, Building2, ShieldCheck, CheckCircle2, LockKeyhole } from 'lucide-react';
 import { usePms } from '../data/usePms';
@@ -18,7 +18,7 @@ export default function UsageInfoModal({ isOpen, onClose }) {
           <dl className="pms-usage-quota">
             <div><dt>{tUi("usage.rooms")}</dt><dd>{quota.rooms.used} <span>/ {quota.rooms.limit ?? subscription?.roomCount ?? tUi("usage.unregistered")}</span></dd></div>
             <div><dt>{tUi("usage.users")}</dt><dd>{quota.users.used} <span>/ {quota.users.limit === null ? tUi("usage.unlimited") : quota.users.limit}</span></dd></div>
-            <div><dt>{tUi("usage.expiry")}</dt><dd>{subscription?.endDate ? new Date(subscription.endDate).toLocaleDateString(getIntlLocale()) : subscription ? tUi("usage.noExpiry") : tUi("usage.noPlan")}</dd></div>
+            <div><dt>{tUi("usage.expiry")}</dt><dd>{subscription?.endDate ? formatDateTime(subscription.endDate).slice(0, 10) : subscription ? tUi("usage.noExpiry") : tUi("usage.noPlan")}</dd></div>
           </dl>
           <h3><Building2 size={17} aria-hidden="true" />{tUi("usage.features")}</h3>
           <ul className="pms-usage-features">{features.map(feature => <li key={feature.code || feature.id}><span aria-hidden="true">{feature.allowed ? <CheckCircle2 size={16} /> : <LockKeyhole size={16} />}</span><span>{labelUi(feature.name)}<small>{feature.allowed ? tUi("usage.enabled") : tUi("usage.disabled")}</small></span></li>)}</ul>

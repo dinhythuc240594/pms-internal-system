@@ -1,4 +1,4 @@
-FROM python:3.14-slim
+FROM python:3.14-slim@sha256:35caba83af2fe6da9a5d922f9b0156f21d1246a48278c58a08bd253303ba42e8
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -7,8 +7,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PORT=8000
 
 WORKDIR /app
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt \
+COPY requirements.txt requirements-installer.txt ./
+RUN pip install --no-cache-dir --require-hashes --only-binary=:all: -r requirements-installer.txt \
+    && pip install --no-cache-dir --require-hashes --only-binary=:all: -r requirements.txt \
     && useradd --create-home --uid 10001 pms
 
 COPY --chown=pms:pms app.py manage.py gunicorn_conf.py ./

@@ -1,3 +1,7 @@
+import { phoneInput } from '../../../shared/lib/phone.js';
+import { emailInput } from '../../../shared/lib/validation.js';
+import { isHotelCurrency } from '../../../shared/lib/currencies.js';
+
 export function canCreateChannexProperty(user, account) {
   return ['SUPER_ADMIN', 'SYSTEM_MANAGER'].includes(user?.globalRole)
     && account?.configured === true && ['system:staging', 'system:production'].includes(account.id);
@@ -23,12 +27,14 @@ export function channexPropertyInput(accountId, draft) {
     return [field, raw.trim()];
   }));
   if (!values.name) throw new Error('Nhập tên khách sạn trên Channex.');
-  if (!['VND', 'USD'].includes(values.currency)) throw new Error('Chọn tiền tệ VND hoặc USD.');
+  if (!isHotelCurrency(values.currency)) throw new Error('Tiền tệ không được hỗ trợ.');
   try {
     if (!values.timezone || /^[+-]/.test(values.timezone)) throw new Error();
     new Intl.DateTimeFormat('en', { timeZone: values.timezone });
   } catch { throw new Error('Nhập múi giờ hợp lệ, ví dụ Asia/Ho_Chi_Minh.'); }
   if (values.country && !/^[A-Z]{2}$/.test(values.country)) throw new Error('Mã quốc gia cần 2 chữ cái in hoa, ví dụ VN.');
+  if (values.email) values.email = emailInput(values.email);
+  values.phone = phoneInput(values.phone);
   return { accountId, ...Object.fromEntries(Object.entries(values).filter(([, value]) => value !== '')) };
 }
 

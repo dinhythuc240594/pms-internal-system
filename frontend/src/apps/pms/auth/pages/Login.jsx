@@ -1,3 +1,4 @@
+import { emailPattern } from '../../../../shared/lib/validation.js';
 import { t as tUi, useI18n } from '../../../../shared/i18n/useI18n.js';
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -48,12 +49,12 @@ export default function Login() {
         {(error || loadError) && <div id="loha-login-error" className="loha-auth-error" role="alert"><CircleAlert size={18} aria-hidden="true" /><span>{error || loadError}</span></div>}
         <div className="loha-auth-field">
           <label htmlFor="loha-login-email">{tUi("auth.email")}</label>
-          <input id="loha-login-email" name="email" type="email" autoComplete="username" autoCapitalize="none" spellCheck={false} required value={email} onChange={e => setEmail(e.target.value)} placeholder="ban@khachsan.vn" aria-describedby={error || loadError ? 'loha-login-error' : undefined} />
+          <input id="loha-login-email" name="email" type="email" pattern={emailPattern} maxLength={254} autoComplete="username" autoCapitalize="none" spellCheck={false} required value={email} onChange={e => setEmail(e.target.value)} placeholder="ban@khachsan.vn" aria-describedby={error || loadError ? 'loha-login-error' : undefined} />
         </div>
         <div className="loha-auth-field">
           <label htmlFor="loha-login-password">{tUi("auth.password")}</label>
           <div className="loha-auth-password">
-            <input id="loha-login-password" name="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" required value={password} onChange={e => setPassword(e.target.value)} placeholder={tUi("auth.passwordPlaceholder")} aria-describedby={error || loadError ? 'loha-login-error' : undefined} />
+            <input id="loha-login-password" name="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" required maxLength={128} value={password} onChange={e => setPassword(e.target.value)} placeholder={tUi("auth.passwordPlaceholder")} aria-describedby={error || loadError ? 'loha-login-error' : undefined} />
             <button className="loha-auth-password-toggle" type="button" aria-label={showPassword ? tUi("auth.hidePassword") : tUi("auth.showPassword")} aria-pressed={showPassword} aria-controls="loha-login-password" onClick={() => setShowPassword(!showPassword)}>
               {showPassword ? <EyeOff size={19} aria-hidden="true" /> : <Eye size={19} aria-hidden="true" />}
             </button>

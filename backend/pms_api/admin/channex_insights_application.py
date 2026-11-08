@@ -56,7 +56,7 @@ def provider_money(value):
         ):
             raise ValueError
         return format(amount, "f")
-    except (InvalidOperation, ValueError):
+    except InvalidOperation, ValueError:
         raise ProviderError("provider_invalid_response") from None
 
 
@@ -93,7 +93,7 @@ def booking_json(entity, property_id):
         inserted = (
             inserted.replace(tzinfo=UTC) if inserted.tzinfo is None else inserted.astimezone(UTC)
         )
-    except (ValueError, KeyError):
+    except ValueError, KeyError, OverflowError:
         raise ProviderError("provider_invalid_response") from None
     return {
         "id": remote_id(entity.get("id")),
@@ -147,6 +147,13 @@ def channel_json(entity, property_id):
         raise ProviderError("provider_invalid_response")
     attrs = entity["attributes"]
     properties, mappings = attrs.get("properties"), attrs.get("rate_plans")
+    actions = attrs.get("actions", [])
+    if (
+        not isinstance(actions, list)
+        or len(actions) > 100
+        or any(not isinstance(action, str) or len(action) > 100 for action in actions)
+    ):
+        raise ProviderError("provider_invalid_response")
     if (
         not isinstance(properties, list)
         or not 1 <= len(properties) <= 1000
@@ -186,6 +193,7 @@ def channel_json(entity, property_id):
         "code": provider_text(attrs.get("channel"), 120, required=True),
         "currency": currency,
         "active": attrs["is_active"],
+        "supportsLoadFutureReservations": "load_future_reservations" in actions,
         "mappedRateCount": len({remote_id(row.get("rate_plan_id")) for row in mappings}),
         "propertyCount": len(property_ids),
     }
@@ -198,7 +206,7 @@ def handle_remote_channels(property_id):
         _, client = account_client(args.get("accountId"))
         entity = verify_property(client, property_id)
         property_id = remote_id(entity["id"])
-        return remote_channels(client, property_id, page)
+        return remote_channels(client, property_id, page, single_property=True)
     except ProviderError as error:
         provider_error(error)
 
@@ -207,7 +215,7 @@ def handle_remote_bookings(property_id):
     args = query_values({"accountId", "page"})
     page = page_number(args.get("page", "1"))
     try:
-        _, client = account_client(runtime().request.args.get("accountId"))
+        _, client = account_client(runtime().request.args.get("accountId"), action="channels.view")
         entity = verify_property(client, property_id)
         property_id = remote_id(entity["id"])
         result = client._request(
@@ -230,12 +238,10 @@ def handle_remote_bookings(property_id):
 
 
 def handle_remote_inventory(property_id):
-    query_values({"accountId", "start", "end"})
+    start_value, end_value = runtime().date_range()
+    query_values({"accountId", "start", "end", "start_date", "end_date"})
     try:
-        start, end = (
-            iso_date(runtime().request.args.get("start")),
-            iso_date(runtime().request.args.get("end")),
-        )
+        start, end = iso_date(start_value), iso_date(end_value)
         if not 0 <= (end - start).days < 31:
             raise ValueError
     except ValueError:
@@ -246,7 +252,7 @@ def handle_remote_inventory(property_id):
         ) from None
     dates = [(start + timedelta(days=i)).isoformat() for i in range((end - start).days + 1)]
     try:
-        _, client = account_client(runtime().request.args.get("accountId"))
+        _, client = account_client(runtime().request.args.get("accountId"), action="channels.view")
         property_entity = verify_property(client, property_id)
         property_id = remote_id(property_entity["id"])
         catalog = catalog_options(

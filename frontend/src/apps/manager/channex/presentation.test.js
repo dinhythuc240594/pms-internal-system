@@ -45,3 +45,21 @@ test('catalog save fields keep decimal strings and omit immutable plan fields on
   assert.deepEqual(channexCatalogInput('rate', rate, true), { name: 'Giá linh hoạt', rate: rate.rate });
   assert.deepEqual(channexCatalogInput('room', { name: ' Deluxe ', countOfRooms: '10', adults: '2', children: '0', infants: '1' }, true), { name: 'Deluxe', countOfRooms: 10, adults: 2, children: 0, infants: 1 });
 });
+
+test('catalog rejects blank names, noninteger capacities and malformed rates before saving', () => {
+  const room = { name: 'Deluxe', countOfRooms: '10', adults: '2', children: '0', infants: '0' };
+  for (const value of ['', ' ', '1e2', '1.5', '-1', '10001']) {
+    assert.throws(() => channexCatalogInput('room', { ...room, countOfRooms: value }, false));
+  }
+  for (const field of ['adults', 'children', 'infants']) {
+    assert.throws(() => channexCatalogInput('room', { ...room, [field]: '51' }, false));
+  }
+  assert.throws(() => channexCatalogInput('room', { ...room, name: '   ' }, true));
+  const rate = { name: 'Flexible', roomTypeId: 'room-1', currency: 'USD', rate: '0' };
+  assert.equal(channexCatalogInput('rate', rate, false).rate, '0');
+  for (const value of ['', '-1', '1e3', '1,5', '1.00001', '1000000000000000']) {
+    assert.throws(() => channexCatalogInput('rate', { ...rate, rate: value }, false));
+  }
+  assert.throws(() => channexCatalogInput('rate', { ...rate, currency: 'US1' }, false));
+  assert.throws(() => channexCatalogInput('rate', { ...rate, roomTypeId: '' }, false));
+});

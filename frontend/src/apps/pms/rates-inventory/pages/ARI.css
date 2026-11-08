@@ -5,7 +5,7 @@
 .ari-date-cell { padding: 8px 0; }
 .ari-search { width: 220px; min-width: 0; }
 .ari-search input { width: 100%; min-width: 0; font-size: 14px; }
-.pms-original.pms-legacy-timeline .pms-legacy-chart { min-width: 0; flex-wrap: nowrap; gap: 0; margin: 12px 0; overscroll-behavior: contain; }
+.pms-original.pms-legacy-timeline .pms-legacy-chart { min-width: 0; flex-wrap: nowrap; gap: 0; margin: 12px 0; overscroll-behavior-x: contain; }
 .pms-legacy-timeline .pms-legacy-chart .ari-chart-row { min-width: calc(var(--ari-room-column) + 1400px); flex-wrap: nowrap; gap: 0; }
 .ari-room-column { width: var(--ari-room-column); }
 .ari-room-heading { padding: 12px; background: #f9fafb; }

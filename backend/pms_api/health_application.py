@@ -34,3 +34,9 @@ def handle_liveness():
 def handle_readiness():
     status = database_status()
     return runtime().json_response(status), 200 if status["status"] == "ok" else 503
+
+
+def handle_operations():
+    from .worker_health import operations_status
+
+    return operations_status()

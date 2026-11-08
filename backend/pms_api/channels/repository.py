@@ -16,6 +16,7 @@ class SQLAlchemyRevisionRepository:
                 select(ChannelRevision.id).where(
                     ChannelRevision.tenant_id == tenant_id,
                     ChannelRevision.revision_id == revision_id,
+                    ChannelRevision.outcome.in_(("imported", "stale", "cancelled")),
                 )
             )
         )

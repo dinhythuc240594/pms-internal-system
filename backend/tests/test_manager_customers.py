@@ -5,12 +5,12 @@ from pathlib import Path
 from alembic.migration import MigrationContext
 from alembic.operations import Operations
 from alembic.script import ScriptDirectory
-from domain_fixture import DomainTestCase
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import DBAPIError
 
 from pms_api.extensions import db
 from pms_api.security import set_context
+from tests.domain_fixture import DomainTestCase
 
 
 class ManagerCustomerTests(DomainTestCase):
@@ -72,6 +72,8 @@ class ManagerCustomerTests(DomainTestCase):
         self.assertEqual(self.update({"city": "No"}, headers={}).status_code, 403)
         for body in (
             {"contactEmail": "bad"},
+            {"contactPhone": "098210910A"},
+            {"contactPhone": "090+123"},
             {"domain": "https://example.com/path"},
             {"customerNotes": "x" * 4001},
             {"phone": "unsupported"},
@@ -90,6 +92,14 @@ class ManagerCustomerTests(DomainTestCase):
             "customerNotes": "Internal follow-up",
             "domain": "new.example.com",
         }
+        rejected = self.request(
+            "POST",
+            "/api/tenants",
+            {**body, "contactPhone": "098210910A"},
+            client=self.manager,
+            headers=self.csrf,
+        )
+        self.assertEqual(rejected.status_code, 422, rejected.json)
         response = self.request(
             "POST", "/api/tenants", body, client=self.manager, headers=self.csrf
         )
@@ -110,18 +120,19 @@ class ManagerCustomerTests(DomainTestCase):
         self.assertEqual(self.client.get(path).status_code, 403)
         self.assertEqual(self.manager.get(path + "?tenantId=other").status_code, 422)
 
-    def test_suspended_staff_are_readable_only_by_system_and_the_tenant_owner(self):
+    def test_suspended_staff_require_owner_membership_not_system_role(self):
         path = f"/api/tenants/{self.tenant_id}/users"
         self.assertEqual(self.update({"status": "suspended"}).status_code, 200)
-        for client in (self.manager, self.client):
-            response = client.get(path)
-            self.assertEqual(response.status_code, 200, response.json)
-            self.assertEqual(
-                {row["id"] for row in response.json["users"]},
-                {"owner-a", "frontdesk", "hk", "accountant"},
-            )
-            self.assertNotIn("password", str(response.json).lower())
+        response = self.client.get(path)
+        self.assertEqual(response.status_code, 200, response.json)
+        self.assertEqual(
+            {row["id"] for row in response.json["users"]},
+            {"owner-a", "frontdesk", "hk", "accountant"},
+        )
+        self.assertNotIn("password", str(response.json).lower())
         for email in (
+            "admin@test.local",
+            "manager@test.local",
             "owner-b@test.local",
             "frontdesk@test.local",
             "hk@test.local",
@@ -133,7 +144,10 @@ class ManagerCustomerTests(DomainTestCase):
         self.assertEqual(
             self.client.get(f"/api/tenants/{self.other_tenant_id}/users").status_code, 403
         )
-        for client, csrf in ((self.manager, self.csrf), (self.client, self.headers)):
+        for client, csrf, code in (
+            (self.manager, self.csrf, "tenant_denied"),
+            (self.client, self.headers, "tenant_suspended"),
+        ):
             for method, suffix, body in (
                 (
                     "POST",
@@ -149,7 +163,7 @@ class ManagerCustomerTests(DomainTestCase):
             ):
                 response = self.request(method, path + suffix, body, client=client, headers=csrf)
                 self.assertEqual(response.status_code, 403, response.json)
-                self.assertEqual(response.json["error"]["code"], "tenant_suspended")
+                self.assertEqual(response.json["error"]["code"], code)
 
     def test_customer_profile_downgrade_refuses_saved_contact_data(self):
         scripts = ScriptDirectory(str(Path(__file__).resolve().parents[1] / "migrations"))

@@ -12,9 +12,11 @@ from sqlalchemy.dialects.postgresql import insert
 from pms_api.ports import runtime
 
 from ..core_models import Tenant, uid
+from ..currencies import is_hotel_currency
 from ..extensions import db
 from ..security import ApiError, audit
 from ..subscriptions import ensure_quota
+from ..validation import phone_value, tax_id_value
 from .domain import bool_value as bool_value
 from .domain import date_range as date_range
 from .domain import money_value as money_value
@@ -42,8 +44,6 @@ CATALOG_FIELDS = {
     "units": set(),
     "meals": {"price"},
 }
-
-
 DEFAULT_SETTINGS = {
     "timezone": "Asia/Ho_Chi_Minh",
     "currency": "VND",
@@ -88,6 +88,10 @@ def validated_settings(data):
         from pms_api.auth.application import validate_email
 
         result["contactEmail"] = validate_email(result["contactEmail"])
+    if "phone" in result:
+        result["phone"] = phone_value(result["phone"])
+    if "taxCode" in result:
+        result["taxCode"] = tax_id_value(result["taxCode"])
     for key, schemes in (("website", {"http", "https"}), ("logoUrl", {"https"})):
         if not result.get(key):
             continue
@@ -112,7 +116,7 @@ def validated_settings(data):
                     for label in labels
                 ):
                     raise ValueError
-        except (ValueError, UnicodeError):
+        except ValueError, UnicodeError:
             raise ApiError(
                 422, "VALIDATION_ERROR", f"{key} cần URL hợp lệ, không chứa tài khoản đăng nhập."
             ) from None
@@ -122,10 +126,10 @@ def validated_settings(data):
         try:
             result["timezone"] = text_value(result["timezone"], "Múi giờ", 100)
             ZoneInfo(result["timezone"])
-        except (ZoneInfoNotFoundError, ValueError, TypeError):
+        except ZoneInfoNotFoundError, ValueError, TypeError:
             raise ApiError(422, "VALIDATION_ERROR", "Múi giờ IANA không hợp lệ.") from None
-    if "currency" in result and result["currency"] not in ("VND", "USD"):
-        raise ApiError(422, "VALIDATION_ERROR", "Tiền tệ cơ sở hỗ trợ VND hoặc USD.")
+    if "currency" in result and not is_hotel_currency(result["currency"]):
+        raise ApiError(422, "VALIDATION_ERROR", "Tiền tệ không được hỗ trợ.")
     for key in ("checkInTime", "checkOutTime"):
         if key in result and (
             not isinstance(result[key], str)
@@ -151,6 +155,8 @@ def room_json(room):
         "id": room.number,
         "uuid": room.id,
         "typeId": room.room_type_id,
+        "floor": room.floor,
+        "area": room.area,
         "condition": room.condition,
         "active": room.active,
     }
@@ -534,6 +540,13 @@ def save_room_type(tenant_id, data, *, updating=False, toggle=False):
 
 def save_physical_room(tenant_id, data, *, updating=False, toggle=False):
     number = text_value(data.get("number", data.get("id")), "Số phòng", 40)
+    location = {
+        key: text_value(data[key], label, 120, empty=True) or None
+        if data[key] is not None
+        else None
+        for key, label in (("floor", "Tầng"), ("area", "Khu vực"))
+        if key in data
+    }
     room = db.session.scalar(
         select(PhysicalRoom)
         .where(PhysicalRoom.tenant_id == tenant_id, PhysicalRoom.number == number)
@@ -582,6 +595,8 @@ def save_physical_room(tenant_id, data, *, updating=False, toggle=False):
         room = PhysicalRoom(id=uid(), tenant_id=tenant_id, number=number)
         db.session.add(room)
     room.room_type_id, room.condition, room.active = type_id, condition, active
+    for key, value in location.items():
+        setattr(room, key, value)
     refresh_existing_inventory(tenant_id, sorted({previous_type, type_id}))
     if previous_condition is not None and previous_condition != room.condition:
         audit(
@@ -644,6 +659,10 @@ def save_master(tenant_id, catalog_name, data, *, updating=False):
             details[key] = str(percentage)
         else:
             details[key] = text_value(value, key, 500, empty=True)
+            if key == "email" and details[key]:
+                from pms_api.auth.application import validate_email
+
+                details[key] = validate_email(details[key])
     if catalog_name == "cashbookCategories" and details.get("type") not in ("INCOME", "EXPENSE"):
         raise ApiError(422, "VALIDATION_ERROR", "Danh mục thu chi cần loại INCOME hoặc EXPENSE.")
     if catalog_name == "commissionRules":
@@ -667,8 +686,8 @@ def save_master(tenant_id, catalog_name, data, *, updating=False):
         details.setdefault("currency", base_currency)
         if details["type"] not in ("cash", "bank"):
             raise ApiError(422, "VALIDATION_ERROR", "Loại quỹ phải là cash hoặc bank.")
-        if details["currency"] not in ("VND", "USD"):
-            raise ApiError(422, "VALIDATION_ERROR", "Tiền tệ quỹ phải là VND hoặc USD.")
+        if not is_hotel_currency(details["currency"]):
+            raise ApiError(422, "VALIDATION_ERROR", "Tiền tệ không được hỗ trợ.")
         if existing and (
             details["type"] != current.data.get("type", "cash")
             or details["currency"] != current.data.get("currency", base_currency)
@@ -692,7 +711,7 @@ def save_master(tenant_id, catalog_name, data, *, updating=False):
     return master_json(current)
 
 
-def handle_save_master_route(tenant_id, catalog_name):
+def handle_save_master(tenant_id, catalog_name):
     result = save_master(
         tenant_id, catalog_name, runtime().payload(), updating=runtime().request.method == "PATCH"
     )
@@ -700,7 +719,7 @@ def handle_save_master_route(tenant_id, catalog_name):
     return result, 201 if runtime().request.method == "POST" else 200
 
 
-def handle_toggle_master_route(tenant_id, catalog_name, item_id):
+def handle_toggle_master(tenant_id, catalog_name, item_id):
     if catalog_name == "roomTypes":
         result = save_room_type(tenant_id, {"id": item_id}, updating=True, toggle=True)
     elif catalog_name == "rooms":
@@ -732,7 +751,7 @@ def handle_toggle_master_route(tenant_id, catalog_name, item_id):
     return result
 
 
-def handle_settings_route(tenant_id):
+def handle_settings(tenant_id):
     data = validated_settings(runtime().payload())
     tenant = db.session.scalar(
         select(Tenant)
@@ -782,8 +801,8 @@ def handle_settings_route(tenant_id):
     return {**tenant.settings, "name": tenant.name}
 
 
-def handle_rates_route(tenant_id):
-    days = date_range(runtime().request.args.get("start"), runtime().request.args.get("end"))
+def handle_rates(tenant_id):
+    days = date_range(*runtime().date_range())
     result = []
     for room_type in db.session.scalars(select(RoomType).where(RoomType.tenant_id == tenant_id)):
         overrides = {
@@ -812,7 +831,7 @@ def handle_rates_route(tenant_id):
     return {"rates": result}
 
 
-def handle_save_rates_route(tenant_id):
+def handle_save_rates(tenant_id):
     data = runtime().payload()
     room_type = get_room_type(tenant_id, data.get("roomTypeId"), lock=True)
     days = date_range(data.get("start"), data.get("end"))
@@ -854,7 +873,7 @@ def handle_save_rates_route(tenant_id):
     return {"rates": result}
 
 
-def handle_room_blocks_route(tenant_id):
+def handle_room_blocks(tenant_id):
     return {
         "roomBlocks": [
             block_json(item)
@@ -867,7 +886,7 @@ def handle_room_blocks_route(tenant_id):
     }
 
 
-def handle_add_room_block_route(tenant_id):
+def handle_add_room_block(tenant_id):
     data = runtime().payload()
     days = date_range(data.get("start"), data.get("end"))
     number = text_value(data.get("room", data.get("roomNumber")), "Số phòng", 40)
@@ -899,7 +918,7 @@ def handle_add_room_block_route(tenant_id):
     return block_json(block), 201
 
 
-def handle_delete_room_block_route(tenant_id, block_id):
+def handle_delete_room_block(tenant_id, block_id):
     block = db.session.scalar(
         select(RoomBlock).where(RoomBlock.tenant_id == tenant_id, RoomBlock.id == block_id)
     )
@@ -926,8 +945,8 @@ def handle_delete_room_block_route(tenant_id, block_id):
     return {"deleted": True}
 
 
-def handle_availability_route(tenant_id):
-    days = date_range(runtime().request.args.get("start"), runtime().request.args.get("end"))
+def handle_availability(tenant_id):
+    days = date_range(*runtime().date_range())
     query = select(RoomType).where(RoomType.tenant_id == tenant_id, RoomType.active.is_(True))
     if runtime().request.args.get("typeId"):
         query = query.where(RoomType.id == runtime().request.args["typeId"])
@@ -970,7 +989,7 @@ def handle_availability_route(tenant_id):
     return {"availability": result}
 
 
-def handle_quote_route(tenant_id):
+def handle_quote(tenant_id):
     data = runtime().payload()
     numbers = data.get("rooms", [data.get("room")])
     days = date_range(data.get("checkIn"), data.get("checkOut"))

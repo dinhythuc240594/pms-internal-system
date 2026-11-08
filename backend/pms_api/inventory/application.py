@@ -6,6 +6,7 @@ from decimal import Decimal, localcontext
 from sqlalchemy import delete, func, select
 from sqlalchemy.dialects.postgresql import insert
 
+from pms_api.auth.application import validate_email
 from pms_api.bookings.application import MONEY_LIMIT, decimal_text, string_value
 from pms_api.catalog.application import bool_value, master_json, parse_date
 from pms_api.finance.application import (
@@ -23,7 +24,7 @@ from ..core_models import uid
 from ..extensions import db
 from ..security import ApiError, audit
 from ..subscriptions import feature_enabled
-from .domain import EIGHT as EIGHT
+from ..validation import phone_value, tax_id_value
 from .domain import allocate_cost as allocate_cost
 from .domain import average as average
 from .domain import cost_value as cost_value
@@ -53,6 +54,7 @@ CATALOGS = {
         "notes",
     },
 }
+EIGHT = Decimal("0.00000001")
 
 
 def scoped_master(tenant_id, catalog, master_id, *, inactive=False):
@@ -295,7 +297,14 @@ def handle_save_master(tenant_id, catalog_name):
                 key,
                 500 if key in {"address", "notes"} else 80 if key == "sku" else 160,
             )
-    if catalog_name == "warehouses":
+    if catalog_name == "suppliers":
+        if "phone" in result:
+            result["phone"] = phone_value(result["phone"])
+        if result.get("email"):
+            result["email"] = validate_email(result["email"])
+        if "taxCode" in result:
+            result["taxCode"] = tax_id_value(result["taxCode"])
+    elif catalog_name == "warehouses":
         result["isDefault"] = bool_value(result.get("isDefault", False))
         if result["isDefault"] and row.active:
             defaults = db.session.scalars(
@@ -646,12 +655,13 @@ def handle_list_documents(tenant_id):
         conditions.append(
             (InventoryDocument.warehouse_id == warehouse) | (InventoryDocument.id.in_(ids))
         )
-    for key, op in [
-        ("start", lambda day: InventoryDocument.date >= day),
-        ("end", lambda day: InventoryDocument.date <= day),
+    start_value, end_value = runtime().date_range()
+    for value, op in [
+        (start_value, lambda day: InventoryDocument.date >= day),
+        (end_value, lambda day: InventoryDocument.date <= day),
     ]:
-        if runtime().request.args.get(key):
-            conditions.append(op(parse_date(runtime().request.args[key])))
+        if value:
+            conditions.append(op(parse_date(value)))
     count = db.session.scalar(
         select(func.count()).select_from(InventoryDocument).where(*conditions)
     )
@@ -1075,10 +1085,9 @@ def stock_report(tenant_id, warehouse_id=None, start=None, end=None):
 
 def handle_get_stock(tenant_id):
     warehouse = string_value(runtime().request.args.get("warehouseId"), "Kho", 40) or None
-    start = (
-        parse_date(runtime().request.args["start"]) if runtime().request.args.get("start") else None
-    )
-    end = parse_date(runtime().request.args["end"]) if runtime().request.args.get("end") else None
+    start_value, end_value = runtime().date_range()
+    start = parse_date(start_value) if start_value else None
+    end = parse_date(end_value) if end_value else None
     return stock_report(tenant_id, warehouse, start, end)
 
 

@@ -23,7 +23,9 @@
   policy and booking date and consumes no second use; its stay conditions still
   apply. Booking currency and voucher identity cannot be changed after creation.
 - Manual FX means **1 unit of transaction currency = rate units of hotel base
-  currency**. VND and USD are supported. FX has up to 8 decimals; money has 4,
+  currency**. The shared hotel currency catalog in `pms_api/currencies.py`
+  supports 20 common currencies verified against Channex staging. Apply migration
+  `0042_hotel_currencies` before using the expanded catalog. FX has up to 8 decimals; money has 4,
   rounded half up. Discounts are allocated across nights with an exact final total.
   The quote exposes original base list prices and its conversion rounding delta.
 - Every booking night, charge, payment, refund and ledger entry stores its base

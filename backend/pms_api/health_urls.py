@@ -8,6 +8,7 @@ from common import CommonURL
 class URL(CommonURL):
     LIVENESS = "/api/health"
     READINESS = "/api/ready"
+    OPERATIONS = "/api/admin/operations"
 
 
 health = Blueprint("health", __name__)
@@ -18,4 +19,8 @@ URL.register(
 
 URL.register(
     health, URL.READINESS, "pms_api.health:ReadinessView", endpoint="readiness", methods=["GET"]
+)
+
+URL.register(
+    health, URL.OPERATIONS, "pms_api.health:OperationsView", endpoint="operations", methods=["GET"]
 )

@@ -1,9 +1,11 @@
 """Reconcile frozen room-net commissions and pay through the shared cash ledger."""
 
+import hashlib
+import json
 from collections import defaultdict
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 
-from sqlalchemy import case, func, or_, select
+from sqlalchemy import case, func, or_, select, union_all
 from sqlalchemy.orm import aliased
 
 from pms_api.bookings.application import (
@@ -27,22 +29,87 @@ from pms_api.finance.application import (
 from pms_api.ports import runtime
 
 from ..bookings.models import Charge, Refund, Reservation, ReservationNight
+from ..channels.models import ChannelBooking, ChannelBookingReview
+from ..currencies import is_hotel_currency
 from ..extensions import db
 from ..pricing.engine import money_json, rounded, snapshot_money
 from ..security import ApiError, audit
 from ..subscriptions import feature_enabled
-from .models import CashDocument, CommissionPayout, CommissionSettlement
+from .models import (
+    CashDocument,
+    CommissionPayout,
+    CommissionRecovery,
+    CommissionReview,
+    CommissionSettlement,
+)
+
+
+def latest_review(column, tenant_id):
+    return (
+        select(column)
+        .where(
+            CommissionReview.tenant_id == tenant_id,
+            CommissionReview.commission_id == CommissionSettlement.id,
+        )
+        .order_by(CommissionReview.created_at.desc(), CommissionReview.id.desc())
+        .limit(1)
+        .correlate(CommissionSettlement)
+        .scalar_subquery()
+    )
+
+
+def reviewed_evidence(tenant_id):
+    return (
+        select(CommissionReview.evidence)
+        .join(
+            CommissionSettlement,
+            (CommissionSettlement.tenant_id == CommissionReview.tenant_id)
+            & (CommissionSettlement.id == CommissionReview.commission_id),
+        )
+        .where(
+            CommissionReview.tenant_id == tenant_id,
+            CommissionSettlement.reservation_id == Reservation.id,
+        )
+        .order_by(CommissionReview.created_at.desc(), CommissionReview.id.desc())
+        .limit(1)
+        .correlate(Reservation)
+        .scalar_subquery()
+    )
+
+
+def pending_ota(tenant_id):
+    return (
+        select(ChannelBookingReview.id)
+        .join(
+            ChannelBooking,
+            (ChannelBooking.tenant_id == ChannelBookingReview.tenant_id)
+            & (ChannelBooking.booking_id == ChannelBookingReview.booking_id),
+        )
+        .where(
+            ChannelBookingReview.tenant_id == tenant_id,
+            ChannelBooking.reservation_id == Reservation.id,
+            ChannelBookingReview.resolved_at.is_(None),
+        )
+        .correlate(Reservation)
+        .exists()
+    )
 
 
 def review_condition(tenant_id):
+    evidence = reviewed_evidence(tenant_id)
+    resolution = Reservation.pricing_snapshot["channel"]["lastManualResolutionId"].astext
     after_checkout = func.coalesce(Reservation.checked_out_at, Reservation.created_at)
     return or_(
         Reservation.status != "CHECKED_OUT",
+        resolution.is_not(None)
+        & resolution.is_distinct_from(evidence["manualResolutionId"].astext),
+        pending_ota(tenant_id),
         select(Charge.id)
         .where(
             Charge.tenant_id == tenant_id,
             Charge.reservation_id == Reservation.id,
             or_(Charge.created_at > after_checkout, Charge.kind == "discount"),
+            ~func.coalesce(evidence["chargeIds"].op("?")(Charge.id), False),
         )
         .correlate(Reservation)
         .exists(),
@@ -51,6 +118,7 @@ def review_condition(tenant_id):
             Refund.tenant_id == tenant_id,
             Refund.reservation_id == Reservation.id,
             Refund.created_at > after_checkout,
+            ~func.coalesce(evidence["refundIds"].op("?")(Refund.id), False),
         )
         .correlate(Reservation)
         .exists(),
@@ -69,40 +137,35 @@ def review_booking_ids(bookings):
     )
 
 
-def commission_json(rows, bookings):
-    by_booking = {row.id: row for row in bookings}
-    payouts = list(
+def cash_history(model, ids):
+    rows = list(
         db.session.execute(
-            select(CommissionPayout, CashDocument)
+            select(model, CashDocument)
             .join(
                 CashDocument,
-                (CashDocument.tenant_id == CommissionPayout.tenant_id)
-                & (CashDocument.id == CommissionPayout.cash_document_id),
+                (CashDocument.tenant_id == model.tenant_id)
+                & (CashDocument.id == model.cash_document_id),
             )
-            .where(
-                CommissionPayout.tenant_id == runtime().state.tenant.id,
-                CommissionPayout.commission_id.in_([row.id for row in rows]),
-            )
-            .order_by(CommissionPayout.created_at, CommissionPayout.id)
+            .where(model.tenant_id == runtime().state.tenant.id, model.commission_id.in_(ids))
+            .order_by(model.created_at, model.id)
         )
     )
     reversed_ids = set(
         db.session.scalars(
             select(CashDocument.reversal_of_id).where(
                 CashDocument.tenant_id == runtime().state.tenant.id,
-                CashDocument.reversal_of_id.in_([document.id for _, document in payouts]),
+                CashDocument.reversal_of_id.in_([document.id for _, document in rows]),
             )
         )
     )
-    histories = defaultdict(list)
-    paid = defaultdict(lambda: Decimal(0))
-    for payout, document in payouts:
+    histories, totals = defaultdict(list), defaultdict(lambda: Decimal(0))
+    for link, document in rows:
         reversed_payment = document.id in reversed_ids
         if not reversed_payment:
-            paid[payout.commission_id] += document.amount
-        histories[payout.commission_id].append(
+            totals[link.commission_id] += document.amount
+        histories[link.commission_id].append(
             {
-                "id": payout.id,
+                "id": link.id,
                 "cashDocumentId": document.id,
                 "fundId": document.fund_id,
                 "amount": decimal_text(document.amount),
@@ -111,18 +174,40 @@ def commission_json(rows, bookings):
                 "reversed": reversed_payment,
             }
         )
+    return histories, totals
+
+
+def commission_json(rows, bookings):
+    by_booking = {row.id: row for row in bookings}
+    ids = [row.id for row in rows]
+    histories, paid = cash_history(CommissionPayout, ids)
+    recoveries, recovered = cash_history(CommissionRecovery, ids)
+    reviews = defaultdict(list)
+    for decision in db.session.scalars(
+        select(CommissionReview)
+        .where(
+            CommissionReview.tenant_id == runtime().state.tenant.id,
+            CommissionReview.commission_id.in_(ids),
+        )
+        .order_by(CommissionReview.created_at, CommissionReview.id)
+    ):
+        reviews[decision.commission_id].append(decision)
     review = review_booking_ids(bookings)
     result = []
     for row in rows:
-        remaining = row.amount - paid[row.id]
+        latest = reviews[row.id][-1] if reviews[row.id] else row
+        net_paid = paid[row.id] - recovered[row.id]
+        remaining = latest.amount - net_paid
         needs_review = row.reservation_id in review
         status = (
             "NEEDS_REVIEW"
             if needs_review
+            else "OVERPAID"
+            if remaining < 0
             else "PAID"
             if remaining == 0
             else "PARTIAL"
-            if paid[row.id]
+            if net_paid > 0
             else "UNPAID"
         )
         booking = by_booking[row.reservation_id]
@@ -133,21 +218,241 @@ def commission_json(rows, bookings):
                 "guestName": booking.guest_name,
                 "sourceId": row.source_id,
                 "sourceName": row.source_name,
-                "percent": decimal_text(row.percent),
-                "roomNet": decimal_text(row.room_net),
-                "baseRoomNet": decimal_text(row.base_room_net),
-                "amount": decimal_text(row.amount),
+                "percent": decimal_text(row.percent) if row.percent is not None else None,
+                "calculationBasis": "provider_amount" if row.percent is None else "percent",
+                "roomNet": decimal_text(latest.room_net),
+                "baseRoomNet": decimal_text(latest.base_room_net),
+                "amount": decimal_text(latest.amount),
                 "currency": row.currency,
-                **money_json(row),
-                "paid": decimal_text(paid[row.id]),
+                **money_json(latest),
+                "originalAmount": decimal_text(row.amount),
+                "paid": decimal_text(net_paid),
                 "balance": decimal_text(remaining),
+                "recoveryDue": decimal_text(max(-remaining, Decimal(0))),
                 "status": status,
                 "needsReview": needs_review,
                 "payments": histories[row.id],
+                "recoveries": recoveries[row.id],
                 "date": iso(row.business_date),
+                "reviews": [
+                    {
+                        "id": decision.id,
+                        "roomNet": decimal_text(decision.room_net),
+                        "amount": decimal_text(decision.amount),
+                        "reason": decision.reason,
+                        "allocations": decision.allocations,
+                        "actorId": decision.user_id,
+                        "createdAt": iso(decision.created_at),
+                    }
+                    for decision in reviews[row.id]
+                ],
             }
         )
     return result
+
+
+def commission_row(tenant_id, commission_id):
+    row = db.session.scalar(
+        select(CommissionSettlement).where(
+            CommissionSettlement.tenant_id == tenant_id,
+            CommissionSettlement.id == commission_id,
+        )
+    )
+    if row is None:
+        raise ApiError(404, "not_found", "Không tìm thấy đối soát hoa hồng.")
+    return row
+
+
+def review_preview(row, booking):
+    charges = list(
+        db.session.scalars(
+            select(Charge)
+            .where(
+                Charge.tenant_id == row.tenant_id,
+                Charge.reservation_id == row.reservation_id,
+            )
+            .order_by(Charge.id)
+        )
+    )
+    refunds = list(
+        db.session.scalars(
+            select(Refund)
+            .where(
+                Refund.tenant_id == row.tenant_id,
+                Refund.reservation_id == row.reservation_id,
+            )
+            .order_by(Refund.id)
+        )
+    )
+    nights = list(
+        db.session.scalars(
+            select(ReservationNight).where(
+                ReservationNight.tenant_id == row.tenant_id,
+                ReservationNight.reservation_id == row.reservation_id,
+            )
+        )
+    )
+    current = commission_json([row], [booking])[0]
+    blocked = db.session.scalar(
+        select(pending_ota(row.tenant_id))
+        .select_from(Reservation)
+        .where(
+            Reservation.tenant_id == row.tenant_id,
+            Reservation.id == booking.id,
+        )
+    )
+    evidence = {
+        "chargeIds": [charge.id for charge in charges],
+        "refundIds": [refund.id for refund in refunds],
+        "bookingVersion": booking.version,
+        "manualResolutionId": (booking.pricing_snapshot.get("channel") or {}).get(
+            "lastManualResolutionId"
+        ),
+        "providerCommission": booking.pricing_snapshot.get("commission"),
+    }
+    result = {
+        "current": current,
+        "evidence": evidence,
+        "blockedByOta": bool(blocked),
+        "roomSubtotal": decimal_text(sum((night.price for night in nights), Decimal(0))),
+        "baseRoomSubtotal": decimal_text(sum((night.base_amount for night in nights), Decimal(0))),
+        "charges": [
+            {
+                "id": charge.id,
+                "kind": charge.kind,
+                "description": charge.description,
+                "amount": decimal_text(charge.amount),
+                "baseAmount": decimal_text(charge.base_amount),
+                "allocatable": charge.kind in {"fee", "discount"},
+            }
+            for charge in charges
+        ],
+        "refunds": [
+            {"id": refund.id, "amount": decimal_text(refund.amount), "reason": refund.reason}
+            for refund in refunds
+        ],
+    }
+    token = hashlib.sha256(
+        json.dumps(result, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+    ).hexdigest()
+    return {**result, "previewToken": token}
+
+
+def handle_commission_review_preview(tenant_id, commission_id):
+    row = commission_row(tenant_id, commission_id)
+    return review_preview(row, find_reservation(tenant_id, row.reservation_id))
+
+
+def handle_review_commission(tenant_id, commission_id):
+    data = runtime().payload()
+    if set(data) - {"previewToken", "allocations", "providerAmount", "reason"}:
+        raise ApiError(422, "invalid_commission", "Thông tin đối soát có trường không được hỗ trợ.")
+    key, fingerprint, replay = begin(tenant_id, data)
+    if replay is not None:
+        return replay, 201
+    row = commission_row(tenant_id, commission_id)
+    booking = find_reservation(tenant_id, row.reservation_id, locked=True)
+    if booking.status != "CHECKED_OUT":
+        raise ApiError(409, "stay_unsettled", "Chỉ đối soát hoa hồng sau khi trả phòng.")
+    preview = review_preview(row, booking)
+    if (
+        not isinstance(data.get("previewToken"), str)
+        or data["previewToken"] != preview["previewToken"]
+    ):
+        raise ApiError(409, "preview_changed", "Dữ liệu đã đổi. Tải lại bản xem trước để đối soát.")
+    if preview["blockedByOta"]:
+        raise ApiError(
+            409, "commission_needs_review", "Cần xử lý booking OTA trước khi đối soát hoa hồng."
+        )
+    reason = string_value(data.get("reason"), "Lý do đối soát", 1000, required=True)
+    expected = {charge["id"]: charge for charge in preview["charges"] if charge["allocatable"]}
+    allocations = data.get("allocations")
+    if not isinstance(allocations, list) or len(allocations) != len(expected):
+        raise ApiError(
+            422, "invalid_allocations", "Cần phân bổ từng khoản phí/giảm giá vào tiền phòng."
+        )
+    room_net, base_room_net = Decimal(preview["roomSubtotal"]), Decimal(preview["baseRoomSubtotal"])
+    seen, stored = set(), []
+    for line in allocations:
+        if (
+            not isinstance(line, dict)
+            or set(line) != {"chargeId", "roomAmount"}
+            or not isinstance(line.get("chargeId"), str)
+        ):
+            raise ApiError(422, "invalid_allocations", "Phân bổ tiền phòng không hợp lệ.")
+        charge = expected.get(line["chargeId"])
+        if charge is None or line["chargeId"] in seen:
+            raise ApiError(
+                422, "invalid_allocations", "Khoản phân bổ không thuộc lưu trú hoặc bị lặp."
+            )
+        try:
+            amount = Decimal(str(line["roomAmount"]))
+            if not amount.is_finite() or isinstance(line["roomAmount"], bool):
+                raise ValueError
+            amount = money_value(abs(amount), allow_zero=True) * (-1 if amount < 0 else 1)
+        except InvalidOperation, TypeError, ValueError:
+            raise ApiError(422, "invalid_allocations", "Số tiền phân bổ không hợp lệ.") from None
+        original = Decimal(charge["amount"])
+        if not min(original, Decimal(0)) <= amount <= max(original, Decimal(0)):
+            raise ApiError(
+                422,
+                "invalid_allocations",
+                "Phần tiền phòng không được vượt khoản gốc hoặc trái dấu.",
+            )
+        base = (
+            Decimal(charge["baseAmount"])
+            if amount == original
+            else rounded(amount * row.exchange_rate)
+        )
+        room_net += amount
+        base_room_net += base
+        seen.add(line["chargeId"])
+        stored.append(
+            {
+                "chargeId": line["chargeId"],
+                "roomAmount": decimal_text(amount),
+                "baseRoomAmount": decimal_text(base),
+            }
+        )
+    if room_net < 0 or base_room_net < 0:
+        raise ApiError(422, "invalid_allocations", "Tổng tiền phòng sau phân bổ không được âm.")
+    money_value(room_net, allow_zero=True)
+    money_value(base_room_net, allow_zero=True)
+    if row.percent is None:
+        amount = money_value(data.get("providerAmount"), allow_zero=True, limit=room_net)
+    else:
+        if "providerAmount" in data:
+            raise ApiError(422, "commission_rate_frozen", "Hoa hồng nguồn này dùng tỷ lệ đã lưu.")
+        amount = rounded(room_net * row.percent / 100)
+    money = snapshot_money(tenant_id, row.currency, amount, row)
+    if row.percent is not None:
+        money["base_amount"] = rounded(base_room_net * row.percent / 100)
+    decision = CommissionReview(
+        tenant_id=tenant_id,
+        commission_id=row.id,
+        room_net=room_net,
+        base_room_net=base_room_net,
+        amount=amount,
+        reason=reason,
+        evidence=preview["evidence"],
+        allocations=stored,
+        user_id=runtime().state.user.id,
+        **money,
+    )
+    db.session.add(decision)
+    db.session.flush()
+    audit(
+        "commission.reviewed",
+        "commission",
+        row.id,
+        {
+            "reviewId": decision.id,
+            "reason": reason,
+            "previousAmount": preview["current"]["amount"],
+            "amount": decimal_text(amount),
+        },
+    )
+    return finish(tenant_id, key, fingerprint, commission_json([row], [booking])[0])
 
 
 def handle_list_commissions(tenant_id):
@@ -155,42 +460,50 @@ def handle_list_commissions(tenant_id):
     currency = runtime().request.args.get(
         "currency", (runtime().state.tenant.settings or {}).get("currency", "VND")
     )
-    if currency not in {"VND", "USD"}:
-        raise ApiError(422, "invalid_currency", "Tiền tệ phải là VND hoặc USD.")
-    end = (
-        parse_date(runtime().request.args["endDate"])
-        if runtime().request.args.get("endDate")
-        else local_date()
-    )
-    start = (
-        parse_date(runtime().request.args["startDate"])
-        if runtime().request.args.get("startDate")
-        else None
-    )
+    if not is_hotel_currency(currency):
+        raise ApiError(422, "invalid_currency", "Tiền tệ không được hỗ trợ.")
+    start_value, end_value = runtime().date_range(aliases=("startDate", "endDate"))
+    end = parse_date(end_value) if end_value else local_date()
+    start = parse_date(start_value) if start_value else None
     if start and end < start:
         raise ApiError(422, "invalid_dates", "Ngày kết thúc phải từ ngày bắt đầu.")
     status = runtime().request.args.get("status", "")
-    if status not in {"", "UNPAID", "PARTIAL", "PAID", "NEEDS_REVIEW"}:
+    if status not in {"", "UNPAID", "PARTIAL", "PAID", "NEEDS_REVIEW", "OVERPAID"}:
         raise ApiError(422, "invalid_status", "Trạng thái hoa hồng không hợp lệ.")
     source_id = string_value(runtime().request.args.get("sourceId"), "Nguồn đặt phòng", 40)
-    reversal = aliased(CashDocument)
+    transactions = union_all(
+        *[
+            select(model.commission_id, (CashDocument.amount * direction).label("amount"))
+            .join(
+                CashDocument,
+                (CashDocument.tenant_id == model.tenant_id)
+                & (CashDocument.id == model.cash_document_id),
+            )
+            .where(
+                model.tenant_id == tenant_id,
+                ~select(aliased_reversal.id)
+                .where(
+                    aliased_reversal.tenant_id == tenant_id,
+                    aliased_reversal.reversal_of_id == CashDocument.id,
+                )
+                .correlate(CashDocument)
+                .exists(),
+            )
+            for model, direction, aliased_reversal in (
+                (CommissionPayout, 1, aliased(CashDocument)),
+                (CommissionRecovery, -1, aliased(CashDocument)),
+            )
+        ]
+    ).subquery()
     payouts = (
-        select(CommissionPayout.commission_id, func.sum(CashDocument.amount).label("paid"))
-        .join(
-            CashDocument,
-            (CashDocument.tenant_id == CommissionPayout.tenant_id)
-            & (CashDocument.id == CommissionPayout.cash_document_id),
-        )
-        .outerjoin(
-            reversal,
-            (reversal.tenant_id == CashDocument.tenant_id)
-            & (reversal.reversal_of_id == CashDocument.id),
-        )
-        .where(CommissionPayout.tenant_id == tenant_id, reversal.id.is_(None))
-        .group_by(CommissionPayout.commission_id)
+        select(transactions.c.commission_id, func.sum(transactions.c.amount).label("paid"))
+        .group_by(transactions.c.commission_id)
         .subquery()
     )
     paid = func.coalesce(payouts.c.paid, 0)
+    effective_amount = func.coalesce(
+        latest_review(CommissionReview.amount, tenant_id), CommissionSettlement.amount
+    )
     business_date = func.coalesce(
         CommissionSettlement.business_date,
         func.timezone(
@@ -224,7 +537,8 @@ def handle_list_commissions(tenant_id):
                 CommissionSettlement.id.is_not(None),
                 case(
                     (review_condition(tenant_id), "NEEDS_REVIEW"),
-                    (CommissionSettlement.amount == paid, "PAID"),
+                    (effective_amount < paid, "OVERPAID"),
+                    (effective_amount == paid, "PAID"),
                     (paid > 0, "PARTIAL"),
                     else_="UNPAID",
                 )
@@ -245,7 +559,7 @@ def handle_list_commissions(tenant_id):
     count, accrued, total_paid = db.session.execute(
         query.with_only_columns(
             func.count(),
-            func.coalesce(func.sum(CommissionSettlement.amount), 0),
+            func.coalesce(func.sum(effective_amount), 0),
             func.coalesce(func.sum(paid), 0),
         )
     ).one()
@@ -264,14 +578,17 @@ def handle_list_commissions(tenant_id):
         if settlement is not None:
             continue
         snapshot = (booking.pricing_snapshot or {}).get("commission") or {}
+        provider_amount = snapshot.get("providerAmount")
         candidates.append(
             {
                 "bookingId": booking.id,
                 "guestName": booking.guest_name,
                 "sourceId": snapshot.get("sourceId", booking.source_id),
                 "sourceName": snapshot.get("sourceName", booking.source_name),
-                "percent": snapshot.get("percent"),
-                "missingRate": "percent" not in snapshot,
+                "percent": None if provider_amount is not None else snapshot.get("percent"),
+                "providerAmount": provider_amount,
+                "calculationBasis": "provider_amount" if provider_amount is not None else "percent",
+                "missingRate": provider_amount is None and "percent" not in snapshot,
                 "needsReview": booking.id in needs_review,
                 "currency": booking.currency,
                 "checkOut": iso(booking.check_out),
@@ -318,7 +635,8 @@ def handle_settle_commission(tenant_id):
             )
         return commission_json([existing], [booking])[0], 200
     snapshot = (booking.pricing_snapshot or {}).get("commission")
-    if not snapshot or "percent" not in snapshot:
+    provider_amount = snapshot.get("providerAmount") if snapshot else None
+    if provider_amount is None and (not snapshot or "percent" not in snapshot):
         if data.get("confirmLegacyRate") is not True or "legacyPercent" not in data:
             raise ApiError(
                 409,
@@ -342,7 +660,11 @@ def handle_settle_commission(tenant_id):
             "commission_rate_frozen",
             "Đặt phòng đã lưu tỷ lệ; không thay bằng tỷ lệ thủ công.",
         )
-    percent = money_value(snapshot["percent"], allow_zero=True, limit=Decimal(100))
+    percent = (
+        money_value(snapshot["percent"], allow_zero=True, limit=Decimal(100))
+        if provider_amount is None
+        else None
+    )
     nights = list(
         db.session.scalars(
             select(ReservationNight).where(
@@ -353,6 +675,16 @@ def handle_settle_commission(tenant_id):
     )
     room_net = sum((night.price for night in nights), Decimal(0))
     base_room_net = sum((night.base_amount for night in nights), Decimal(0))
+    amount = (
+        money_value(provider_amount, allow_zero=True, limit=room_net)
+        if provider_amount is not None
+        else rounded(room_net * percent / 100)
+    )
+    base_amount = (
+        snapshot_money(tenant_id, booking.currency, amount, source=booking)["base_amount"]
+        if provider_amount is not None
+        else rounded(base_room_net * percent / 100)
+    )
     row = CommissionSettlement(
         tenant_id=tenant_id,
         reservation_id=booking.id,
@@ -361,9 +693,9 @@ def handle_settle_commission(tenant_id):
         percent=percent,
         room_net=room_net,
         base_room_net=base_room_net,
-        amount=rounded(room_net * percent / 100),
+        amount=amount,
         currency=booking.currency,
-        base_amount=rounded(base_room_net * percent / 100),
+        base_amount=base_amount,
         base_currency=booking.base_currency,
         exchange_rate=booking.exchange_rate,
         business_date=local_date(booking.checked_out_at)
@@ -379,7 +711,8 @@ def handle_settle_commission(tenant_id):
         row.id,
         {
             "bookingId": booking.id,
-            "percent": decimal_text(percent),
+            "percent": decimal_text(percent) if percent is not None else None,
+            "calculationBasis": "provider_amount" if percent is None else "percent",
             "roomNet": decimal_text(room_net),
             "amount": decimal_text(row.amount),
         },
@@ -387,57 +720,45 @@ def handle_settle_commission(tenant_id):
     return commission_json([row], [booking])[0], 201
 
 
-def handle_pay_commission(tenant_id, commission_id):
+def write_commission_cash(tenant_id, commission_id, *, recovering=False):
     data = runtime().payload()
     if set(data) - {"amount", "fundId", "categoryId", "note"}:
         raise ApiError(422, "invalid_payment", "Thanh toán hoa hồng chứa trường không được hỗ trợ.")
     key, fingerprint, replay = begin(tenant_id, data)
     if replay is not None:
         return replay, 201
-    row = db.session.scalar(
-        select(CommissionSettlement).where(
-            CommissionSettlement.tenant_id == tenant_id,
-            CommissionSettlement.id == commission_id,
-        )
-    )
-    if row is None:
-        raise ApiError(404, "not_found", "Không tìm thấy đối soát hoa hồng.")
-    # Reservation corrections take this same booking lock before writing cash.
+    row = commission_row(tenant_id, commission_id)
     booking = find_reservation(tenant_id, row.reservation_id, locked=True)
-    row = db.session.scalar(
-        select(CommissionSettlement)
-        .where(
-            CommissionSettlement.tenant_id == tenant_id,
-            CommissionSettlement.id == commission_id,
-        )
-        .with_for_update()
-        .execution_options(populate_existing=True)
-    )
     current = commission_json([row], [booking])[0]
     if current["needsReview"]:
         raise ApiError(
             409,
             "commission_needs_review",
-            "Lưu trú có chiết khấu hóa đơn chưa phân bổ hoặc điều chỉnh sau trả phòng; cần đối soát trước khi chi tiếp.",
+            "Lưu trú có điều chỉnh hoặc booking OTA chưa đối soát; cần kiểm tra trước khi ghi tiền.",
         )
     amount = money_value(data.get("amount"))
-    if amount > Decimal(current["balance"]):
-        raise ApiError(409, "commission_overpayment", "Khoản chi vượt hoa hồng còn phải trả.")
+    limit = Decimal(current["recoveryDue"] if recovering else current["balance"])
+    if amount > limit:
+        raise ApiError(
+            409, "commission_overpayment", "Khoản tiền vượt số hoa hồng còn phải chi hoặc thu hồi."
+        )
     if row.currency != (runtime().state.tenant.settings or {}).get(
         "currency", "VND"
     ) and not feature_enabled("MULTI_CURRENCY", for_write=True):
         raise ApiError(403, "feature_disabled", "Gói chưa bật đa tiền tệ.")
-    category = cash_category(tenant_id, "expense", data.get("categoryId"))
-    fund_id = string_value(data.get("fundId"), "Quỹ chi", 40, required=True)
+    kind = "receipt" if recovering else "expense"
+    category = cash_category(tenant_id, kind, data.get("categoryId"))
+    fund_id = string_value(data.get("fundId"), "Quỹ", 40, required=True)
     fund = lock_funds(tenant_id, [fund_id], row.currency)[fund_id]
-    ensure_available(tenant_id, fund_id, row.currency, amount)
+    if not recovering:
+        ensure_available(tenant_id, fund_id, row.currency, amount)
     note = (
-        string_value(data.get("note"), "Nội dung", 500)
+        string_value(data.get("note"), "Nội dung", 500, required=recovering)
         or f"Hoa hồng {row.source_name} · {row.reservation_id}"
     )
     document = CashDocument(
         tenant_id=tenant_id,
-        kind="expense",
+        kind=kind,
         fund_id=fund.id,
         fund_name=fund.name,
         amount=amount,
@@ -456,20 +777,27 @@ def handle_pay_commission(tenant_id, commission_id):
         tenant_id,
         fund.id,
         row.currency,
-        -amount,
-        "expense",
+        amount if recovering else -amount,
+        kind,
         note,
         cash_document_id=document.id,
         source=document,
     )
-    db.session.add(
-        CommissionPayout(tenant_id=tenant_id, commission_id=row.id, cash_document_id=document.id)
-    )
+    model = CommissionRecovery if recovering else CommissionPayout
+    db.session.add(model(tenant_id=tenant_id, commission_id=row.id, cash_document_id=document.id))
     db.session.flush()
     audit(
-        "commission.payment",
+        "commission.recovery" if recovering else "commission.payment",
         "commission",
         row.id,
         {"cashDocumentId": document.id, "amount": decimal_text(amount), "fundId": fund.id},
     )
     return finish(tenant_id, key, fingerprint, commission_json([row], [booking])[0])
+
+
+def handle_pay_commission(tenant_id, commission_id):
+    return write_commission_cash(tenant_id, commission_id)
+
+
+def handle_recover_commission(tenant_id, commission_id):
+    return write_commission_cash(tenant_id, commission_id, recovering=True)

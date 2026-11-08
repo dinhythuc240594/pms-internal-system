@@ -16,6 +16,7 @@ from pms_api.core_models import AuditLog
 from pms_api.extensions import db
 from pms_api.security import set_context
 from tests.domain_fixture import DomainTestCase
+from tests.system_scope_fixture import grant_system_access, linked_property
 from tests.test_channex_airbnb import airbnb_adapter
 from tests.test_channex_remote import PROPERTY, RATE, catalog_entity, property_entity
 
@@ -118,6 +119,8 @@ class ChannexChannelTests(DomainTestCase):
 
     def setUp(self):
         super().setUp()
+        grant_system_access(self)
+        linked_property(self, PROPERTY)
         self.manager, self.headers = self.login("manager@test.local")
         self.provider = Mock(api_key="private-source-key", base="https://staging.channex.io/api/v1")
         prop = property_entity()
@@ -139,7 +142,7 @@ class ChannexChannelTests(DomainTestCase):
         )
         config.start()
         self.addCleanup(config.stop)
-        factory = patch("pms_api.channels.factory.ChannexClient", return_value=self.provider)
+        factory = patch("pms_api.admin.channex_remote_application.channel_adapter", return_value=self.provider)
         self.factory = factory.start()
         self.addCleanup(factory.stop)
 
@@ -235,22 +238,15 @@ class ChannexChannelTests(DomainTestCase):
         api_key = "private-encrypted-hotel-source-key"
         webhook_secret = "private-hotel-webhook-secret-long-enough"
         with self.app.app_context():
-            set_context("manager", is_system=True)
+            set_context("manager", is_system=True, is_service=True)
             encrypted = encrypt_credentials(
                 self.tenant_id, "staging", PROPERTY, api_key, webhook_secret
             )
-            db.session.add(
-                ChannelConnection(
-                    tenant_id=self.tenant_id,
-                    environment="staging",
-                    property_id=PROPERTY,
-                    credential_ref="unused-environment-reference",
-                    webhook_secret_ref="unused-webhook-reference",
-                    secrets_ciphertext=encrypted,
-                    actor_id="manager",
-                    active=True,
-                )
-            )
+            row = db.session.query(ChannelConnection).filter_by(tenant_id=self.tenant_id).one()
+            row.credential_ref = "unused-environment-reference"
+            row.webhook_secret_ref = "unused-webhook-reference"
+            row.secrets_ciphertext = encrypted
+            row.active = True
             db.session.commit()
         path = (
             f"/api/admin/channex/properties/{PROPERTY}/channel-adapters"
@@ -467,7 +463,7 @@ class ChannexChannelTests(DomainTestCase):
         self.assertEqual(values["settings"]["email"], "")
         self.assertNotIn("new-private", str(response.json))
         with self.app.app_context():
-            set_context("manager", is_system=True)
+            set_context("manager", is_system=True, is_service=True)
             log = db.session.query(AuditLog).filter_by(event="channex.channel.created").one()
             self.assertEqual(log.details, {"propertyId": PROPERTY, "environment": "staging"})
 
@@ -607,13 +603,17 @@ class ChannexChannelTests(DomainTestCase):
         )
         self.assertEqual(response.status_code, 409)
         other = str(UUID(int=20))
+        revision = self.detail()["revision"]
         self.channel["attributes"]["properties"].append(other)
         self.channel["relationships"]["properties"]["data"].append({"id": other})
-        self.assertFalse(self.detail()["editable"])
+        response = self.remote(f"/channels/{CHANNEL}")
+        self.assertEqual(response.status_code, 409, response.json)
+        self.assertEqual(response.json["error"]["code"], "channel_multiple_properties")
+        self.assertNotIn("private-password", str(response.json))
         response = self.remote(
             f"/channels/{CHANNEL}",
             method="PATCH",
-            body={"revision": self.detail()["revision"], "name": "Multi hotel"},
+            body={"revision": revision, "name": "Multi hotel"},
         )
         self.assertEqual(response.status_code, 409)
         self.assertEqual(self.writes(), [])
@@ -763,6 +763,7 @@ class ChannexChannelTests(DomainTestCase):
         self.assertTrue(response.json["deleted"])
 
     def test_system_roles_csrf_and_provider_failure(self):
+        grant_system_access(self, "admin")
         for user, expected in (
             ("admin@test.local", 201),
             ("owner-a@test.local", 403),

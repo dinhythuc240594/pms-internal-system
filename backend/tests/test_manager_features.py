@@ -6,13 +6,13 @@ from pathlib import Path
 from alembic.migration import MigrationContext
 from alembic.operations import Operations
 from alembic.script import ScriptDirectory
-from domain_fixture import DomainTestCase
 from sqlalchemy import create_engine, func, select, text
 from sqlalchemy.exc import DBAPIError
 
 from pms_api.core_models import AuditLog, Plan, Subscription, Tenant, utcnow
 from pms_api.extensions import db
 from pms_api.security import set_context
+from tests.domain_fixture import DomainTestCase
 
 FEATURE_CODES = {
     "DASHBOARD",
@@ -42,7 +42,7 @@ class ManagerFeatureTests(DomainTestCase):
 
     def plan_feature(self, enabled):
         with self.app.app_context():
-            set_context(is_system=True)
+            set_context(is_system=True, is_service=True)
             db.session.get(Plan, "default-pro").features = {"POS_SALES": enabled}
             db.session.commit()
 
@@ -209,7 +209,7 @@ class ManagerFeatureTests(DomainTestCase):
         for state in ("expired", "cancelled", "end_date", "future", "inactive", "suspended"):
             with self.subTest(state=state):
                 with self.app.app_context():
-                    set_context(is_system=True)
+                    set_context(is_system=True, is_service=True)
                     sub = db.session.get(Subscription, "sub-a")
                     sub.status = state if state in {"expired", "cancelled"} else "active"
                     sub.start_date = (
@@ -235,7 +235,7 @@ class ManagerFeatureTests(DomainTestCase):
         self.assertEqual(self.override({"enabled": False}).status_code, 200)
         before = self.request("GET", "/feature-overrides").json["featureOverrides"]
         with self.app.app_context():
-            set_context(is_system=True)
+            set_context(is_system=True, is_service=True)
             audit_count = db.session.scalar(select(func.count()).select_from(AuditLog))
         for data in (
             {},
@@ -276,7 +276,7 @@ class ManagerFeatureTests(DomainTestCase):
         self.assertEqual(self.request("GET", "/feature-overrides").json["featureOverrides"], before)
         self.assertTrue(self.request("GET", "/workspace").json["features"]["DASHBOARD"])
         with self.app.app_context():
-            set_context(is_system=True)
+            set_context(is_system=True, is_service=True)
             self.assertEqual(
                 db.session.scalar(select(func.count()).select_from(AuditLog)), audit_count
             )
@@ -286,7 +286,7 @@ class ManagerFeatureTests(DomainTestCase):
         self.assertEqual(self.override({"enabled": True, "notes": "Private note"}).status_code, 200)
         self.assertEqual(self.override(None, method="DELETE").status_code, 200)
         with self.app.app_context():
-            set_context(is_system=True)
+            set_context(is_system=True, is_service=True)
             entries = {row.event: row for row in db.session.scalars(select(AuditLog))}
             self.assertEqual(entries["feature.updated"].user_id, "admin")
             self.assertIsNone(entries["feature.updated"].tenant_id)
@@ -305,7 +305,7 @@ class ManagerFeatureTests(DomainTestCase):
         )
         self.assertEqual(response.status_code, 422, response.json)
         with self.app.app_context():
-            set_context(is_system=True)
+            set_context(is_system=True, is_service=True)
             self.assertEqual(db.session.get(Plan, "default-pro").features, {"POS_SALES": True})
 
     def test_worker_transactions_refresh_global_override_and_subscription_access(self):
@@ -330,7 +330,7 @@ class ManagerFeatureTests(DomainTestCase):
                     with self.app.test_request_context("/api/_channel_worker", method="POST"):
                         self.assertTrue(feature_enabled("POS_SALES", for_write=True))
                     db.session.rollback()
-                    set_context("admin", is_system=True)
+                    set_context("admin", is_system=True, is_service=True)
                     if change == "global":
                         db.session.get(FeatureControl, "POS_SALES").enabled_global = False
                     elif change == "override_expired":
@@ -365,7 +365,7 @@ class ManagerFeatureTests(DomainTestCase):
 
         def hotel_snapshot():
             with self.app.app_context():
-                set_context(is_system=True)
+                set_context(is_system=True, is_service=True)
                 return {
                     "tenants": db.session.execute(
                         text("SELECT id,name,status FROM tenants ORDER BY id")
@@ -434,7 +434,7 @@ class ManagerFeatureTests(DomainTestCase):
                     finally:
                         if kind == "global":
                             with self.app.app_context():
-                                set_context("admin", is_system=True)
+                                set_context("admin", is_system=True, is_service=True)
                                 db.session.delete(db.session.get(FeatureControl, "POS_SALES"))
                                 db.session.commit()
                         else:

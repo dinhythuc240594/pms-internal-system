@@ -26,8 +26,22 @@ test('property payload trims text, omits blank optional fields and never forward
     accountId: 'system:staging', name: 'An Nhiên', currency: 'VND', timezone: 'Asia/Ho_Chi_Minh', country: 'VN', city: 'Đà Nẵng',
   });
   const valid = { name: 'An Nhiên', currency: 'VND', timezone: 'Asia/Ho_Chi_Minh', country: 'VN' };
-  for (const invalid of [{ name: ' ' }, { currency: 'EUR' }, { timezone: 'Not/AZone' }, { timezone: '' }, { timezone: '+07:00' }, { country: 'Vietnam' }]) {
+  for (const invalid of [{ name: ' ' }, { currency: 'XXX' }, { timezone: 'Not/AZone' }, { timezone: '' }, { timezone: '+07:00' }, { country: 'Vietnam' }]) {
     assert.throws(() => channexPropertyInput('system:staging', { ...valid, ...invalid }));
+  }
+});
+
+test('property defaults and payload preserve popular Channex currencies without conversion', () => {
+  for (const currency of ['EUR', 'THB', 'JPY']) {
+    const draft = channexPropertyDraft({ name: 'International hotel', currency });
+    assert.equal(draft.currency, currency);
+    const input = channexPropertyInput('system:staging', draft);
+    assert.equal(input.currency, currency);
+    assert.equal(input.accountId, 'system:staging');
+  }
+  const valid = channexPropertyDraft({ name: 'Test hotel' });
+  for (const currency of ['XXX', 'ZZZ', 'US1', 'EU', 'EURO', 'eur']) {
+    assert.throws(() => channexPropertyInput('system:staging', { ...valid, currency }));
   }
 });
 
@@ -44,7 +58,8 @@ test('property inputs enforce remote field limits without silently truncating PM
   const valid = { name: 'An Nhiên', currency: 'VND', timezone: 'Asia/Ho_Chi_Minh', country: '' };
   assert.equal('country' in channexPropertyInput('system:staging', valid), false);
   for (const [field, label, maximum] of [['name', 'Tên khách sạn', 255], ['city', 'Tỉnh / Thành phố', 255], ['address', 'Địa chỉ', 255], ['email', 'Email liên hệ', 254], ['phone', 'Điện thoại', 32]]) {
-    assert.equal(channexPropertyInput('system:staging', { ...valid, [field]: 'a'.repeat(maximum) })[field].length, maximum);
+    const value = field === 'phone' ? '+123 456 789 012 345' + ' .'.repeat(6) : field === 'email' ? 'a'.repeat(64) + '@' + 'b'.repeat(63) + '.' + 'c'.repeat(63) + '.' + 'd'.repeat(61) : 'a'.repeat(maximum);
+    assert.equal(channexPropertyInput('system:staging', { ...valid, [field]: value })[field].length, maximum);
     assert.throws(() => channexPropertyInput('system:staging', { ...valid, [field]: 'a'.repeat(maximum + 1) }), { message: `${label} chỉ được tối đa ${maximum} ký tự.` });
     for (const control of ['\n', '\u0000', '\u007f', '\u009f']) assert.throws(() => channexPropertyInput('system:staging', { ...valid, [field]: `a${control}b` }), { message: `${label} có ký tự điều khiển không hợp lệ. Vui lòng nhập lại.` });
   }
@@ -52,4 +67,15 @@ test('property inputs enforce remote field limits without silently truncating PM
   assert.equal(draft.address.length, 500);
   assert.equal(draft.phone.length, 40);
   assert.throws(() => channexPropertyInput('system:staging', { ...draft, name: 'An Nhiên' }), /Địa chỉ/);
+});
+
+test('property contact fields reject malformed email and phone before a remote write', () => {
+  const draft = channexPropertyDraft({ name: 'Test hotel' });
+  for (const email of ['no-at-sign', 'a@@example.test', 'a b@example.test', 'a..b@example.test', 'a@-example.test']) {
+    assert.throws(() => channexPropertyInput('system:staging', { ...draft, email }), /email/i);
+  }
+  for (const phone of ['098210910A', '++84900', '090+123', '---', '123456', '1234567890123456']) {
+    assert.throws(() => channexPropertyInput('system:staging', { ...draft, phone }), /điện thoại/i);
+  }
+  assert.equal(channexPropertyInput('system:staging', { ...draft, phone: ' +84 900 123 ' }).phone, '+84 900 123');
 });

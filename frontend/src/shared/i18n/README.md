@@ -6,6 +6,17 @@ profile settings. The selection is stored under `loha-ui-language` in localStora
 synchronized across tabs, and updates `document.documentElement.lang`.
 If storage is unavailable, the selection remains usable in memory.
 
+`shared/styles/fonts.css` bundles Inter, Be Vietnam Pro and Noto Sans SC through
+Fontsource and defines `--font-sans` and `--font-mono`. Chinese UI prioritizes
+Noto Sans SC through the document's `lang` attribute. Use these font stacks for
+CSS and inline styles, including dialogs and form controls, so Chinese glyphs
+render on devices without installed Chinese fonts. The font files are served
+with the app; Chinese text
+does not depend on Google Fonts being reachable. Keep remote CSS imports out of
+application stylesheets: an unavailable imported stylesheet can block the entire
+app and delay local font loading. Unicode ranges let the browser load only the
+required font segments.
+
 Each locale has a flat `key: value` JSON dictionary in `locales/`. Keep the same
 keys and named parameters in all three files. Missing translations fall back to
 Vietnamese; unknown keys display the key so missing entries remain visible.
@@ -32,20 +43,30 @@ Use this compatibility helper only for known UI labels. Hotel names, employee
 names, room type names, guest details, notes and form values are business data and
 must remain unchanged.
 
-`LegacyI18nBridge` covers older screens whose visible literals have not yet been
-moved to named keys. Its generated catalogs contain fixed UI copy and templates,
-and it updates text, placeholders, titles, and accessible labels when the locale
-changes. Add `data-i18n-ignore` to a container whose text is business or user data
-that could otherwise look like a fixed UI label. New components should continue
-to use named `t(...)` keys rather than relying on the bridge.
+Older screens translate source-authored UI literals with `tr(...)`, using the
+generated compatibility catalogs. Keep expressions containing hotel names,
+guest details, notes, or other business data outside this helper, even when their
+text matches a UI label. New components should use named `t(...)` keys.
 
-The API client resolves backend-owned display references before publishing JSON
-responses to React state. Use `i18n:key.name` for a fixed value, or a descriptor
+`LegacyI18nBridge` only translates explicitly marked legacy UI. Set
+`data-i18n-ui` on an element to translate its direct text nodes; descendants do
+not inherit this opt-in. To translate UI attributes, list their names in
+`data-i18n-attrs="placeholder aria-label title"`. Only these three attributes are
+supported. Leave business text and attributes unmarked. `data-i18n-ignore` and
+editable containers protect their entire subtree, including marked descendants.
+Form values are never translated by the bridge.
+
+The API client preserves backend-owned display references in React state. Use
+`i18n:key.name` for a fixed value, or a descriptor
 such as `{ "$i18n": "key.name", "values": { "id": "123" } }` when the frontend
 must interpolate API data. Definitions, feature labels and notification copy live
 in the frontend locale files; the backend only returns stable keys and values.
-The compatibility catalog still translates existing validation messages while
-tenant and user data stays unchanged.
+Resolve these references at render time with `useI18n().apiText(...)` so they
+follow language changes. Ordinary strings remain unchanged, and descriptor
+interpolation values are inserted verbatim. The compatibility catalog translates
+legacy strings only in the root `message` and `error.message` response envelopes.
+Nested business fields, arrays, and error details remain opaque; a field named
+`message`, `title`, or `description` inside business data does not opt in.
 
 The dictionaries cover shared controls, PMS/Manager navigation, sign-in, settings,
 dashboard, profile, housekeeping, room status and the daily rate matrix, with

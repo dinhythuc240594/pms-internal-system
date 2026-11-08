@@ -10,6 +10,7 @@ class URL(CommonURL):
     CREATE_SYSTEM_USER = "/users"
     UPDATE_SYSTEM_USER = "/users/<user_id>"
     TENANTS = "/tenants"
+    CUSTOMER_ACCOUNTS = "/admin/customer-accounts"
     CHANNEX = "/admin/channex"
     CHANNEX_ACCOUNTS = "/admin/channex/accounts"
     CHANNEX_PROPERTIES = "/admin/channex/properties"
@@ -85,6 +86,14 @@ URL.register(
 
 URL.register(
     admin, URL.TENANTS, "pms_api.admin.routes:TenantsView", endpoint="tenants", methods=["GET"]
+)
+
+URL.register(
+    admin,
+    URL.CUSTOMER_ACCOUNTS,
+    "pms_api.admin.routes:CustomerAccountsView",
+    endpoint="customer_accounts",
+    methods=["GET"],
 )
 
 URL.register(

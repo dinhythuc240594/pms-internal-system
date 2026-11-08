@@ -2,11 +2,10 @@
 
 from datetime import datetime, timedelta, timezone
 
-from domain_fixture import DomainTestCase
-
 from pms_api.core_models import AuditLog
 from pms_api.extensions import db
 from pms_api.security import set_context
+from tests.domain_fixture import DomainTestCase
 
 
 class AuditFilterTests(DomainTestCase):
@@ -15,7 +14,7 @@ class AuditFilterTests(DomainTestCase):
         self.admin, _ = self.login("admin@test.local")
         self.start = datetime(2026, 10, 1, tzinfo=timezone.utc)
         with self.app.app_context():
-            set_context(is_system=True)
+            set_context(is_system=True, is_service=True)
             for key, tenant, actor, hours in (
                 ("a-old", self.tenant_id, "owner-a", -1),
                 ("a-start", self.tenant_id, "owner-a", 0),
@@ -31,7 +30,7 @@ class AuditFilterTests(DomainTestCase):
                         id=key,
                         tenant_id=tenant,
                         user_id=actor,
-                        event="fixture.audit",
+                        event="tenant.updated",
                         entity_type="fixture",
                         entity_id=key,
                         created_at=self.start + timedelta(hours=hours),

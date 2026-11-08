@@ -11,7 +11,7 @@ from psycopg import sql
 from sqlalchemy import URL
 
 
-def main(argv=None):
+def main():
     stored = credentials(create=False)
     database = "pms_test_" + uuid.uuid4().hex
     created = False
@@ -49,9 +49,8 @@ def main(argv=None):
                 port=stored["port"],
                 database=database,
             ).render_as_string(hide_password=False)
-        arguments = sys.argv[1:] if argv is None else argv
         result = subprocess.run(
-            [sys.executable, "-m", "unittest", *(arguments or ["discover", "-s", "tests", "-v"])],
+            [sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v"],
             cwd=Path(__file__).resolve().parents[1],
             env=environment,
         )

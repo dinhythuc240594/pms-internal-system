@@ -4,7 +4,7 @@ import { bookingEvent, timestamp } from './presentation.js';
 
 test('hotel timestamps use the hotel timezone across date boundaries', () => {
   const instant = '2026-10-14T01:30:00Z';
-  assert.equal(timestamp(instant, 'America/New_York'), new Date(instant).toLocaleString('vi-VN', { timeZone: 'America/New_York' }));
+  assert.equal(timestamp(instant, 'America/New_York'), '13/10/2026 21:30');
   assert.match(timestamp(instant, 'America/New_York'), /13\/10\/2026/);
   assert.match(timestamp(instant, 'Asia/Ho_Chi_Minh'), /14\/10\/2026/);
   assert.equal(timestamp(null, 'Asia/Ho_Chi_Minh'), '—');

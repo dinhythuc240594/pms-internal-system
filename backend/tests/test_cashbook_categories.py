@@ -49,7 +49,7 @@ class CashbookCategoryTests(DomainTestCase):
     def test_vouchers_reject_foreign_inactive_wrong_catalog_and_wrong_direction(self):
         income, expense = self.category(), self.category("Other expense", "EXPENSE")
         with self.app.app_context():
-            set_context(is_system=True)
+            set_context(is_system=True, is_service=True)
             db.session.add(
                 Master(
                     id="foreign-category",
@@ -136,7 +136,7 @@ class CashbookCategoryTests(DomainTestCase):
         self.assertIsNone(book.json["cashDocuments"][0]["categoryId"])
         self.assertEqual(self.request("get", "/cashbook?categoryId=missing").status_code, 422)
         with self.app.app_context():
-            set_context(is_system=True)
+            set_context(is_system=True, is_service=True)
             db.session.add(
                 Master(
                     id="foreign-filter",

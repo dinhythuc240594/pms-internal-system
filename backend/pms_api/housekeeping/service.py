@@ -4,11 +4,12 @@ from collections import Counter
 
 from sqlalchemy import select
 
+from pms_api.ports import runtime
+
 from ..bookings.models import Reservation, ReservationRoom
 from ..catalog.models import PhysicalRoom
 from ..core_models import User
 from ..extensions import db
-from ..ports import runtime
 from ..pricing.engine import business_date
 from ..security import GLOBAL_ROLES, ApiError, audit, set_context
 from ..subscriptions import enforce_entitlements, lock_tenant
@@ -228,13 +229,13 @@ def assign_day_plan(tenant_id, day, rooms, staff_ids, total_loads, *, shift_choi
 
 
 def process_day_plan(tenant_id, actor_id):
-    """Generate today's work in a fresh context; recheck the trusted CLI actor each poll."""
+    """Generate scheduled work in a service context, never a user's PMS session."""
     with (
         runtime().app_scope(),
         runtime().request_scope("/api/_housekeeping_worker", method="POST"),
     ):
         try:
-            set_context(tenant_id=tenant_id)
+            set_context(tenant_id=tenant_id, is_service=True)
             runtime().state.tenant = lock_tenant(tenant_id)
             user = db.session.scalar(
                 select(User)
@@ -247,7 +248,7 @@ def process_day_plan(tenant_id, actor_id):
                     403, "housekeeping_actor_revoked", "Housekeeping worker actor is unavailable."
                 )
             runtime().state.user, runtime().state.role = user, "HOTEL_OWNER"
-            set_context(user.id, tenant_id, is_system=True)
+            set_context(user.id, tenant_id, is_service=True)
             if runtime().state.tenant.status != "active":
                 db.session.rollback()
                 return 0

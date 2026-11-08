@@ -1,14 +1,17 @@
 import { getLocale } from '../../../shared/i18n/store.js';
-import { translateApiText, translateApiValue } from '../../../shared/i18n/core.js';
+import { translateApiMessage } from '../../../shared/i18n/core.js';
 
 export function localizeApiPayload(value, locale = getLocale()) {
-  if (typeof value === 'string') return value.startsWith('i18n:') ? value : translateApiText(locale, value);
-  if (Array.isArray(value)) return value.map(item => localizeApiPayload(item, locale));
-  if (value && typeof value === 'object') {
-    if (typeof value.$i18n === 'string') return value;
-    return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, localizeApiPayload(item, locale)]));
+  if (!value || typeof value !== 'object' || Array.isArray(value) || typeof value.$i18n === 'string') return value;
+  // Keep descriptors reactive and all business fields opaque, including nested
+  // fields named "message". Only these response envelopes contain legacy copy.
+  const message = item => typeof item === 'string' && !item.startsWith('i18n:') ? translateApiMessage(locale, item) : item;
+  const result = { ...value };
+  if (Object.hasOwn(value, 'message')) result.message = message(value.message);
+  if (value.error && typeof value.error === 'object' && !Array.isArray(value.error) && Object.hasOwn(value.error, 'message')) {
+    result.error = { ...value.error, message: message(value.error.message) };
   }
-  return value;
+  return result;
 }
 
 export const CORE_ROLES = {
@@ -19,17 +22,25 @@ export const CORE_ROLES = {
 };
 export const systemUser = user => ['SYSTEM_MANAGER', 'SUPER_ADMIN'].includes(user?.globalRole);
 export function tenantRole(user, id) {
-  if (systemUser(user)) return 'HOTEL_OWNER';
   return user?.memberships?.find(m => m.tenantId === id && m.active !== false)?.role;
 }
+export function channelSupportDecision(user, tenant, action = 'channels.view', write = false) {
+  if (!user || user.active === false) return { allowed: false, reason: 'session', message: 'Vui lòng đăng nhập lại (401).' };
+  if (!systemUser(user) || !['channels.view', 'channels.write'].includes(action)) return { allowed: false, reason: 'role', message: 'Bạn không có quyền quản trị phần này (403).' };
+  if (write && tenant?.status?.toUpperCase() !== 'ACTIVE') return { allowed: false, reason: 'suspended', message: 'Khách sạn đang tạm ngưng. Dữ liệu chỉ được xem.' };
+  return { allowed: true };
+}
 export function permitted(user, tenant, action, write = false) {
+  action = ({ 'reservations.checkout': 'reservations.write', 'housekeeping.complete': 'housekeeping.write' })[action] || action;
   if (!user || user.active === false) return { allowed: false, reason: 'session', message: 'Vui lòng đăng nhập lại (401).' };
   if (!tenant || !tenantRole(user, tenant.id)) return { allowed: false, reason: 'tenant', message: 'Bạn không có quyền vào khách sạn này (403).' };
+  if (action === 'users.write' && systemUser(user)) return { allowed: false, reason: 'role', message: 'Chỉ chủ khách sạn có tài khoản khách hàng được cấp hoặc thu hồi quyền truy cập (403).' };
   if (tenant.status?.toUpperCase() !== 'ACTIVE' && (write || !action.endsWith('.view'))) return { allowed: false, reason: 'suspended', message: 'Khách sạn đang tạm ngưng. Dữ liệu chỉ được xem.' };
   if (!CORE_ROLES[tenantRole(user, tenant.id)]?.some(a => a === '*' || a === action)) return { allowed: false, reason: 'role', message: 'Vai trò của bạn không được phép thực hiện thao tác này (403).' };
   return { allowed: true };
 }
 export const ACTION_FEATURES = {
+  'reservations.checkout': 'RESERVATION_VIEW', 'housekeeping.complete': 'HOUSEKEEPING',
   'dashboard.view': 'DASHBOARD', 'reservations.view': 'RESERVATION_VIEW', 'reservations.write': 'RESERVATION_CREATE',
   'rooms.view': 'ROOM_DIAGRAM', 'housekeeping.view': 'HOUSEKEEPING', 'housekeeping.write': 'HOUSEKEEPING', 'housekeeping.manage': 'HOUSEKEEPING',
   'cashbook.view': 'CASHBOOK', 'cashbook.write': 'CASHBOOK', 'cashbook.reverse': 'CASHBOOK', 'payments.write': 'CASHBOOK', 'finance.adjust': 'CASHBOOK',
@@ -44,7 +55,12 @@ export function subscriptionDecision(subscription, features, action, feature = A
   const inactive = subscription.effectiveActive === false || subscription.status !== 'active'
     || (subscription.startDate && Date.parse(subscription.startDate) > now)
     || (subscription.endDate && Date.parse(subscription.endDate) <= now);
-  if (write && inactive) return { allowed: false, reason: 'expired', message: 'Gói chưa hoạt động hoặc đã hết hạn. Dữ liệu hiện chỉ được xem; vui lòng liên hệ gia hạn.' };
+  const temporary = subscription.blockedReason === 'expired' && subscription.operationalAccess?.active === true
+    && Date.parse(subscription.operationalAccess.until) > now;
+  const completion = temporary && ['payments.write', 'finance.adjust', 'reservations.checkout', 'housekeeping.complete'].includes(action);
+  if (write && inactive && !completion) return { allowed: false, reason: 'expired', message: temporary
+    ? 'Quyền vận hành tạm chỉ cho hoàn tất nghiệp vụ hiện có. Thao tác này cần gia hạn gói.'
+    : 'Gói chưa hoạt động hoặc đã hết hạn. Dữ liệu hiện chỉ được xem; vui lòng liên hệ gia hạn.' };
   return { allowed: true };
 }
 export function createRequestScope() {
@@ -64,22 +80,45 @@ function canonical(value) {
 export function createIntentJournal(storage) {
   const storageKey = 'bluejay-pms-pending-intents-v1';
   let pending = {};
-  try { pending = JSON.parse(storage?.getItem(storageKey) || '{}'); } catch { /* An inaccessible storage still permits in-memory retries. */ }
-  const save = () => { try { storage?.setItem(storageKey, JSON.stringify(pending)); } catch { /* Retain the in-memory intent. */ } };
+  let persistenceFailed = false;
+  const reload = () => {
+    if (!storage?.getItem || persistenceFailed) return;
+    try {
+      const saved = JSON.parse(storage.getItem(storageKey) || '{}');
+      pending = saved && typeof saved === 'object' && !Array.isArray(saved) ? saved : {};
+    } catch { /* An inaccessible storage still permits in-memory retries. */ }
+  };
+  reload();
+  const keyOf = value => typeof value === 'string' ? value : value?.key;
+  const save = () => { try { storage?.setItem(storageKey, JSON.stringify(pending)); } catch { persistenceFailed = true; /* Retain the in-memory intent. */ } };
   return {
     async acquire(path, body, suggested = crypto.randomUUID(), actor = '') {
       const payload = path + JSON.stringify(canonical(body));
       const hash = async value => [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value)))].map(byte => byte.toString(16).padStart(2, '0')).join('');
       const fingerprint = await hash((actor ? actor + '\u0000' : '') + payload);
+      const legacy = actor ? await hash(payload) : null;
+      // Other forms can hold another journal over this same session storage.
+      reload();
       // Keep unknown pre-upgrade money results on their original key until reconciled.
       if (actor) {
-        const legacy = await hash(payload);
-        if (pending[legacy]) return { fingerprint: legacy, key: pending[legacy] };
+        if (keyOf(pending[legacy])) return { fingerprint: legacy, key: keyOf(pending[legacy]), path, actor };
       }
-      if (!pending[fingerprint]) { pending[fingerprint] = suggested; save(); }
-      return { fingerprint, key: pending[fingerprint] };
+      if (!keyOf(pending[fingerprint])) { pending[fingerprint] = suggested; save(); }
+      return { fingerprint, key: keyOf(pending[fingerprint]), path, actor };
     },
-    confirm(intent) { if (pending[intent.fingerprint] === intent.key) { delete pending[intent.fingerprint]; save(); } },
+    acknowledge(intent, resultId) {
+      reload();
+      if (keyOf(pending[intent.fingerprint]) !== intent.key) return;
+      pending[intent.fingerprint] = { key: intent.key, path: intent.path, actor: intent.actor || '', resultId: resultId || null, committedAt: new Date().toISOString() };
+      save();
+    },
+    acknowledged(prefix, actor = '') {
+      reload();
+      return Object.entries(pending)
+        .filter(([, value]) => value?.committedAt && value.path?.startsWith(prefix) && value.actor === actor)
+        .map(([fingerprint, value]) => ({ fingerprint, ...value }));
+    },
+    confirm(intent) { reload(); if (keyOf(pending[intent.fingerprint]) === intent.key) { delete pending[intent.fingerprint]; save(); } },
   };
 }
 export function createApiClient(fetcher = globalThis.fetch, baseUrl = import.meta.env?.VITE_API_BASE_URL || '', onPendingChange) {
@@ -87,8 +126,8 @@ export function createApiClient(fetcher = globalThis.fetch, baseUrl = import.met
   const pending = { reads: 0, writes: 0 };
   return {
     setCsrf(token) { csrfToken = token; },
-    async request(url, { method = 'GET', body, signal, intent, quiet = false } = {}) {
-      const kind = method === 'GET' ? 'reads' : 'writes';
+    async request(url, { method = 'GET', body, signal, intent, quiet = false, readOnly = false } = {}) {
+      const kind = readOnly || method === 'GET' ? 'reads' : 'writes';
       if (!quiet) pending[kind] += 1;
       try {
         if (!quiet) onPendingChange?.({ ...pending });
@@ -100,7 +139,7 @@ export function createApiClient(fetcher = globalThis.fetch, baseUrl = import.met
         const payload = response.status === 204 ? null : await response.json().catch(() => null);
         const data = localizeApiPayload(payload);
         if (!response.ok) {
-          const error = new Error(translateApiValue(getLocale(), data?.error?.message) || `Yêu cầu thất bại (${response.status}).`);
+          const error = new Error(translateApiMessage(getLocale(), data?.error?.message) || translateApiMessage(getLocale(), `Yêu cầu thất bại (${response.status}).`));
           Object.assign(error, { status: response.status, code: data?.error?.code, details: data?.error?.details });
           throw error;
         }

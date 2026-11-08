@@ -1,8 +1,9 @@
-"""HTTP adapters. Business operations live in the application module."""
+"""HTTP entry points; business behavior is implemented in the application layer."""
 
 from common import CommonMethodView
 
 from . import health_application as application
+from .security import require_system
 
 
 class LivenessView(CommonMethodView):
@@ -17,6 +18,13 @@ class ReadinessView(CommonMethodView):
         return application.handle_readiness()
 
 
+class OperationsView(CommonMethodView):
+    @staticmethod
+    @require_system()
+    def dispatch_request():
+        return application.handle_operations()
+
+
 def __getattr__(name):
     if name == "database_check":
         from .commands import database_check
@@ -26,6 +34,4 @@ def __getattr__(name):
         from importlib import import_module
 
         return getattr(import_module(".health_urls", __package__), name)
-    if hasattr(application, name):
-        return getattr(application, name)
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    return getattr(application, name)

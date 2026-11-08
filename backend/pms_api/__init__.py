@@ -23,12 +23,11 @@ from .model_registry import register_models
 from .notifications_urls import notifications as notifications_blueprint
 from .ports import configure_runtime
 from .pricing.urls import pricing
+from .reconciliation.urls import reconciliation
 from .reports.urls import reports
 from .saas_billing.urls import billing
 from .security import register_security
 from .workspace_urls import URL as WorkspaceURL
-
-configure_runtime(FlaskRuntime())
 
 
 class URL(CommonURL):
@@ -45,6 +44,8 @@ def create_app(environ=None, *, env_file=BACKEND_DIR / ".env"):
     app.config.update(load_config(environ, env_file=env_file))
     register_models()
     db.init_app(app)
+    configure_runtime(FlaskRuntime())
+    register_services(app)
     migration_directory = BACKEND_DIR / "migrations"
     migrate.init_app(app, db, directory=str(migration_directory), render_as_batch=False)
     app.extensions["migration_heads"] = set(ScriptDirectory(str(migration_directory)).get_heads())
@@ -54,7 +55,6 @@ def create_app(environ=None, *, env_file=BACKEND_DIR / ".env"):
             resources={r"/api/*": {"origins": app.config["CORS_ORIGINS"]}},
             supports_credentials=True,
         )
-    register_services(app)
     register_security(app)
     app.register_blueprint(health_blueprint)
     app.register_blueprint(auth)
@@ -69,6 +69,7 @@ def create_app(environ=None, *, env_file=BACKEND_DIR / ".env"):
     app.register_blueprint(notifications_blueprint)
     app.register_blueprint(pricing)
     app.register_blueprint(reports)
+    app.register_blueprint(reconciliation)
     app.register_blueprint(billing)
     register_commands(app)
 

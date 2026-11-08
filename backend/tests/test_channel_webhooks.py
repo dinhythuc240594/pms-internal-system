@@ -55,7 +55,7 @@ class ChannelWebhookTests(DomainTestCase):
         return response.json
 
     def work(self, provider):
-        with patch("pms_api.channels.factory.ChannexClient", return_value=provider) as factory:
+        with patch("pms_api.channels.service.channel_adapter", return_value=provider) as factory:
             with self.app.app_context():
                 self.assertEqual(process_jobs(self.tenant_id, 1), 1)
             factory.assert_called_once_with("staging", self.config["apiKey"])
@@ -99,6 +99,29 @@ class ChannelWebhookTests(DomainTestCase):
             self.assertEqual(response.status_code, status, response.json)
         jobs = self.snapshot()["jobs"]
         self.assertEqual(sum(job["kind"] == "pull_bookings" for job in jobs), 1)
+
+    def test_malformed_headers_and_authenticated_invalid_payloads_never_queue_work(self):
+        self.save()
+        with self.app.app_context():
+            set_context(self.owner_id, self.tenant_id)
+            secret = load_credentials(db.session.scalar(select(ChannelConnection)))["webhookSecret"]
+        body = {"event": "booking", "property_id": PROPERTY}
+        for supplied, payload, status in (
+            ("", body, 401),
+            ("é" * 32, body, 401),
+            ("a" * 1025, body, 401),
+            (secret, {}, 422),
+            (secret, {**body, "payload": {"property_id": str(UUID(int=999))}}, 422),
+        ):
+            with self.subTest(status=status, payload=payload):
+                response = self.client.post(
+                    f"/api/channex/webhooks/{self.tenant_id}",
+                    json=payload,
+                    headers={"X-Channex-Webhook-Secret": supplied},
+                )
+                self.assertEqual(response.status_code, status, response.json)
+                self.assertNotIn(secret, response.get_data(as_text=True))
+        self.assertEqual([job["kind"] for job in self.snapshot()["jobs"]], ["setup_webhook"])
 
     def test_transient_registration_failure_retains_config_and_can_retry(self):
         from unittest.mock import Mock

@@ -71,6 +71,11 @@ class CatalogValidationTests(unittest.TestCase):
 
     def test_hotel_profile_rejects_invalid_contact_urls_and_types(self):
         for value in [
+            {"phone": "098210910A"},
+            {"phone": "123456"},
+            {"phone": "090+1234567"},
+            {"taxCode": "ABC123"},
+            {"taxCode": "0312345678-01"},
             {"phone": "x" * 41},
             {"contactEmail": "invalid"},
             {"contactEmail": "user name@hotel.example"},

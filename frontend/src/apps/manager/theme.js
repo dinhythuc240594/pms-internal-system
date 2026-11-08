@@ -1,4 +1,4 @@
-const fontFamily = "'Inter', 'Be Vietnam Pro', sans-serif";
+const fontFamily = 'var(--font-sans)';
 
 // LOHA colors; aliases keep existing manager pages on the shared palette.
 export const getThemeTokens = (isDark = false) => {

@@ -17,5 +17,7 @@ def register_models():
         "channels.models",
         "notification_models",
         "saas_billing.models",
+        "worker_health",
+        "reconciliation.models",
     ):
         import_module(f"{__package__}.{module}")

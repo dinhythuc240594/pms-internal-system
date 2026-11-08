@@ -1,3 +1,4 @@
+import { formatDateTime } from '../../../../shared/lib/date.js';
 const DAY = 24 * 60 * 60 * 1000;
 
 export function featureOverridePayload({ overrideType, notes }, now = Date.now()) {
@@ -18,5 +19,5 @@ export function overrideExpiry(expiresAt, now = Date.now()) {
 }
 
 export function displayDate(value) {
-  return value && Number.isFinite(Date.parse(value)) ? new Date(value).toLocaleDateString('vi-VN') : '—';
+  return value && Number.isFinite(Date.parse(value)) ? formatDateTime(value).slice(0, 10) : '—';
 }

@@ -1,0 +1,510 @@
+- generic [ref=f3e3]:
+  - generic [ref=f3e4]:
+    - button "Switch hotel (hotel-a)" [ref=f3e5]
+    - button "Toggle read only" [ref=f3e6]
+    - button "Toggle error" [ref=f3e7]
+    - button "Toggle empty" [ref=f3e8]
+  - generic [ref=f3e9]:
+    - banner [ref=f3e10]:
+      - generic [ref=f3e11]:
+        - paragraph [ref=f3e12]: PHÂN PHỐI & BÁN PHÒNG
+        - heading "Lịch sử đồng bộ" [level=1] [ref=f3e13]
+        - paragraph [ref=f3e14]: Theo dõi yêu cầu trao đổi giá, phòng trống và đặt phòng với Channex.
+      - button "Tải lại lịch sử" [ref=f3e16] [cursor=pointer]
+    - navigation "Quản lý kênh OTA" [ref=f3e22]:
+      - link "Kênh OTA" [ref=f3e23] [cursor=pointer]:
+        - /url: /id/ota
+      - link "Lịch sử đồng bộ" [ref=f3e27] [cursor=pointer]:
+        - /url: /id/ota-history
+    - status [active] [ref=f3e624]:
+      - paragraph [ref=f3e628]: Đã xếp hàng thử lại. Tải lại lịch sử để xem kết quả sau khi yêu cầu được xử lý.
+    - region [ref=f3e31]:
+      - generic [ref=f3e32]:
+        - generic [ref=f3e33]:
+          - heading "Đặt phòng cần xử lý" [level=2] [ref=f3e34]
+          - paragraph [ref=f3e35]: PMS chưa áp dụng các cập nhật này. Đối soát dữ liệu và tồn phòng trước khi thử lại; hệ thống không tự thử lại.
+        - status [ref=f3e629]: 26 đặt phòng cần xử lý
+      - region "Đặt phòng cần xử lý, có thể cuộn ngang" [ref=f3e37]:
+        - table "Đặt phòng Channex chưa được áp dụng vào PMS" [ref=f3e630]:
+          - rowgroup [ref=f3e631]:
+            - row [ref=f3e632]:
+              - columnheader "Đặt phòng" [ref=f3e633]
+              - columnheader "Kỳ lưu trú & giá trị" [ref=f3e634]
+              - columnheader "Nguyên nhân" [ref=f3e635]
+              - columnheader "Thao tác" [ref=f3e636]
+          - rowgroup [ref=f3e637]:
+            - row [ref=f3e638]:
+              - 'cell "TEST-1000 Kênh: Booking.com Mã Channex: booking-0 Mã cập nhật: revision-0 Đặt phòng mới · 16:00 16/10/2026" [ref=f3e639]':
+                - strong [ref=f3e640]: TEST-1000
+                - generic [ref=f3e641]: "Kênh: Booking.com"
+                - generic [ref=f3e642]: "Mã Channex: booking-0"
+                - generic [ref=f3e643]: "Mã cập nhật: revision-0"
+                - generic [ref=f3e644]: Đặt phòng mới · 16:00 16/10/2026
+              - cell "19/10/2026 → 22/10/2026 1.234,56 USD" [ref=f3e645]:
+                - generic [ref=f3e646]: 19/10/2026 → 22/10/2026
+                - generic [ref=f3e647]: 1.234,56 USD
+                - group [ref=f3e648]:
+                  - generic "1 phòng · Xem ghép nối" [ref=f3e649] [cursor=pointer]
+              - cell "Cần xử lý Không đủ tồn phòng phù hợp cho toàn bộ kỳ lưu trú. Kiểm tra tồn phòng và liên hệ kênh bán trước khi xử lý lại. Đã xếp hàng kiểm tra lại theo yêu cầu. Tải lại để xem kết quả đồng bộ mới nhất." [ref=f3e650]:
+                - generic [ref=f3e651]: Cần xử lý
+                - paragraph [ref=f3e652]: Không đủ tồn phòng phù hợp cho toàn bộ kỳ lưu trú. Kiểm tra tồn phòng và liên hệ kênh bán trước khi xử lý lại.
+                - generic [ref=f3e653]: Đã xếp hàng kiểm tra lại theo yêu cầu. Tải lại để xem kết quả đồng bộ mới nhất.
+              - cell [ref=f3e654]:
+                - button "Đã xếp hàng" [disabled] [ref=f3e656]
+            - row [ref=f3e660]:
+              - 'cell "TEST-1001 Kênh: Booking.com Mã Channex: booking-1 Mã cập nhật: revision-1 Đặt phòng mới · 16:00 16/10/2026" [ref=f3e661]':
+                - strong [ref=f3e662]: TEST-1001
+                - generic [ref=f3e663]: "Kênh: Booking.com"
+                - generic [ref=f3e664]: "Mã Channex: booking-1"
+                - generic [ref=f3e665]: "Mã cập nhật: revision-1"
+                - generic [ref=f3e666]: Đặt phòng mới · 16:00 16/10/2026
+              - cell "19/10/2026 → 22/10/2026 1.234,56 USD" [ref=f3e667]:
+                - generic [ref=f3e668]: 19/10/2026 → 22/10/2026
+                - generic [ref=f3e669]: 1.234,56 USD
+                - group [ref=f3e670]:
+                  - generic "1 phòng · Xem ghép nối" [ref=f3e671] [cursor=pointer]
+              - cell "Cần xử lý Chưa ghép đúng loại phòng và gói giá của cập nhật. Kiểm tra ghép nối rồi thử lại." [ref=f3e672]:
+                - generic [ref=f3e673]: Cần xử lý
+                - paragraph [ref=f3e674]: Chưa ghép đúng loại phòng và gói giá của cập nhật. Kiểm tra ghép nối rồi thử lại.
+              - cell [ref=f3e675]:
+                - button "Thử lại sau khi xử lý" [ref=f3e677] [cursor=pointer]
+            - row [ref=f3e681]:
+              - 'cell "TEST-1002 Kênh: Booking.com Mã Channex: booking-2 Mã cập nhật: revision-2 Đặt phòng mới · 16:00 16/10/2026" [ref=f3e682]':
+                - strong [ref=f3e683]: TEST-1002
+                - generic [ref=f3e684]: "Kênh: Booking.com"
+                - generic [ref=f3e685]: "Mã Channex: booking-2"
+                - generic [ref=f3e686]: "Mã cập nhật: revision-2"
+                - generic [ref=f3e687]: Đặt phòng mới · 16:00 16/10/2026
+              - cell "19/10/2026 → 22/10/2026 1.234,56 USD" [ref=f3e688]:
+                - generic [ref=f3e689]: 19/10/2026 → 22/10/2026
+                - generic [ref=f3e690]: 1.234,56 USD
+                - group [ref=f3e691]:
+                  - generic "1 phòng · Xem ghép nối" [ref=f3e692] [cursor=pointer]
+              - cell "Cần xử lý Loại phòng PMS đã tạm ngưng. Kiểm tra loại phòng và ghép nối trước khi xử lý lại." [ref=f3e693]:
+                - generic [ref=f3e694]: Cần xử lý
+                - paragraph [ref=f3e695]: Loại phòng PMS đã tạm ngưng. Kiểm tra loại phòng và ghép nối trước khi xử lý lại.
+              - cell [ref=f3e696]:
+                - button "Thử lại sau khi xử lý" [ref=f3e698] [cursor=pointer]
+            - row [ref=f3e702]:
+              - 'cell "TEST-1003 Kênh: Booking.com Mã Channex: booking-3 Mã cập nhật: revision-3 Đặt phòng mới · 16:00 16/10/2026" [ref=f3e703]':
+                - strong [ref=f3e704]: TEST-1003
+                - generic [ref=f3e705]: "Kênh: Booking.com"
+                - generic [ref=f3e706]: "Mã Channex: booking-3"
+                - generic [ref=f3e707]: "Mã cập nhật: revision-3"
+                - generic [ref=f3e708]: Đặt phòng mới · 16:00 16/10/2026
+              - cell "19/10/2026 → 22/10/2026 1.234,56 USD" [ref=f3e709]:
+                - generic [ref=f3e710]: 19/10/2026 → 22/10/2026
+                - generic [ref=f3e711]: 1.234,56 USD
+                - group [ref=f3e712]:
+                  - generic "1 phòng · Xem ghép nối" [ref=f3e713] [cursor=pointer]
+              - cell "Cần xử lý Dữ liệu cập nhật đặt phòng chưa hợp lệ. Đối chiếu ngày lưu trú và thông tin đặt phòng trên Channex." [ref=f3e714]:
+                - generic [ref=f3e715]: Cần xử lý
+                - paragraph [ref=f3e716]: Dữ liệu cập nhật đặt phòng chưa hợp lệ. Đối chiếu ngày lưu trú và thông tin đặt phòng trên Channex.
+              - cell [ref=f3e717]:
+                - button "Thử lại sau khi xử lý" [ref=f3e719] [cursor=pointer]
+            - row [ref=f3e723]:
+              - 'cell "TEST-1004 Kênh: Booking.com Mã Channex: booking-4 Mã cập nhật: revision-4 Đặt phòng mới · 16:00 16/10/2026" [ref=f3e724]':
+                - strong [ref=f3e725]: TEST-1004
+                - generic [ref=f3e726]: "Kênh: Booking.com"
+                - generic [ref=f3e727]: "Mã Channex: booking-4"
+                - generic [ref=f3e728]: "Mã cập nhật: revision-4"
+                - generic [ref=f3e729]: Đặt phòng mới · 16:00 16/10/2026
+              - cell "19/10/2026 → 22/10/2026 1.234,56 USD" [ref=f3e730]:
+                - generic [ref=f3e731]: 19/10/2026 → 22/10/2026
+                - generic [ref=f3e732]: 1.234,56 USD
+                - group [ref=f3e733]:
+                  - generic "1 phòng · Xem ghép nối" [ref=f3e734] [cursor=pointer]
+              - cell "Cần xử lý Không đủ tồn phòng phù hợp cho toàn bộ kỳ lưu trú. Kiểm tra tồn phòng và liên hệ kênh bán trước khi xử lý lại." [ref=f3e735]:
+                - generic [ref=f3e736]: Cần xử lý
+                - paragraph [ref=f3e737]: Không đủ tồn phòng phù hợp cho toàn bộ kỳ lưu trú. Kiểm tra tồn phòng và liên hệ kênh bán trước khi xử lý lại.
+              - cell [ref=f3e738]:
+                - button "Thử lại sau khi xử lý" [ref=f3e740] [cursor=pointer]
+            - row [ref=f3e744]:
+              - 'cell "TEST-1005 Kênh: Booking.com Mã Channex: booking-5 Mã cập nhật: revision-5 Đặt phòng mới · 16:00 16/10/2026" [ref=f3e745]':
+                - strong [ref=f3e746]: TEST-1005
+                - generic [ref=f3e747]: "Kênh: Booking.com"
+                - generic [ref=f3e748]: "Mã Channex: booking-5"
+                - generic [ref=f3e749]: "Mã cập nhật: revision-5"
+                - generic [ref=f3e750]: Đặt phòng mới · 16:00 16/10/2026
+              - cell "19/10/2026 → 22/10/2026 1.234,56 USD" [ref=f3e751]:
+                - generic [ref=f3e752]: 19/10/2026 → 22/10/2026
+                - generic [ref=f3e753]: 1.234,56 USD
+                - group [ref=f3e754]:
+                  - generic "1 phòng · Xem ghép nối" [ref=f3e755] [cursor=pointer]
+              - cell "Cần xử lý Chưa ghép đúng loại phòng và gói giá của cập nhật. Kiểm tra ghép nối rồi thử lại." [ref=f3e756]:
+                - generic [ref=f3e757]: Cần xử lý
+                - paragraph [ref=f3e758]: Chưa ghép đúng loại phòng và gói giá của cập nhật. Kiểm tra ghép nối rồi thử lại.
+              - cell [ref=f3e759]:
+                - button "Thử lại sau khi xử lý" [ref=f3e761] [cursor=pointer]
+            - row [ref=f3e765]:
+              - 'cell "TEST-1006 Kênh: Booking.com Mã Channex: booking-6 Mã cập nhật: revision-6 Đặt phòng mới · 16:00 16/10/2026" [ref=f3e766]':
+                - strong [ref=f3e767]: TEST-1006
+                - generic [ref=f3e768]: "Kênh: Booking.com"
+                - generic [ref=f3e769]: "Mã Channex: booking-6"
+                - generic [ref=f3e770]: "Mã cập nhật: revision-6"
+                - generic [ref=f3e771]: Đặt phòng mới · 16:00 16/10/2026
+              - cell "19/10/2026 → 22/10/2026 1.234,56 USD" [ref=f3e772]:
+                - generic [ref=f3e773]: 19/10/2026 → 22/10/2026
+                - generic [ref=f3e774]: 1.234,56 USD
+                - group [ref=f3e775]:
+                  - generic "1 phòng · Xem ghép nối" [ref=f3e776] [cursor=pointer]
+              - cell "Cần xử lý Loại phòng PMS đã tạm ngưng. Kiểm tra loại phòng và ghép nối trước khi xử lý lại." [ref=f3e777]:
+                - generic [ref=f3e778]: Cần xử lý
+                - paragraph [ref=f3e779]: Loại phòng PMS đã tạm ngưng. Kiểm tra loại phòng và ghép nối trước khi xử lý lại.
+              - cell [ref=f3e780]:
+                - button "Thử lại sau khi xử lý" [ref=f3e782] [cursor=pointer]
+            - row [ref=f3e786]:
+              - 'cell "TEST-1007 Kênh: Booking.com Mã Channex: booking-7 Mã cập nhật: revision-7 Đặt phòng mới · 16:00 16/10/2026" [ref=f3e787]':
+                - strong [ref=f3e788]: TEST-1007
+                - generic [ref=f3e789]: "Kênh: Booking.com"
+                - generic [ref=f3e790]: "Mã Channex: booking-7"
+                - generic [ref=f3e791]: "Mã cập nhật: revision-7"
+                - generic [ref=f3e792]: Đặt phòng mới · 16:00 16/10/2026
+              - cell "19/10/2026 → 22/10/2026 1.234,56 USD" [ref=f3e793]:
+                - generic [ref=f3e794]: 19/10/2026 → 22/10/2026
+                - generic [ref=f3e795]: 1.234,56 USD
+                - group [ref=f3e796]:
+                  - generic "1 phòng · Xem ghép nối" [ref=f3e797] [cursor=pointer]
+              - cell "Cần xử lý Dữ liệu cập nhật đặt phòng chưa hợp lệ. Đối chiếu ngày lưu trú và thông tin đặt phòng trên Channex." [ref=f3e798]:
+                - generic [ref=f3e799]: Cần xử lý
+                - paragraph [ref=f3e800]: Dữ liệu cập nhật đặt phòng chưa hợp lệ. Đối chiếu ngày lưu trú và thông tin đặt phòng trên Channex.
+              - cell [ref=f3e801]:
+                - button "Thử lại sau khi xử lý" [ref=f3e803] [cursor=pointer]
+            - row [ref=f3e807]:
+              - 'cell "TEST-1008 Kênh: Booking.com Mã Channex: booking-8 Mã cập nhật: revision-8 Đặt phòng mới · 16:00 16/10/2026" [ref=f3e808]':
+                - strong [ref=f3e809]: TEST-1008
+                - generic [ref=f3e810]: "Kênh: Booking.com"
+                - generic [ref=f3e811]: "Mã Channex: booking-8"
+                - generic [ref=f3e812]: "Mã cập nhật: revision-8"
+                - generic [ref=f3e813]: Đặt phòng mới · 16:00 16/10/2026
+              - cell "19/10/2026 → 22/10/2026 1.234,56 USD" [ref=f3e814]:
+                - generic [ref=f3e815]: 19/10/2026 → 22/10/2026
+                - generic [ref=f3e816]: 1.234,56 USD
+                - group [ref=f3e817]:
+                  - generic "1 phòng · Xem ghép nối" [ref=f3e818] [cursor=pointer]
+              - cell "Cần xử lý Không đủ tồn phòng phù hợp cho toàn bộ kỳ lưu trú. Kiểm tra tồn phòng và liên hệ kênh bán trước khi xử lý lại." [ref=f3e819]:
+                - generic [ref=f3e820]: Cần xử lý
+                - paragraph [ref=f3e821]: Không đủ tồn phòng phù hợp cho toàn bộ kỳ lưu trú. Kiểm tra tồn phòng và liên hệ kênh bán trước khi xử lý lại.
+              - cell [ref=f3e822]:
+                - button "Thử lại sau khi xử lý" [ref=f3e824] [cursor=pointer]
+            - row [ref=f3e828]:
+              - 'cell "TEST-1009 Kênh: Booking.com Mã Channex: booking-9 Mã cập nhật: revision-9 Đặt phòng mới · 16:00 16/10/2026" [ref=f3e829]':
+                - strong [ref=f3e830]: TEST-1009
+                - generic [ref=f3e831]: "Kênh: Booking.com"
+                - generic [ref=f3e832]: "Mã Channex: booking-9"
+                - generic [ref=f3e833]: "Mã cập nhật: revision-9"
+                - generic [ref=f3e834]: Đặt phòng mới · 16:00 16/10/2026
+              - cell "19/10/2026 → 22/10/2026 1.234,56 USD" [ref=f3e835]:
+                - generic [ref=f3e836]: 19/10/2026 → 22/10/2026
+                - generic [ref=f3e837]: 1.234,56 USD
+                - group [ref=f3e838]:
+                  - generic "1 phòng · Xem ghép nối" [ref=f3e839] [cursor=pointer]
+              - cell "Cần xử lý Chưa ghép đúng loại phòng và gói giá của cập nhật. Kiểm tra ghép nối rồi thử lại." [ref=f3e840]:
+                - generic [ref=f3e841]: Cần xử lý
+                - paragraph [ref=f3e842]: Chưa ghép đúng loại phòng và gói giá của cập nhật. Kiểm tra ghép nối rồi thử lại.
+              - cell [ref=f3e843]:
+                - button "Thử lại sau khi xử lý" [ref=f3e845] [cursor=pointer]
+            - row [ref=f3e849]:
+              - 'cell "TEST-1010 Kênh: Booking.com Mã Channex: booking-10 Mã cập nhật: revision-10 Đặt phòng mới · 16:00 16/10/2026" [ref=f3e850]':
+                - strong [ref=f3e851]: TEST-1010
+                - generic [ref=f3e852]: "Kênh: Booking.com"
+                - generic [ref=f3e853]: "Mã Channex: booking-10"
+                - generic [ref=f3e854]: "Mã cập nhật: revision-10"
+                - generic [ref=f3e855]: Đặt phòng mới · 16:00 16/10/2026
+              - cell "19/10/2026 → 22/10/2026 1.234,56 USD" [ref=f3e856]:
+                - generic [ref=f3e857]: 19/10/2026 → 22/10/2026
+                - generic [ref=f3e858]: 1.234,56 USD
+                - group [ref=f3e859]:
+                  - generic "1 phòng · Xem ghép nối" [ref=f3e860] [cursor=pointer]
+              - cell "Cần xử lý Loại phòng PMS đã tạm ngưng. Kiểm tra loại phòng và ghép nối trước khi xử lý lại." [ref=f3e861]:
+                - generic [ref=f3e862]: Cần xử lý
+                - paragraph [ref=f3e863]: Loại phòng PMS đã tạm ngưng. Kiểm tra loại phòng và ghép nối trước khi xử lý lại.
+              - cell [ref=f3e864]:
+                - button "Thử lại sau khi xử lý" [ref=f3e866] [cursor=pointer]
+            - row [ref=f3e870]:
+              - 'cell "TEST-1011 Kênh: Booking.com Mã Channex: booking-11 Mã cập nhật: revision-11 Đặt phòng mới · 16:00 16/10/2026" [ref=f3e871]':
+                - strong [ref=f3e872]: TEST-1011
+                - generic [ref=f3e873]: "Kênh: Booking.com"
+                - generic [ref=f3e874]: "Mã Channex: booking-11"
+                - generic [ref=f3e875]: "Mã cập nhật: revision-11"
+                - generic [ref=f3e876]: Đặt phòng mới · 16:00 16/10/2026
+              - cell "19/10/2026 → 22/10/2026 1.234,56 USD" [ref=f3e877]:
+                - generic [ref=f3e878]: 19/10/2026 → 22/10/2026
+                - generic [ref=f3e879]: 1.234,56 USD
+                - group [ref=f3e880]:
+                  - generic "1 phòng · Xem ghép nối" [ref=f3e881] [cursor=pointer]
+              - cell "Cần xử lý Dữ liệu cập nhật đặt phòng chưa hợp lệ. Đối chiếu ngày lưu trú và thông tin đặt phòng trên Channex." [ref=f3e882]:
+                - generic [ref=f3e883]: Cần xử lý
+                - paragraph [ref=f3e884]: Dữ liệu cập nhật đặt phòng chưa hợp lệ. Đối chiếu ngày lưu trú và thông tin đặt phòng trên Channex.
+              - cell [ref=f3e885]:
+                - button "Thử lại sau khi xử lý" [ref=f3e887] [cursor=pointer]
+            - row [ref=f3e891]:
+              - 'cell "TEST-1012 Kênh: Booking.com Mã Channex: booking-12 Mã cập nhật: revision-12 Đặt phòng mới · 16:00 16/10/2026" [ref=f3e892]':
+                - strong [ref=f3e893]: TEST-1012
+                - generic [ref=f3e894]: "Kênh: Booking.com"
+                - generic [ref=f3e895]: "Mã Channex: booking-12"
+                - generic [ref=f3e896]: "Mã cập nhật: revision-12"
+                - generic [ref=f3e897]: Đặt phòng mới · 16:00 16/10/2026
+              - cell "19/10/2026 → 22/10/2026 1.234,56 USD" [ref=f3e898]:
+                - generic [ref=f3e899]: 19/10/2026 → 22/10/2026
+                - generic [ref=f3e900]: 1.234,56 USD
+                - group [ref=f3e901]:
+                  - generic "1 phòng · Xem ghép nối" [ref=f3e902] [cursor=pointer]
+              - cell "Cần xử lý Không đủ tồn phòng phù hợp cho toàn bộ kỳ lưu trú. Kiểm tra tồn phòng và liên hệ kênh bán trước khi xử lý lại." [ref=f3e903]:
+                - generic [ref=f3e904]: Cần xử lý
+                - paragraph [ref=f3e905]: Không đủ tồn phòng phù hợp cho toàn bộ kỳ lưu trú. Kiểm tra tồn phòng và liên hệ kênh bán trước khi xử lý lại.
+              - cell [ref=f3e906]:
+                - button "Thử lại sau khi xử lý" [ref=f3e908] [cursor=pointer]
+            - row [ref=f3e912]:
+              - 'cell "TEST-1013 Kênh: Booking.com Mã Channex: booking-13 Mã cập nhật: revision-13 Đặt phòng mới · 16:00 16/10/2026" [ref=f3e913]':
+                - strong [ref=f3e914]: TEST-1013
+                - generic [ref=f3e915]: "Kênh: Booking.com"
+                - generic [ref=f3e916]: "Mã Channex: booking-13"
+                - generic [ref=f3e917]: "Mã cập nhật: revision-13"
+                - generic [ref=f3e918]: Đặt phòng mới · 16:00 16/10/2026
+              - cell "19/10/2026 → 22/10/2026 1.234,56 USD" [ref=f3e919]:
+                - generic [ref=f3e920]: 19/10/2026 → 22/10/2026
+                - generic [ref=f3e921]: 1.234,56 USD
+                - group [ref=f3e922]:
+                  - generic "1 phòng · Xem ghép nối" [ref=f3e923] [cursor=pointer]
+              - cell "Cần xử lý Chưa ghép đúng loại phòng và gói giá của cập nhật. Kiểm tra ghép nối rồi thử lại." [ref=f3e924]:
+                - generic [ref=f3e925]: Cần xử lý
+                - paragraph [ref=f3e926]: Chưa ghép đúng loại phòng và gói giá của cập nhật. Kiểm tra ghép nối rồi thử lại.
+              - cell [ref=f3e927]:
+                - button "Thử lại sau khi xử lý" [ref=f3e929] [cursor=pointer]
+            - row [ref=f3e933]:
+              - 'cell "TEST-1014 Kênh: Booking.com Mã Channex: booking-14 Mã cập nhật: revision-14 Đặt phòng mới · 16:00 16/10/2026" [ref=f3e934]':
+                - strong [ref=f3e935]: TEST-1014
+                - generic [ref=f3e936]: "Kênh: Booking.com"
+                - generic [ref=f3e937]: "Mã Channex: booking-14"
+                - generic [ref=f3e938]: "Mã cập nhật: revision-14"
+                - generic [ref=f3e939]: Đặt phòng mới · 16:00 16/10/2026
+              - cell "19/10/2026 → 22/10/2026 1.234,56 USD" [ref=f3e940]:
+                - generic [ref=f3e941]: 19/10/2026 → 22/10/2026
+                - generic [ref=f3e942]: 1.234,56 USD
+                - group [ref=f3e943]:
+                  - generic "1 phòng · Xem ghép nối" [ref=f3e944] [cursor=pointer]
+              - cell "Cần xử lý Loại phòng PMS đã tạm ngưng. Kiểm tra loại phòng và ghép nối trước khi xử lý lại." [ref=f3e945]:
+                - generic [ref=f3e946]: Cần xử lý
+                - paragraph [ref=f3e947]: Loại phòng PMS đã tạm ngưng. Kiểm tra loại phòng và ghép nối trước khi xử lý lại.
+              - cell [ref=f3e948]:
+                - button "Thử lại sau khi xử lý" [ref=f3e950] [cursor=pointer]
+            - row [ref=f3e954]:
+              - 'cell "TEST-1015 Kênh: Booking.com Mã Channex: booking-15 Mã cập nhật: revision-15 Đặt phòng mới · 16:00 16/10/2026" [ref=f3e955]':
+                - strong [ref=f3e956]: TEST-1015
+                - generic [ref=f3e957]: "Kênh: Booking.com"
+                - generic [ref=f3e958]: "Mã Channex: booking-15"
+                - generic [ref=f3e959]: "Mã cập nhật: revision-15"
+                - generic [ref=f3e960]: Đặt phòng mới · 16:00 16/10/2026
+              - cell "19/10/2026 → 22/10/2026 1.234,56 USD" [ref=f3e961]:
+                - generic [ref=f3e962]: 19/10/2026 → 22/10/2026
+                - generic [ref=f3e963]: 1.234,56 USD
+                - group [ref=f3e964]:
+                  - generic "1 phòng · Xem ghép nối" [ref=f3e965] [cursor=pointer]
+              - cell "Cần xử lý Dữ liệu cập nhật đặt phòng chưa hợp lệ. Đối chiếu ngày lưu trú và thông tin đặt phòng trên Channex." [ref=f3e966]:
+                - generic [ref=f3e967]: Cần xử lý
+                - paragraph [ref=f3e968]: Dữ liệu cập nhật đặt phòng chưa hợp lệ. Đối chiếu ngày lưu trú và thông tin đặt phòng trên Channex.
+              - cell [ref=f3e969]:
+                - button "Thử lại sau khi xử lý" [ref=f3e971] [cursor=pointer]
+            - row [ref=f3e975]:
+              - 'cell "TEST-1016 Kênh: Booking.com Mã Channex: booking-16 Mã cập nhật: revision-16 Đặt phòng mới · 16:00 16/10/2026" [ref=f3e976]':
+                - strong [ref=f3e977]: TEST-1016
+                - generic [ref=f3e978]: "Kênh: Booking.com"
+                - generic [ref=f3e979]: "Mã Channex: booking-16"
+                - generic [ref=f3e980]: "Mã cập nhật: revision-16"
+                - generic [ref=f3e981]: Đặt phòng mới · 16:00 16/10/2026
+              - cell "19/10/2026 → 22/10/2026 1.234,56 USD" [ref=f3e982]:
+                - generic [ref=f3e983]: 19/10/2026 → 22/10/2026
+                - generic [ref=f3e984]: 1.234,56 USD
+                - group [ref=f3e985]:
+                  - generic "1 phòng · Xem ghép nối" [ref=f3e986] [cursor=pointer]
+              - cell "Cần xử lý Không đủ tồn phòng phù hợp cho toàn bộ kỳ lưu trú. Kiểm tra tồn phòng và liên hệ kênh bán trước khi xử lý lại." [ref=f3e987]:
+                - generic [ref=f3e988]: Cần xử lý
+                - paragraph [ref=f3e989]: Không đủ tồn phòng phù hợp cho toàn bộ kỳ lưu trú. Kiểm tra tồn phòng và liên hệ kênh bán trước khi xử lý lại.
+              - cell [ref=f3e990]:
+                - button "Thử lại sau khi xử lý" [ref=f3e992] [cursor=pointer]
+            - row [ref=f3e996]:
+              - 'cell "TEST-1017 Kênh: Booking.com Mã Channex: booking-17 Mã cập nhật: revision-17 Đặt phòng mới · 16:00 16/10/2026" [ref=f3e997]':
+                - strong [ref=f3e998]: TEST-1017
+                - generic [ref=f3e999]: "Kênh: Booking.com"
+                - generic [ref=f3e1000]: "Mã Channex: booking-17"
+                - generic [ref=f3e1001]: "Mã cập nhật: revision-17"
+                - generic [ref=f3e1002]: Đặt phòng mới · 16:00 16/10/2026
+              - cell "19/10/2026 → 22/10/2026 1.234,56 USD" [ref=f3e1003]:
+                - generic [ref=f3e1004]: 19/10/2026 → 22/10/2026
+                - generic [ref=f3e1005]: 1.234,56 USD
+                - group [ref=f3e1006]:
+                  - generic "1 phòng · Xem ghép nối" [ref=f3e1007] [cursor=pointer]
+              - cell "Cần xử lý Chưa ghép đúng loại phòng và gói giá của cập nhật. Kiểm tra ghép nối rồi thử lại." [ref=f3e1008]:
+                - generic [ref=f3e1009]: Cần xử lý
+                - paragraph [ref=f3e1010]: Chưa ghép đúng loại phòng và gói giá của cập nhật. Kiểm tra ghép nối rồi thử lại.
+              - cell [ref=f3e1011]:
+                - button "Thử lại sau khi xử lý" [ref=f3e1013] [cursor=pointer]
+            - row [ref=f3e1017]:
+              - 'cell "TEST-1018 Kênh: Booking.com Mã Channex: booking-18 Mã cập nhật: revision-18 Đặt phòng mới · 16:00 16/10/2026" [ref=f3e1018]':
+                - strong [ref=f3e1019]: TEST-1018
+                - generic [ref=f3e1020]: "Kênh: Booking.com"
+                - generic [ref=f3e1021]: "Mã Channex: booking-18"
+                - generic [ref=f3e1022]: "Mã cập nhật: revision-18"
+                - generic [ref=f3e1023]: Đặt phòng mới · 16:00 16/10/2026
+              - cell "19/10/2026 → 22/10/2026 1.234,56 USD" [ref=f3e1024]:
+                - generic [ref=f3e1025]: 19/10/2026 → 22/10/2026
+                - generic [ref=f3e1026]: 1.234,56 USD
+                - group [ref=f3e1027]:
+                  - generic "1 phòng · Xem ghép nối" [ref=f3e1028] [cursor=pointer]
+              - cell "Cần xử lý Loại phòng PMS đã tạm ngưng. Kiểm tra loại phòng và ghép nối trước khi xử lý lại." [ref=f3e1029]:
+                - generic [ref=f3e1030]: Cần xử lý
+                - paragraph [ref=f3e1031]: Loại phòng PMS đã tạm ngưng. Kiểm tra loại phòng và ghép nối trước khi xử lý lại.
+              - cell [ref=f3e1032]:
+                - button "Thử lại sau khi xử lý" [ref=f3e1034] [cursor=pointer]
+            - row [ref=f3e1038]:
+              - 'cell "TEST-1019 Kênh: Booking.com Mã Channex: booking-19 Mã cập nhật: revision-19 Đặt phòng mới · 16:00 16/10/2026" [ref=f3e1039]':
+                - strong [ref=f3e1040]: TEST-1019
+                - generic [ref=f3e1041]: "Kênh: Booking.com"
+                - generic [ref=f3e1042]: "Mã Channex: booking-19"
+                - generic [ref=f3e1043]: "Mã cập nhật: revision-19"
+                - generic [ref=f3e1044]: Đặt phòng mới · 16:00 16/10/2026
+              - cell "19/10/2026 → 22/10/2026 1.234,56 USD" [ref=f3e1045]:
+                - generic [ref=f3e1046]: 19/10/2026 → 22/10/2026
+                - generic [ref=f3e1047]: 1.234,56 USD
+                - group [ref=f3e1048]:
+                  - generic "1 phòng · Xem ghép nối" [ref=f3e1049] [cursor=pointer]
+              - cell "Cần xử lý Dữ liệu cập nhật đặt phòng chưa hợp lệ. Đối chiếu ngày lưu trú và thông tin đặt phòng trên Channex." [ref=f3e1050]:
+                - generic [ref=f3e1051]: Cần xử lý
+                - paragraph [ref=f3e1052]: Dữ liệu cập nhật đặt phòng chưa hợp lệ. Đối chiếu ngày lưu trú và thông tin đặt phòng trên Channex.
+              - cell [ref=f3e1053]:
+                - button "Thử lại sau khi xử lý" [ref=f3e1055] [cursor=pointer]
+            - row [ref=f3e1059]:
+              - 'cell "TEST-1020 Kênh: Booking.com Mã Channex: booking-20 Mã cập nhật: revision-20 Đặt phòng mới · 16:00 16/10/2026" [ref=f3e1060]':
+                - strong [ref=f3e1061]: TEST-1020
+                - generic [ref=f3e1062]: "Kênh: Booking.com"
+                - generic [ref=f3e1063]: "Mã Channex: booking-20"
+                - generic [ref=f3e1064]: "Mã cập nhật: revision-20"
+                - generic [ref=f3e1065]: Đặt phòng mới · 16:00 16/10/2026
+              - cell "19/10/2026 → 22/10/2026 1.234,56 USD" [ref=f3e1066]:
+                - generic [ref=f3e1067]: 19/10/2026 → 22/10/2026
+                - generic [ref=f3e1068]: 1.234,56 USD
+                - group [ref=f3e1069]:
+                  - generic "1 phòng · Xem ghép nối" [ref=f3e1070] [cursor=pointer]
+              - cell "Cần xử lý Không đủ tồn phòng phù hợp cho toàn bộ kỳ lưu trú. Kiểm tra tồn phòng và liên hệ kênh bán trước khi xử lý lại." [ref=f3e1071]:
+                - generic [ref=f3e1072]: Cần xử lý
+                - paragraph [ref=f3e1073]: Không đủ tồn phòng phù hợp cho toàn bộ kỳ lưu trú. Kiểm tra tồn phòng và liên hệ kênh bán trước khi xử lý lại.
+              - cell [ref=f3e1074]:
+                - button "Thử lại sau khi xử lý" [ref=f3e1076] [cursor=pointer]
+            - row [ref=f3e1080]:
+              - 'cell "TEST-1021 Kênh: Booking.com Mã Channex: booking-21 Mã cập nhật: revision-21 Đặt phòng mới · 16:00 16/10/2026" [ref=f3e1081]':
+                - strong [ref=f3e1082]: TEST-1021
+                - generic [ref=f3e1083]: "Kênh: Booking.com"
+                - generic [ref=f3e1084]: "Mã Channex: booking-21"
+                - generic [ref=f3e1085]: "Mã cập nhật: revision-21"
+                - generic [ref=f3e1086]: Đặt phòng mới · 16:00 16/10/2026
+              - cell "19/10/2026 → 22/10/2026 1.234,56 USD" [ref=f3e1087]:
+                - generic [ref=f3e1088]: 19/10/2026 → 22/10/2026
+                - generic [ref=f3e1089]: 1.234,56 USD
+                - group [ref=f3e1090]:
+                  - generic "1 phòng · Xem ghép nối" [ref=f3e1091] [cursor=pointer]
+              - cell "Cần xử lý Chưa ghép đúng loại phòng và gói giá của cập nhật. Kiểm tra ghép nối rồi thử lại." [ref=f3e1092]:
+                - generic [ref=f3e1093]: Cần xử lý
+                - paragraph [ref=f3e1094]: Chưa ghép đúng loại phòng và gói giá của cập nhật. Kiểm tra ghép nối rồi thử lại.
+              - cell [ref=f3e1095]:
+                - button "Thử lại sau khi xử lý" [ref=f3e1097] [cursor=pointer]
+            - row [ref=f3e1101]:
+              - 'cell "TEST-1022 Kênh: Booking.com Mã Channex: booking-22 Mã cập nhật: revision-22 Đặt phòng mới · 16:00 16/10/2026" [ref=f3e1102]':
+                - strong [ref=f3e1103]: TEST-1022
+                - generic [ref=f3e1104]: "Kênh: Booking.com"
+                - generic [ref=f3e1105]: "Mã Channex: booking-22"
+                - generic [ref=f3e1106]: "Mã cập nhật: revision-22"
+                - generic [ref=f3e1107]: Đặt phòng mới · 16:00 16/10/2026
+              - cell "19/10/2026 → 22/10/2026 1.234,56 USD" [ref=f3e1108]:
+                - generic [ref=f3e1109]: 19/10/2026 → 22/10/2026
+                - generic [ref=f3e1110]: 1.234,56 USD
+                - group [ref=f3e1111]:
+                  - generic "1 phòng · Xem ghép nối" [ref=f3e1112] [cursor=pointer]
+              - cell "Cần xử lý Loại phòng PMS đã tạm ngưng. Kiểm tra loại phòng và ghép nối trước khi xử lý lại." [ref=f3e1113]:
+                - generic [ref=f3e1114]: Cần xử lý
+                - paragraph [ref=f3e1115]: Loại phòng PMS đã tạm ngưng. Kiểm tra loại phòng và ghép nối trước khi xử lý lại.
+              - cell [ref=f3e1116]:
+                - button "Thử lại sau khi xử lý" [ref=f3e1118] [cursor=pointer]
+            - row [ref=f3e1122]:
+              - 'cell "TEST-1023 Kênh: Booking.com Mã Channex: booking-23 Mã cập nhật: revision-23 Đặt phòng mới · 16:00 16/10/2026" [ref=f3e1123]':
+                - strong [ref=f3e1124]: TEST-1023
+                - generic [ref=f3e1125]: "Kênh: Booking.com"
+                - generic [ref=f3e1126]: "Mã Channex: booking-23"
+                - generic [ref=f3e1127]: "Mã cập nhật: revision-23"
+                - generic [ref=f3e1128]: Đặt phòng mới · 16:00 16/10/2026
+              - cell "19/10/2026 → 22/10/2026 1.234,56 USD" [ref=f3e1129]:
+                - generic [ref=f3e1130]: 19/10/2026 → 22/10/2026
+                - generic [ref=f3e1131]: 1.234,56 USD
+                - group [ref=f3e1132]:
+                  - generic "1 phòng · Xem ghép nối" [ref=f3e1133] [cursor=pointer]
+              - cell "Cần xử lý Dữ liệu cập nhật đặt phòng chưa hợp lệ. Đối chiếu ngày lưu trú và thông tin đặt phòng trên Channex." [ref=f3e1134]:
+                - generic [ref=f3e1135]: Cần xử lý
+                - paragraph [ref=f3e1136]: Dữ liệu cập nhật đặt phòng chưa hợp lệ. Đối chiếu ngày lưu trú và thông tin đặt phòng trên Channex.
+              - cell [ref=f3e1137]:
+                - button "Thử lại sau khi xử lý" [ref=f3e1139] [cursor=pointer]
+            - row [ref=f3e1143]:
+              - 'cell "TEST-1024 Kênh: Booking.com Mã Channex: booking-24 Mã cập nhật: revision-24 Đặt phòng mới · 16:00 16/10/2026" [ref=f3e1144]':
+                - strong [ref=f3e1145]: TEST-1024
+                - generic [ref=f3e1146]: "Kênh: Booking.com"
+                - generic [ref=f3e1147]: "Mã Channex: booking-24"
+                - generic [ref=f3e1148]: "Mã cập nhật: revision-24"
+                - generic [ref=f3e1149]: Đặt phòng mới · 16:00 16/10/2026
+              - cell "19/10/2026 → 22/10/2026 1.234,56 USD" [ref=f3e1150]:
+                - generic [ref=f3e1151]: 19/10/2026 → 22/10/2026
+                - generic [ref=f3e1152]: 1.234,56 USD
+                - group [ref=f3e1153]:
+                  - generic "1 phòng · Xem ghép nối" [ref=f3e1154] [cursor=pointer]
+              - cell "Cần xử lý Không đủ tồn phòng phù hợp cho toàn bộ kỳ lưu trú. Kiểm tra tồn phòng và liên hệ kênh bán trước khi xử lý lại." [ref=f3e1155]:
+                - generic [ref=f3e1156]: Cần xử lý
+                - paragraph [ref=f3e1157]: Không đủ tồn phòng phù hợp cho toàn bộ kỳ lưu trú. Kiểm tra tồn phòng và liên hệ kênh bán trước khi xử lý lại.
+              - cell [ref=f3e1158]:
+                - button "Thử lại sau khi xử lý" [ref=f3e1160] [cursor=pointer]
+      - generic [ref=f3e1164]:
+        - status [ref=f3e1165]: Trang 1 / 2 · 26 đặt phòng
+        - navigation "Phân trang đặt phòng cần xử lý" [ref=f3e1166]:
+          - button "Trang trước" [disabled] [ref=f3e1167]
+          - button "Trang sau" [ref=f3e1168] [cursor=pointer]
+    - region [ref=f3e576]:
+      - generic [ref=f3e577]:
+        - generic [ref=f3e578]:
+          - heading "Hoạt động gần đây" [level=2] [ref=f3e579]
+          - paragraph [ref=f3e580]: Tối đa 50 yêu cầu mới nhất của khách sạn.
+        - generic [ref=f3e581]:
+          - generic [ref=f3e582]:
+            - text: Trạng thái
+            - combobox "Trạng thái" [ref=f3e583]:
+              - option "Tất cả trạng thái" [selected]
+              - option "Đang chờ"
+              - option "Đang xử lý"
+              - option "Thành công"
+              - option "Cần xử lý"
+              - option "Cần kiểm tra"
+          - generic [ref=f3e1169]: 1 / 1 yêu cầu
+      - region "Bảng lịch sử đồng bộ, có thể cuộn ngang" [ref=f3e585]:
+        - table "Danh sách yêu cầu đồng bộ" [ref=f3e1170]:
+          - rowgroup [ref=f3e1171]:
+            - row [ref=f3e1172]:
+              - columnheader "Yêu cầu đồng bộ" [ref=f3e1173]
+              - columnheader "Ngày tạo" [ref=f3e1174]
+              - columnheader "Khoảng ngày" [ref=f3e1175]
+              - columnheader "Trạng thái" [ref=f3e1176]
+              - columnheader "Số lần xử lý" [ref=f3e1177]
+              - columnheader "Kết quả" [ref=f3e1178]
+              - columnheader "Thao tác" [ref=f3e1179]
+          - rowgroup [ref=f3e1180]:
+            - row [ref=f3e1181]:
+              - 'cell "Xử lý cập nhật đặt phòng Mã cập nhật: revision-0" [ref=f3e1182]':
+                - strong [ref=f3e1188]: Xử lý cập nhật đặt phòng
+                - generic [ref=f3e1189]: "Mã cập nhật: revision-0"
+              - cell [ref=f3e1190]:
+                - time [ref=f3e1191]: 16:00 16/10/2026
+              - cell "Không áp dụng khoảng ngày" [ref=f3e1192]
+              - cell "Đang chờ" [ref=f3e1194]
+              - cell "1 lần" [ref=f3e1197]
+              - cell "Không đủ tồn phòng phù hợp cho toàn bộ kỳ lưu trú. Kiểm tra tồn phòng và liên hệ kênh bán trước khi xử lý lại. Đã xếp hàng tự động thử lại Kết thúc 16:01 16/10/2026" [ref=f3e1198]:
+                - text: Không đủ tồn phòng phù hợp cho toàn bộ kỳ lưu trú. Kiểm tra tồn phòng và liên hệ kênh bán trước khi xử lý lại.
+                - generic [ref=f3e1199]: Đã xếp hàng tự động thử lại
+                - generic [ref=f3e1200]: Kết thúc 16:01 16/10/2026
+              - cell "—" [ref=f3e1201]
+      - paragraph [ref=f3e1206]: Các yêu cầu đang chờ sẽ được xử lý lần lượt. Tải lại để xem kết quả đồng bộ mới nhất.
+  - generic "Observed requests" [ref=f3e623]: hotel-a GET /channels hotel-a GET /channels/booking-reviews?page=1&pageSize=25 hotel-a POST /channels/jobs/job-0/retry hotel-a GET /channels hotel-a GET /channels/booking-reviews?page=1&pageSize=25

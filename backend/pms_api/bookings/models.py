@@ -26,6 +26,8 @@ class Reservation(MoneySnapshot, db.Model):
     __tablename__ = "reservations"
     id = db.Column(db.String(40), primary_key=True, default=uid)
     tenant_id = db.Column(db.String(40), db.ForeignKey("tenants.id"), nullable=False)
+    version = db.Column(db.Integer, nullable=False, default=1, server_default="1", server_onupdate=db.FetchedValue())
+    __mapper_args__ = {"eager_defaults": True}
     status = db.Column(db.String(20), nullable=False, default="CONFIRMED")
     check_in = db.Column(db.Date, nullable=False)
     check_out = db.Column(db.Date, nullable=False)
@@ -42,6 +44,7 @@ class Reservation(MoneySnapshot, db.Model):
     no_show_at = db.Column(db.DateTime(timezone=True))
     __table_args__ = (
         UniqueConstraint("tenant_id", "id"),
+        CheckConstraint("version > 0", name="positive_version"),
         ForeignKeyConstraint(["tenant_id", "source_id"], ["masters.tenant_id", "masters.id"]),
         CheckConstraint("check_out > check_in", name="positive_stay"),
         CheckConstraint(
@@ -105,6 +108,7 @@ class ReservationNight(MoneySnapshot, db.Model):
     reservation_id = db.Column(db.String(40), nullable=False)
     room_id = db.Column(db.String(40), nullable=False)
     room_number = db.Column(db.String(40), nullable=False)
+    room_type_id = db.Column(db.String(40), nullable=False)
     date = db.Column(db.Date, nullable=False)
     price = db.Column(db.Numeric(19, 4), nullable=False)
     __table_args__ = (
@@ -115,6 +119,9 @@ class ReservationNight(MoneySnapshot, db.Model):
             "room_id",
             "date",
             name="uq_reservation_nights_booking_room_date",
+        ),
+        ForeignKeyConstraint(
+            ["tenant_id", "room_type_id"], ["room_types.tenant_id", "room_types.id"]
         ),
         ForeignKeyConstraint(
             ["tenant_id", "reservation_id"], ["reservations.tenant_id", "reservations.id"]

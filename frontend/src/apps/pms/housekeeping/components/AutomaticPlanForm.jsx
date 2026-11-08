@@ -1,3 +1,4 @@
+import DateInput from '../../../../shared/components/DateInput.jsx';
 import { useId, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
@@ -34,8 +35,8 @@ export default function AutomaticPlanForm({ initial, staff, rooms, requestTenant
     <p className="hk-plan-hint">{tUi('hk.autoIntro')}</p>
     <fieldset disabled={busy}>
       <div className="hk-plan-fields">
-        <label>{tUi('common.fromDate')}<input type="date" required value={range.start} onChange={event => changeRange({ ...range, start: event.target.value })} /></label>
-        <label>{tUi('hk.autoEndDate')}<input type="date" required min={range.start || undefined} value={range.end} onChange={event => changeRange({ ...range, end: event.target.value })} /></label>
+        <label>{tUi('common.fromDate')}<DateInput required value={range.start} onChange={start => changeRange({ ...range, start })} /></label>
+        <label>{tUi('hk.autoEndDate')}<DateInput required min={range.start || undefined} value={range.end} onChange={end => changeRange({ ...range, end })} /></label>
       </div>
       <p className="hk-plan-hint">{tUi('hk.autoRangeHint')}</p>
       {rangeError && <p className="domain-error" role="alert">{rangeError}</p>}

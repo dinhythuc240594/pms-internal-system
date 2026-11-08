@@ -198,12 +198,12 @@ class BookingNoShowTests(DomainTestCase):
         self.assertEqual(len(self.request("get", "/workspace").json["ledger"]), 2)
 
     def test_no_show_migration_round_trip_and_downgrade_preserves_history(self):
-        row = self.booking()
         runner = self.app.test_cli_runner()
         downgraded = runner.invoke(args=["db", "downgrade", "0019_cash_categories"])
         self.assertEqual(downgraded.exit_code, 0, downgraded.output)
         upgraded = runner.invoke(args=["db", "upgrade"])
         self.assertEqual(upgraded.exit_code, 0, upgraded.output)
+        row = self.booking()
         self.assertEqual(
             self.request("get", f"/reservations/{row['id']}").json["status"], "CONFIRMED"
         )

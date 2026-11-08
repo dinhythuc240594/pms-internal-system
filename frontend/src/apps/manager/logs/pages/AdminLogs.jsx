@@ -1,5 +1,5 @@
-import { getIntlLocale } from '../../../../shared/i18n/store.js';
-import { t as tUi, useI18n } from '../../../../shared/i18n/useI18n.js';
+import { formatDateTime } from '../../../../shared/lib/date.js';
+import { tr as labelUi, t as tUi, useI18n } from '../../../../shared/i18n/useI18n.js';
 import React, { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { 
@@ -32,7 +32,7 @@ export default function AdminLogs() {
 
   const { workspace } = usePms();
   const labels={'tenant.created':'Tạo khách sạn','tenant.updated':'Cập nhật khách sạn','membership.created':'Gán tài khoản khách sạn','membership.updated':'Cập nhật vai trò / trạng thái','guest.created':'Tạo hồ sơ khách','guest.updated':'Sửa hồ sơ khách','reservation.created':'Tạo đặt phòng','reservation.updated':'Sửa đặt phòng','reservation.status':'Đổi trạng thái đặt phòng','reservation.payment':'Thu tiền','reservation.refund':'Hoàn tiền','reservation.charge':'Thêm phụ thu','reservation.note':'Thêm ghi chú'};
-  const logs=workspace.auditLogs.map(l=>({...l,action:l.event||l.action||'Cập nhật',timestamp:new Date(l.createdAt||l.at).toLocaleString(getIntlLocale()).replace(', ',' '),operator:l.userId||l.user||'—',operatorRole:l.role||'',tenantName:workspace.tenants.find(t=>t.id===l.tenantId)?.name||'Toàn hệ thống',target:l.entityId||'—',details:labels[l.event]||l.event||'Cập nhật',ipAddress:'—',severity:'Low',status:'Success',metadata:l}));
+  const logs=workspace.auditLogs.map(l=>({...l,action:l.event||l.action||'Cập nhật',timestamp:formatDateTime(l.createdAt||l.at),operator:l.userId||l.user||'—',operatorRole:l.role||'',tenantName:workspace.tenants.find(t=>t.id===l.tenantId)?.name||'Toàn hệ thống',target:l.entityId||'—',details:labels[l.event]||l.event||'Cập nhật',ipAddress:'—',severity:'Low',status:'Success',metadata:l}));
   const [search, setSearch] = useState('');
   const [severityFilter, setSeverityFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
@@ -99,7 +99,7 @@ export default function AdminLogs() {
         </div>
       )}
 
-      <section className="admin-logs-summary" aria-label="Tổng quan nhật ký">
+      <section className="admin-logs-summary" aria-label={labelUi("Tổng quan nhật ký")}>
         {[
           { label: 'Sự kiện ghi nhận', value: logs.length, note: 'Nhật ký từ máy chủ' },
           { label: 'Thao tác thành công', value: logs.length, note: logs.length ? '100% sự kiện ghi nhận' : 'Chưa có sự kiện' },
@@ -114,14 +114,14 @@ export default function AdminLogs() {
       <div className="manager-panel admin-logs-filters">
         <label className="admin-logs-search">
           <Search size={16} aria-hidden="true" />
-          <input type="search" aria-label="Tìm sự kiện nhật ký" placeholder="Tìm hành động, nhân viên, khách sạn..." value={search} onChange={event => setSearch(event.target.value)} />
+          <input type="search" aria-label={labelUi("Tìm sự kiện nhật ký")} placeholder={labelUi("Tìm hành động, nhân viên, khách sạn...")} value={search} onChange={event => setSearch(event.target.value)} />
         </label>
         <div className="admin-logs-filter-actions">
-          <select aria-label="Lọc mức độ sự kiện" value={severityFilter} onChange={event => setSeverityFilter(event.target.value)}>
-            <option value="ALL">Tất cả mức độ</option><option value="High">Mức cao (High)</option><option value="Medium">Trung bình (Medium)</option><option value="Low">Mức thấp (Low)</option>
+          <select aria-label={labelUi("Lọc mức độ sự kiện")} value={severityFilter} onChange={event => setSeverityFilter(event.target.value)}>
+            <option value="ALL">{labelUi("Tất cả mức độ")}</option><option value="High">{labelUi("Mức cao (High)")}</option><option value="Medium">{labelUi("Trung bình (Medium)")}</option><option value="Low">{labelUi("Mức thấp (Low)")}</option>
           </select>
-          <select aria-label="Lọc trạng thái sự kiện" value={statusFilter} onChange={event => setStatusFilter(event.target.value)}>
-            <option value="ALL">{tUi("common.allStatuses")}</option><option value="Success">Thành công (Success)</option><option value="Warning">Cảnh báo (Warning)</option><option value="Failed">Thất bại / bị chặn (Failed)</option>
+          <select aria-label={labelUi("Lọc trạng thái sự kiện")} value={statusFilter} onChange={event => setStatusFilter(event.target.value)}>
+            <option value="ALL">{tUi("common.allStatuses")}</option><option value="Success">{labelUi("Thành công (Success)")}</option><option value="Warning">{labelUi("Cảnh báo (Warning)")}</option><option value="Failed">{labelUi("Thất bại / bị chặn (Failed)")}</option>
           </select>
           <button className="manager-button" type="button" onClick={handleExportCSV}><Download size={16} aria-hidden="true" />{tUi("common.exportCsv")}</button>
         </div>
@@ -131,22 +131,22 @@ export default function AdminLogs() {
           MAIN AUDIT LOGS DATA TABLE
           ------------------------------------------------------------- */}
       <div className="manager-panel admin-logs-table-panel">
-        <div className="manager-table-wrap" role="region" aria-label="Danh sách nhật ký hệ thống" tabIndex={0}>
+        <div className="manager-table-wrap" role="region" aria-label={labelUi("Danh sách nhật ký hệ thống")} tabIndex={0}>
           <table style={{ width: '100%', minWidth: '920px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
             <thead>
               <tr style={{ backgroundColor: t.isDark ? '#222731' : '#F8FAFC', color: t.textSecondary, borderBottom: `1px solid ${t.border}` }}>
                 <th style={{ padding: '14px 12px', fontWeight: '700', whiteSpace: 'nowrap' }}>{tUi("common.time")}</th>
-                <th style={{ padding: '14px 12px', fontWeight: '700', whiteSpace: 'nowrap' }}>Người thực hiện</th>
-                <th style={{ padding: '14px 10px', fontWeight: '700', whiteSpace: 'nowrap' }}>Mã hành động</th>
-                <th style={{ padding: '14px 12px', fontWeight: '700', whiteSpace: 'nowrap' }}>Đối tượng / tenant</th>
-                <th style={{ padding: '14px 12px', fontWeight: '700', whiteSpace: 'nowrap', maxWidth: '220px' }}>Mô tả can thiệp</th>
-                <th style={{ padding: '14px 12px', fontWeight: '700', whiteSpace: 'nowrap' }}>Địa chỉ IP</th>
+                <th style={{ padding: '14px 12px', fontWeight: '700', whiteSpace: 'nowrap' }}>{labelUi("Người thực hiện")}</th>
+                <th style={{ padding: '14px 10px', fontWeight: '700', whiteSpace: 'nowrap' }}>{labelUi("Mã hành động")}</th>
+                <th style={{ padding: '14px 12px', fontWeight: '700', whiteSpace: 'nowrap' }}>{labelUi("Đối tượng / tenant")}</th>
+                <th style={{ padding: '14px 12px', fontWeight: '700', whiteSpace: 'nowrap', maxWidth: '220px' }}>{labelUi("Mô tả can thiệp")}</th>
+                <th style={{ padding: '14px 12px', fontWeight: '700', whiteSpace: 'nowrap' }}>{labelUi("Địa chỉ IP")}</th>
                 <th style={{ padding: '14px 12px', fontWeight: '700', whiteSpace: 'nowrap' }}>{tUi("common.status")}</th>
                 <th style={{ padding: '14px 12px', fontWeight: '700', textAlign: 'center', whiteSpace: 'nowrap' }}>{tUi("common.details")}</th>
               </tr>
             </thead>
             <tbody>
-              {filteredLogs.length === 0 && <tr><td colSpan={8} className="admin-logs-empty"><span role="status">{logs.length ? 'Không có sự kiện phù hợp với bộ lọc.' : 'Chưa có sự kiện được ghi nhận.'}</span></td></tr>}
+              {filteredLogs.length === 0 && <tr><td colSpan={8} className="admin-logs-empty"><span role="status">{logs.length ? labelUi("Không có sự kiện phù hợp với bộ lọc.") : labelUi("Chưa có sự kiện được ghi nhận.")}</span></td></tr>}
               {filteredLogs.map((log) => {
                 const [datePart, timePart] = log.timestamp.split(' ');
                 return (
@@ -181,7 +181,7 @@ export default function AdminLogs() {
                         style={{
                           fontSize: '10.5px',
                           fontWeight: '800',
-                          fontFamily: 'monospace',
+                          fontFamily: 'var(--font-mono)',
                           backgroundColor: t.bgInput,
                           color: t.textPrimary,
                           padding: '4px 7px',
@@ -223,7 +223,7 @@ export default function AdminLogs() {
                     </td>
 
                     {/* Col 6: IP Address */}
-                    <td style={{ padding: '12px 12px', fontSize: '12px', fontFamily: 'monospace', color: t.textSecondary, whiteSpace: 'nowrap' }}>
+                    <td style={{ padding: '12px 12px', fontSize: '12px', fontFamily: 'var(--font-mono)', color: t.textSecondary, whiteSpace: 'nowrap' }}>
                       {log.ipAddress}
                     </td>
 
@@ -253,7 +253,7 @@ export default function AdminLogs() {
                     <td style={{ padding: '12px 12px', textAlign: 'center', whiteSpace: 'nowrap' }}>
                       <button
                         onClick={() => setSelectedLog(log)}
-                        title="Xem toàn bộ payload chi tiết"
+                        title={labelUi("Xem toàn bộ payload chi tiết")}
                         style={{
                           width: '32px',
                           height: '32px',
@@ -296,7 +296,7 @@ export default function AdminLogs() {
           MODAL: PREMIUM LOG DETAILS INSPECTOR
           ============================================================= */}
       {selectedLog && (
-        <LegacyOverlay title="Chi tiết sự kiện nhật ký" onClose={() => { setSelectedLog(null); setLogViewMode('overview'); }}
+        <LegacyOverlay title={labelUi("Chi tiết sự kiện nhật ký")} onClose={() => { setSelectedLog(null); setLogViewMode('overview'); }}
           style={{
             position: 'fixed',
             inset: 0,
@@ -348,7 +348,7 @@ export default function AdminLogs() {
                     <h3 style={{ fontSize: '18px', fontWeight: '800', color: t.textPrimary, margin: 0, letterSpacing: '-0.01em' }}>
                       Chi tiết sự kiện audit
                     </h3>
-                    <span style={{ fontSize: '11px', fontFamily: 'monospace', fontWeight: '800', backgroundColor: t.bgInput, color: t.textSecondary, padding: '2px 8px', borderRadius: '6px', border: `1px solid ${t.border}` }}>
+                    <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', fontWeight: '800', backgroundColor: t.bgInput, color: t.textSecondary, padding: '2px 8px', borderRadius: '6px', border: `1px solid ${t.border}` }}>
                       #{selectedLog.id}
                     </span>
                   </div>
@@ -359,7 +359,7 @@ export default function AdminLogs() {
               </div>
 
               {/* Close Button */}
-              <button aria-label="Đóng chi tiết nhật ký"
+              <button aria-label={labelUi("Đóng chi tiết nhật ký")}
                 onClick={() => {
                   setSelectedLog(null);
                   setLogViewMode('overview');
@@ -386,7 +386,7 @@ export default function AdminLogs() {
             {/* Status & Severity Badges Header Ribbon */}
             <div className="admin-logs-dialog-status" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', backgroundColor: t.bgInput, borderRadius: '14px', border: `1px solid ${t.border}`, marginBottom: '18px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span style={{ fontSize: '12px', fontWeight: '700', color: t.textSecondary }}>Trạng thái:</span>
+                <span style={{ fontSize: '12px', fontWeight: '700', color: t.textSecondary }}>{labelUi("Trạng thái:")}</span>
                 <span 
                   style={{
                     fontSize: '11px',
@@ -402,12 +402,12 @@ export default function AdminLogs() {
                   }}
                 >
                   <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: selectedLog.status === 'Success' ? t.primary : selectedLog.status === 'Warning' ? '#D97706' : '#DC2626' }}></span>
-                  {selectedLog.status === 'Success' ? 'Thành công (Success)' : selectedLog.status === 'Warning' ? 'Cảnh báo (Warning)' : 'Thất bại / bị chặn'}
+                  {selectedLog.status === 'Success' ? labelUi("Thành công (Success)") : selectedLog.status === 'Warning' ? labelUi("Cảnh báo (Warning)") : labelUi("Thất bại / bị chặn")}
                 </span>
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span style={{ fontSize: '12px', fontWeight: '700', color: t.textSecondary }}>Mức độ:</span>
+                <span style={{ fontSize: '12px', fontWeight: '700', color: t.textSecondary }}>{labelUi("Mức độ:")}</span>
                 <span 
                   style={{
                     fontSize: '11px',
@@ -444,7 +444,7 @@ export default function AdminLogs() {
                 }}
               >
                 <Shield size={14} />
-                <span>Tổng quan sự kiện</span>
+                <span>{labelUi("Tổng quan sự kiện")}</span>
               </button>
               <button
                 onClick={() => setLogViewMode('json')}
@@ -479,7 +479,7 @@ export default function AdminLogs() {
                   <div style={{ backgroundColor: t.isDark ? '#1F242D' : '#F8FAFC', padding: '14px 16px', borderRadius: '16px', border: `1px solid ${t.border}` }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: t.textSecondary, fontSize: '11px', fontWeight: '700', marginBottom: '4px' }}>
                       <Clock size={13} color={t.primary} />
-                      <span>Thời gian thực thi</span>
+                      <span>{labelUi("Thời gian thực thi")}</span>
                     </div>
                     <div style={{ fontSize: '13.5px', fontWeight: '800', color: t.textPrimary }}>
                       {selectedLog.timestamp}
@@ -490,7 +490,7 @@ export default function AdminLogs() {
                   <div style={{ backgroundColor: t.isDark ? '#1F242D' : '#F8FAFC', padding: '14px 16px', borderRadius: '16px', border: `1px solid ${t.border}` }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: t.textSecondary, fontSize: '11px', fontWeight: '700', marginBottom: '4px' }}>
                       <User size={13} color={t.primary} />
-                      <span>Người thực hiện</span>
+                      <span>{labelUi("Người thực hiện")}</span>
                     </div>
                     <div style={{ fontSize: '13.5px', fontWeight: '800', color: t.textPrimary }}>
                       {selectedLog.operator}
@@ -504,7 +504,7 @@ export default function AdminLogs() {
                   <div style={{ backgroundColor: t.isDark ? '#1F242D' : '#F8FAFC', padding: '14px 16px', borderRadius: '16px', border: `1px solid ${t.border}` }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: t.textSecondary, fontSize: '11px', fontWeight: '700', marginBottom: '4px' }}>
                       <Building2 size={13} color={t.primary} />
-                      <span>Khách sạn / cơ sở</span>
+                      <span>{labelUi("Khách sạn / cơ sở")}</span>
                     </div>
                     <div style={{ fontSize: '13.5px', fontWeight: '800', color: t.textPrimary }}>
                       {selectedLog.tenantName}
@@ -518,9 +518,9 @@ export default function AdminLogs() {
                   <div style={{ backgroundColor: t.isDark ? '#1F242D' : '#F8FAFC', padding: '14px 16px', borderRadius: '16px', border: `1px solid ${t.border}` }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: t.textSecondary, fontSize: '11px', fontWeight: '700', marginBottom: '4px' }}>
                       <Globe size={13} color={t.primary} />
-                      <span>Địa chỉ IP & cụm</span>
+                      <span>{labelUi("Địa chỉ IP & cụm")}</span>
                     </div>
-                    <div style={{ fontSize: '13.5px', fontWeight: '800', fontFamily: 'monospace', color: t.textPrimary }}>
+                    <div style={{ fontSize: '13.5px', fontWeight: '800', fontFamily: 'var(--font-mono)', color: t.textPrimary }}>
                       {selectedLog.ipAddress}
                     </div>
                     <span style={{ fontSize: '10.5px', color: t.textMuted }}>
@@ -532,8 +532,8 @@ export default function AdminLogs() {
 
                 {/* Action Code Box */}
                 <div className="admin-logs-dialog-code" style={{ backgroundColor: t.bgInput, padding: '12px 16px', borderRadius: '14px', border: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: '12px', fontWeight: '700', color: t.textSecondary }}>Mã hành động can thiệp:</span>
-                  <span style={{ fontSize: '12px', fontWeight: '800', fontFamily: 'monospace', backgroundColor: t.aquaBg, color: t.aquaText, padding: '4px 10px', borderRadius: '8px', border: `1px solid ${t.aquaBorder}` }}>
+                  <span style={{ fontSize: '12px', fontWeight: '700', color: t.textSecondary }}>{labelUi("Mã hành động can thiệp:")}</span>
+                  <span style={{ fontSize: '12px', fontWeight: '800', fontFamily: 'var(--font-mono)', backgroundColor: t.aquaBg, color: t.aquaText, padding: '4px 10px', borderRadius: '8px', border: `1px solid ${t.aquaBorder}` }}>
                     {selectedLog.action}
                   </span>
                 </div>
@@ -560,7 +560,7 @@ export default function AdminLogs() {
                     color: '#E2E8F0', 
                     padding: '20px', 
                     borderRadius: '16px', 
-                    fontFamily: 'Consolas, Monaco, "Courier New", monospace', 
+                    fontFamily: 'var(--font-mono)',
                     fontSize: '12px', 
                     lineHeight: 1.6, 
                     border: '1px solid #333842',
@@ -616,7 +616,7 @@ export default function AdminLogs() {
                   }}
                 >
                   {copiedJson ? <Check size={12} /> : <Copy size={12} />}
-                  <span>{copiedJson ? 'Đã sao chép!' : 'Sao chép JSON'}</span>
+                  <span>{copiedJson ? labelUi("Đã sao chép!") : labelUi("Sao chép JSON")}</span>
                 </button>
               </div>
             )}
@@ -644,7 +644,7 @@ export default function AdminLogs() {
                 }}
               >
                 <Copy size={14} />
-                <span>Sao chép ID</span>
+                <span>{labelUi("Sao chép ID")}</span>
               </button>
 
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
@@ -674,7 +674,7 @@ export default function AdminLogs() {
                   }}
                 >
                   <Download size={14} />
-                  <span>Xuất JSON</span>
+                  <span>{labelUi("Xuất JSON")}</span>
                 </button>
 
                 <button

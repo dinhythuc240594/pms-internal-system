@@ -11,6 +11,7 @@ from pms_api.core_models import AuditLog
 from pms_api.extensions import db
 from pms_api.security import set_context
 from tests.domain_fixture import DomainTestCase
+from tests.system_scope_fixture import grant_system_access, linked_property
 from tests.test_channex_remote import PROPERTY, RATE, catalog_entity, property_entity
 
 GROUP, CHANNEL, MAPPING = [str(UUID(int=value)) for value in (7, 8, 9)]
@@ -54,6 +55,8 @@ def airbnb_adapter():
 class AirbnbTests(DomainTestCase):
     def setUp(self):
         super().setUp()
+        grant_system_access(self)
+        linked_property(self, PROPERTY)
         self.manager, self.manager_headers = self.login("manager@test.local")
         self.manager_headers["Origin"] = ORIGIN
         self.provider = Mock(api_key="fixture-manager-secret", base="https://staging.channex.io/api/v1")
@@ -67,7 +70,7 @@ class AirbnbTests(DomainTestCase):
         self.calls = []
         self.mapping_pending = False
         self.provider._request.side_effect = self.transport
-        provider = patch("pms_api.channels.factory.ChannexClient", return_value=self.provider)
+        provider = patch("pms_api.admin.channex_remote_application.channel_adapter", return_value=self.provider)
         config = patch.dict(
             self.app.config, {"CHANNEX_MANAGER_API_KEY_STAGING": "fixture-manager-secret"}
         )
@@ -311,7 +314,7 @@ class AirbnbTests(DomainTestCase):
         self.assertEqual(write[4]["timeout"], 45)
         self.assertTrue(write[4]["allow_async"])
         with self.app.app_context():
-            set_context(is_system=True)
+            set_context(is_system=True, is_service=True)
             audit = (
                 db.session.query(AuditLog).filter_by(event="channex.airbnb.mapping.created").one()
             )

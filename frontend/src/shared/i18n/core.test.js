@@ -5,7 +5,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import legacyEnUS from './locales/legacy-en-US.json' with { type: 'json' };
 import legacyZhCN from './locales/legacy-zh-CN.json' with { type: 'json' };
-import { dictionaries, LANGUAGE_STORAGE_KEY, normalizeLocale, translate, translateLabel, translateUiText } from './core.js';
+import { dictionaries, LANGUAGE_STORAGE_KEY, normalizeLocale, translate, translateApiMessage, translateApiText, translateApiValue, translateLabel, translateUiText } from './core.js';
 import { getLocale, setLocale, subscribeLocale, t } from './store.js';
 import { money, today } from '../../apps/pms/data/model.js';
 import { shortDate } from './formatters.js';
@@ -44,6 +44,29 @@ test('legacy interface copy translates static and dynamic text while preserving 
   assert.equal(translateUiText('en-US', 'Tồn thấp · mức tối thiểu 5'), 'Low inventory · minimum level 5');
   assert.equal(translateUiText('vi', 'Chọn gói phù hợp.'), 'Chọn gói phù hợp.');
   assert.equal(translateUiText('en-US', 'Khách sạn Ngọc Lan'), 'Khách sạn Ngọc Lan');
+});
+
+test('API values translate only explicit references and preserve dictionary collisions', () => {
+  const data = ['Ghi chú', 'Khách lẻ', 'Tồn thấp · mức tối thiểu 5', 'Đã lưu.', 'New booking', '备注'];
+  for (const locale of ['vi', 'en-US', 'zh-CN']) {
+    for (const value of [...data, null, undefined, 0, false]) {
+      assert.equal(translateApiText(locale, value), value);
+      assert.equal(translateApiValue(locale, value), value);
+    }
+    const object = { name: 'Ghi chú', values: { room: 'Khách lẻ' } };
+    assert.equal(translateApiValue(locale, object), object);
+  }
+  assert.equal(translateApiValue('en-US', 'i18n:common.notes'), 'Notes');
+  assert.equal(translateApiValue('zh-CN', 'i18n:common.notes'), dictionaries['zh-CN']['common.notes']);
+});
+
+test('API descriptors interpolate business data verbatim while known messages still translate', () => {
+  const descriptor = Object.freeze({ $i18n: 'hk.taskTitle', values: Object.freeze({ room: 'Ghi chú · i18n:common.save · $&' }) });
+  assert.equal(translateApiValue('en-US', descriptor), 'Task for room Ghi chú · i18n:common.save · $&');
+  assert.equal(translateApiValue('zh-CN', descriptor), '客房 Ghi chú · i18n:common.save · $& 的任务');
+  assert.equal(translateApiMessage('en-US', 'Cấu hình giá không hợp lệ.'), 'Invalid price configuration.');
+  assert.equal(translateApiMessage('en-US', 'i18n:common.save'), 'Save');
+  assert.equal(translateApiMessage('en-US', descriptor), 'Task for room Ghi chú · i18n:common.save · $&');
 });
 
 test('legacy translation catalogs preserve every interpolation placeholder', () => {
@@ -102,12 +125,12 @@ test('language persists on reload and synchronizes across browser tabs and stora
   }
 });
 
-test('localized display keeps exact decimal prices and API business dates unchanged', () => {
+test('VND display keeps Vietnamese separators, exact decimal prices and API business dates in every language', () => {
   const businessDate = today('Asia/Ho_Chi_Minh');
   try {
     setLocale('vi'); assert.equal(money('1250000.1234'), '1.250.000,1234 ₫'); assert.equal(shortDate('2026-10-15'), '15/10');
-    setLocale('en-US'); assert.equal(money('1250000.1234'), '1,250,000.1234 ₫'); assert.equal(shortDate('2026-10-15'), '10/15');
-    setLocale('zh-CN'); assert.equal(money('1250000.1234'), '1,250,000.1234 ₫'); assert.equal(shortDate('2026-10-15'), '10/15');
+    setLocale('en-US'); assert.equal(money('1250000.1234'), '1.250.000,1234 ₫'); assert.equal(shortDate('2026-10-15'), '15/10');
+    setLocale('zh-CN'); assert.equal(money('1250000.1234'), '1.250.000,1234 ₫'); assert.equal(shortDate('2026-10-15'), '15/10');
     assert.equal(today('Asia/Ho_Chi_Minh'), businessDate);
   } finally { setLocale('vi'); }
 });

@@ -1,3 +1,5 @@
+import { normalizePricingRules } from '../../../../shared/lib/planPricing.js';
+
 export function registeredRoomCount(value, ceiling) {
   const text = String(value).trim();
   const count = Number(text);
@@ -19,5 +21,7 @@ export function planFormInput(plan) {
   const limits = Object.fromEntries(['maxRooms', 'maxUsers'].map(key => [key, plan[key] == null || plan[key] === '' ? null : registeredRoomCount(plan[key])]));
   if (code === 'FREE' && Object.values(prices).some(value => !/^0+(?:\.0+)?$/.test(value))) throw new Error('Gói FREE phải có giá bằng 0.');
   if (code === 'FREE' && (limits.maxRooms == null || limits.maxRooms > 30 || limits.maxUsers == null || limits.maxUsers > 5)) throw new Error('Gói FREE có tối đa 30 phòng và 5 tài khoản; cần nhập đủ hai giới hạn.');
-  return { ...(plan.id ? { id: plan.id } : {}), ...(plan.restoring ? { deleted: false } : {}), code, name, currency, ...prices, ...limits, features: { ...plan.features }, active: plan.active === true };
+  const pricingRules = normalizePricingRules(plan.pricingRules);
+  if (code === 'FREE' && [pricingRules.extraRoomPrice, pricingRules.extraRoomPriceYear].some(value => Number(value) !== 0)) throw new Error('Gói FREE phải có giá phòng thêm bằng 0.');
+  return { ...(plan.id ? { id: plan.id } : {}), ...(plan.restoring ? { deleted: false } : {}), code, name, currency, ...prices, ...limits, pricingRules, features: { ...plan.features }, active: plan.active === true };
 }

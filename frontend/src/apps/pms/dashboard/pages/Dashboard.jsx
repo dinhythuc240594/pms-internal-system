@@ -1,3 +1,4 @@
+import { formatDate } from '../../../../shared/lib/date.js';
 import { t as tUi, tr as labelUi, useI18n } from '../../../../shared/i18n/useI18n.js';
 import React from 'react';
 import { Link } from 'react-router-dom';
@@ -110,13 +111,13 @@ function ChartPanel({ chart, hasFinance, currency }) {
           <span><i className="pms-dashboard-occupancy-key" aria-hidden="true" />{tUi("dashboard.occupancy")}</span>
         </div>
         <div className="pms-dashboard-chart" role="img" aria-label={`${hasFinance ? tUi("dashboard.chart") : tUi("dashboard.occupancyChart")} từng ngày; số liệu chi tiết có trong bảng bên dưới.`}>
-          {chart.map(row => <div className="pms-dashboard-chart-column" key={row.date} title={`${row.date}: công suất ${Number(row.occupancy).toFixed(1)}%${hasFinance ? ', doanh thu ghi nhận ' + money(row.realizedRevenue, currency) : ''}`}>
+          {chart.map(row => <div className="pms-dashboard-chart-column" key={row.date} title={`${formatDate(row.date)}: công suất ${Number(row.occupancy).toFixed(1)}%${hasFinance ? ', doanh thu ghi nhận ' + money(row.realizedRevenue, currency) : ''}`}>
             {hasFinance && <div className="pms-dashboard-revenue-bar" style={{ height: `${Math.max(0, Number(row.realizedRevenue) / maximumRevenue * 100)}%` }} />}
             <div className="pms-dashboard-occupancy-bar" style={{ height: `${Math.min(100, Number(row.occupancy))}%` }} />
           </div>)}
         </div>
         <div className="pms-dashboard-chart-dates" aria-hidden="true">{chart.map(row => <span key={row.date}>{row.date.slice(5).split('-').reverse().join('/')}</span>)}</div>
-        <p className="pms-dashboard-chart-note">{hasFinance ? 'Doanh thu ghi nhận từ hóa đơn đã chốt. ' : ''}{tUi("dashboard.occupancyHint")}</p>
+        <p className="pms-dashboard-chart-note">{hasFinance ? labelUi("Doanh thu ghi nhận từ hóa đơn đã chốt.") + " " : ''}{tUi("dashboard.occupancyHint")}</p>
         <details className="pms-dashboard-chart-details">
           <summary>{tUi("dashboard.dailyFigures")}</summary>
           <div className="pms-dashboard-chart-table-wrap" role="region" aria-label={tUi("dashboard.chartData")} tabIndex={0}>

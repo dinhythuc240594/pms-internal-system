@@ -4,7 +4,7 @@ import { CheckCircle2, Play, Save, Send } from 'lucide-react';
 import { timestamp } from '../../data/presentation';
 import { isClosed, shortDate, taskKind, taskStatuses } from '../planCalendar';
 
-export default function TaskDetail({ task, staff, shifts, canManage, canWrite, busy, act, assignTask, updateTask, timeZone, onClose }) {
+export default function TaskDetail({ task, staff, shifts, canManage, canApprove = canManage, canWrite, busy, act, assignTask, updateTask, timeZone, onClose }) {
   useI18n();
   const [staffId, setStaffId] = useState(task.staffId || '');
   const [shiftId, setShiftId] = useState(task.shiftId || '');
@@ -30,10 +30,10 @@ export default function TaskDetail({ task, staff, shifts, canManage, canWrite, b
       <div className="hk-plan-actions">
         {task.status === 'pending' && <button type="button" className="primary" disabled={busy} onClick={() => changeStatus('in_progress')}><Play size={15} aria-hidden="true" />{tUi("hk.startCleaning")}</button>}
         {task.status === 'in_progress' && <button type="button" className="success" disabled={busy} onClick={() => changeStatus('inspection')}><Send size={15} aria-hidden="true" />{tUi("hk.sendInspection")}</button>}
-        {task.status === 'inspection' && canManage && <><button type="button" className="success" disabled={busy} onClick={() => changeStatus('completed')}><CheckCircle2 size={15} aria-hidden="true" />{tUi("hk.confirmClean")}</button><button type="button" disabled={busy} onClick={() => changeStatus('in_progress')}>{tUi("hk.rework")}</button></>}
+        {task.status === 'inspection' && canApprove && <><button type="button" className="success" disabled={busy} onClick={() => changeStatus('completed')}><CheckCircle2 size={15} aria-hidden="true" />{tUi("hk.confirmClean")}</button><button type="button" disabled={busy} onClick={() => changeStatus('in_progress')}>{tUi("hk.rework")}</button></>}
         {canManage && <button type="button" className="hk-danger-button" disabled={busy} onClick={() => changeStatus('cancelled')}>{tUi("hk.cancelTask")}</button>}
       </div>
-      <p className="hk-plan-hint">{task.status === 'inspection' && !canManage ? tUi("hk.inspectionHint") : tUi("hk.workDateHint")}{' '}{tUi("hk.noteSaveHint")}</p>
+      <p className="hk-plan-hint">{task.status === 'inspection' && !canApprove ? tUi("hk.inspectionHint") : tUi("hk.workDateHint")}{' '}{tUi("hk.noteSaveHint")}</p>
     </>}
     <div className="hk-dialog-footer"><button type="button" disabled={busy} onClick={onClose}>{tUi("common.close")}</button></div>
   </div>;

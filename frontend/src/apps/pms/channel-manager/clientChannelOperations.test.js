@@ -23,6 +23,7 @@ test('client OTA operations stay on the tenant API and never forward a manager a
   assert.deepEqual(await operations.saveChannexChannel('other-account', 'other-property', { id: 'channel-1', ...input }), { saved: true });
   await operations.saveChannexChannel('other-account', 'other-property', input);
   await operations.actionChannexChannel('other-account', 'other-property', 'channel-1', 'activate', input);
+  await operations.actionChannexChannel('other-account', 'other-property', 'channel-1', 'load_bookings', input);
   await operations.actionChannexChannel('other-account', 'other-property', 'channel-1', 'delete', input);
   await operations.createChannexAirbnbLink('other-account', 'other-property', input);
   await operations.getChannexAirbnbListings('other-account', 'other-property', 'channel-1');
@@ -36,6 +37,7 @@ test('client OTA operations stay on the tenant API and never forward a manager a
     { path: '/channels/remote/channel-1', method: 'PATCH', body: input },
     { path: '/channels/remote', method: 'POST', body: input },
     { path: '/channels/remote/channel-1/activate', method: 'POST', body: input },
+    { path: '/channels/remote/channel-1/load_bookings', method: 'POST', body: input },
     { path: '/channels/remote/channel-1', method: 'DELETE', body: input },
     { path: '/channels/remote/airbnb-link', method: 'POST', body: input },
     { path: '/channels/remote/channel-1/airbnb/listings' },

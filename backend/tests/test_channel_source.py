@@ -8,8 +8,8 @@ from uuid import UUID
 from flask import Flask, g
 
 from pms_api.admin.channex_airbnb import airbnb_connection_link, state_signer
+from pms_api.channels.factory import ChannelAdapterFactory
 from pms_api.channels.routes import manager_source_config
-from pms_api.composition import register_services
 from pms_api.security import ApiError
 
 PROPERTY = str(UUID(int=1))
@@ -18,13 +18,28 @@ PROPERTY = str(UUID(int=1))
 class ChannelSourceTests(unittest.TestCase):
     def setUp(self):
         self.app = Flask(__name__)
-        register_services(self.app)
+        self.app.extensions["pms_services"] = SimpleNamespace(channels=ChannelAdapterFactory())
         self.context = self.app.test_request_context()
         self.context.push()
         self.addCleanup(self.context.pop)
         g.user = SimpleNamespace(global_role="SYSTEM_MANAGER")
         self.app.config["CHANNEX_MANAGER_API_KEY_STAGING"] = "private-manager-staging-key"
         self.body = {"accountId": "system:staging", "propertyId": PROPERTY, "active": True}
+        linked = patch(
+            "pms_api.channels.application.connection",
+            return_value=SimpleNamespace(
+                property_id=PROPERTY,
+                environment="staging",
+            ),
+        )
+        linked.start()
+        self.addCleanup(linked.stop)
+
+    def test_system_source_requires_the_existing_authorized_property(self):
+        with patch("pms_api.channels.application.connection", return_value=None):
+            with self.assertRaises(ApiError) as caught:
+                manager_source_config("hotel-a", self.body)
+        self.assertEqual(caught.exception.status, 403)
 
     def test_system_source_is_resolved_on_server_without_mutating_input(self):
         result = manager_source_config("hotel-a", self.body)
@@ -61,7 +76,10 @@ class ChannelSourceTests(unittest.TestCase):
     def test_own_hotel_source_cannot_be_repointed_to_another_property(self):
         source = SimpleNamespace(api_key="private-hotel-key")
         with (
-            patch("pms_api.admin.channex_remote_application.account_client", return_value=("staging", source)),
+            patch(
+                "pms_api.admin.channex_remote_application.account_client",
+                return_value=("staging", source),
+            ),
             patch(
                 "pms_api.channels.application.connection",
                 return_value=SimpleNamespace(property_id=PROPERTY),
@@ -95,7 +113,10 @@ class ChannelAirbnbReturnTests(unittest.TestCase):
                 "attributes": {"url": "https://www.airbnb.com/connect"},
             }
         }
-        with app.test_request_context(headers={"Origin": origin}):
+        with (
+            app.test_request_context(headers={"Origin": origin}),
+            patch("pms_api.channels.onboarding.invalidate_linked_inventory") as invalidate,
+        ):
             g.auth_session = SimpleNamespace(token_hash="private-session-signing-key")
             for role, path in (
                 ("USER", "/id/ota"),
@@ -123,3 +144,4 @@ class ChannelAirbnbReturnTests(unittest.TestCase):
                     self.assertEqual(state["tenantId"], "hotel-a")
                     self.assertEqual(state["actor"], "actor")
                     self.assertNotIn(values["token"], str(result))
+                    invalidate.assert_called_with("staging", PROPERTY)

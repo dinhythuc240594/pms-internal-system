@@ -117,12 +117,14 @@
 .pms-reports-date-fields input,
 .pms-reports-date-fields select {
   min-width: 0;
+  min-height: 44px;
   padding: 8px 12px;
   border: 1px solid var(--border-color);
   border-radius: 6px;
   background: var(--bg-main);
   color: var(--text-primary);
   font: inherit;
+  font-size: 1rem;
   color-scheme: light;
 }
 
@@ -216,6 +218,7 @@
 
 .pms-reports-export {
   display: inline-flex;
+  min-height: 44px;
   align-items: center;
   gap: 8px;
   padding: 8px 12px;

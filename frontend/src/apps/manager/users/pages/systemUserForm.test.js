@@ -35,3 +35,10 @@ test('initial passwords must contain 12 to 128 characters without changing their
   assert.throws(() => systemUserInput({ ...draft, password: 'x'.repeat(129) }), /12.*128/);
   assert.equal(systemUserInput({ ...draft, password: '  password  ' }).password, '  password  ');
 });
+
+test('system account creation rejects malformed email labels and normalizes login email consistently', () => {
+  for (const email of ['a..b@example.com', '.a@example.com', 'a.@example.com', 'a@-example.com', 'a@example_.com', 'a\u0000@example.com']) {
+    assert.throws(() => systemUserInput({ ...draft, email }), /email/i);
+  }
+  assert.equal(systemUserInput({ ...draft, email: ' AN+Admin@Example.COM ' }).email, 'an+admin@example.com');
+});

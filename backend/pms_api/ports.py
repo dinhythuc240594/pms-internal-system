@@ -10,6 +10,7 @@ from contextvars import ContextVar
 from typing import Any, Protocol
 
 from .bookings.ports import ReservationRepository
+from .channels.ports import RevisionRepository
 from .pricing.ports import PricingRepository
 
 
@@ -31,8 +32,11 @@ class ApplicationRuntime(Protocol):
     logger: Any
     reservations: ReservationRepository
     pricing: PricingRepository
+    channels: Any
+    revisions: RevisionRepository
 
     def payload(self) -> dict: ...
+    def date_range(self, *, aliases=("start", "end")) -> tuple: ...
     def json_response(self, *args, **kwargs) -> Any: ...
     def request_scope(self, path, *, method) -> Any: ...
     def app_scope(self) -> Any: ...

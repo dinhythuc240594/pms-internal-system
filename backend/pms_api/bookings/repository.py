@@ -30,7 +30,7 @@ class SQLAlchemyReservationRepository:
             Reservation.tenant_id == tenant_id, Reservation.id == reservation_id
         )
         if locked:
-            statement = statement.with_for_update()
+            statement = statement.with_for_update().execution_options(populate_existing=True)
         row = self.session.execute(statement).scalar_one_or_none()
         if not row:
             raise ApiError(404, "not_found", "Không tìm thấy đặt phòng.")

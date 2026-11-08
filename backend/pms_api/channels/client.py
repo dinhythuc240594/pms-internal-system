@@ -5,13 +5,15 @@ ARI: https://docs.channex.io/api-v.1-documentation/ari
 """
 
 import json
+import math
 import socket
 import ssl
+from http.client import HTTPException as HTTPClientError
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 
-from .errors import ProviderError
+from .errors import ProviderError as ProviderError
 from .identifiers import remote_id as remote_id
 
 BASES = {
@@ -24,6 +26,13 @@ MAX_RESPONSE = 2 * 1024 * 1024
 class NoRedirect(HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         return None
+
+
+def finite_number(value):
+    number = float(value)
+    if not math.isfinite(number):
+        raise ValueError
+    return number
 
 
 class ChannexClient:
@@ -73,7 +82,7 @@ class ChannexClient:
                 raise ProviderError("provider_response_too_large")
             if allow_empty and method == "DELETE" and status == 204 and not data:
                 return {"meta": {"message": "Success"}, "_http_status": status}
-            result = json.loads(data)
+            result = json.loads(data, parse_float=finite_number, parse_constant=finite_number)
             if (
                 not isinstance(result, dict)
                 or "errors" in result
@@ -93,6 +102,7 @@ class ChannexClient:
                 raise ProviderError("provider_rejected")
             return {**result, "_http_status": status} if allow_async or allow_empty else result
         except HTTPError as error:
+            error.close()
             code = (
                 "provider_rate_limited"
                 if error.code == 429
@@ -103,7 +113,7 @@ class ChannexClient:
             raise ProviderError(
                 code, error.code == 429 or error.code >= 500, http_status=error.code
             ) from None
-        except (URLError, TimeoutError, socket.timeout, OSError) as error:
+        except (URLError, TimeoutError, socket.timeout, OSError, HTTPClientError) as error:
             reason = error.reason if isinstance(error, URLError) else error
             if isinstance(reason, (TimeoutError, socket.timeout)):
                 failure_type = "timeout"
@@ -116,22 +126,34 @@ class ChannexClient:
             else:
                 failure_type = "transport"
             raise ProviderError("provider_unavailable", True, failure_type=failure_type) from None
-        except (ValueError, UnicodeDecodeError):
+        except ValueError, UnicodeDecodeError, RecursionError:
             raise ProviderError("provider_invalid_response") from None
 
-    def feed(self, property_id):
+    def feed(self, property_id, page=1):
+        if type(page) is not int or not 1 <= page <= 2**31 - 1:
+            raise ProviderError("provider_invalid_response")
         result = self._request(
             "GET",
             "/booking_revisions/feed",
             query={
                 "filter[property_id]": remote_id(property_id),
                 "order[inserted_at]": "asc",
-                "pagination[page]": 1,
+                "pagination[page]": page,
                 "pagination[limit]": 100,
             },
         )
         rows = result.get("data")
-        if not isinstance(rows, list) or len(rows) > 100:
+        meta = result.get("meta", {})
+        total = meta.get("total", len(rows) if isinstance(rows, list) else 0)
+        if (
+            not isinstance(rows, list)
+            or len(rows) > 100
+            or type(meta.get("page", page)) is not int
+            or meta.get("page", page) != page
+            or meta.get("limit", 100) != 100
+            or type(total) is not int
+            or total < len(rows)
+        ):
             raise ProviderError("provider_invalid_response")
         return rows
 
@@ -206,7 +228,7 @@ class ChannexClient:
                     and isinstance(related, dict)
                     and related.get("id") == property_id
                 )
-            except (KeyError, TypeError, AttributeError):
+            except KeyError, TypeError, AttributeError:
                 raise ProviderError("provider_invalid_response") from None
 
         found, seen, expected_total = [], set(), None
@@ -250,10 +272,10 @@ class ChannexClient:
         values = {
             "callback_url": callback_url,
             "property_id": property_id,
-            "event_mask": "booking",
+            "event_mask": "*",
             "is_global": False,
             "is_active": True,
-            "send_data": False,
+            "send_data": True,
             "request_params": {},
             "headers": {"X-Channex-Webhook-Secret": webhook_secret},
         }
@@ -286,6 +308,19 @@ class ChannexClient:
             raise ProviderError("provider_invalid_response")
         return saved_id
 
+    def booking(self, booking_id):
+        booking_id = remote_id(booking_id)
+        result = self._request("GET", f"/bookings/{booking_id}")
+        entity = result.get("data")
+        if (
+            not isinstance(entity, dict)
+            or entity.get("type") != "booking"
+            or entity.get("id") != booking_id
+            or not isinstance(entity.get("attributes"), dict)
+        ):
+            raise ProviderError("provider_invalid_response")
+        return entity
+
     def revision(self, revision_id):
         result = self._request("GET", f"/booking_revisions/{remote_id(revision_id)}")
         if not isinstance(result.get("data"), dict):
@@ -295,11 +330,53 @@ class ChannexClient:
     def ack(self, revision_id):
         self._request("POST", f"/booking_revisions/{remote_id(revision_id)}/ack", {})
 
+    def load_future_reservations(self, channel_id):
+        result = self._request(
+            "POST",
+            f"/channels/{remote_id(channel_id)}/execute/load_future_reservations",
+            {},
+            allow_async=True,
+        )
+        if not isinstance(result.get("meta", {}).get("message"), str) and not result.get(
+            "async_meta"
+        ):
+            raise ProviderError("provider_invalid_response")
+        return result
+
     def push_availability(self, values):
         self._request("POST", "/availability", {"values": values})
 
     def push_restrictions(self, values):
         self._request("POST", "/restrictions", {"values": values})
+
+    def restrictions(self, property_id, start, end):
+        result = self._request(
+            "GET",
+            "/restrictions",
+            query={
+                "filter[property_id]": remote_id(property_id),
+                "filter[date][gte]": start,
+                "filter[date][lte]": end,
+                "filter[restrictions]": "rate,stop_sell",
+            },
+        )
+        if not isinstance(result.get("data"), dict):
+            raise ProviderError("provider_invalid_response")
+        return result["data"]
+
+    def availability(self, property_id, start, end):
+        result = self._request(
+            "GET",
+            "/availability",
+            query={
+                "filter[property_id]": remote_id(property_id),
+                "filter[date][gte]": start,
+                "filter[date][lte]": end,
+            },
+        )
+        if not isinstance(result.get("data"), dict):
+            raise ProviderError("provider_invalid_response")
+        return result["data"]
 
     def catalog(self, resource, property_id):
         if resource not in {"room_types", "rate_plans"}:

@@ -1,3 +1,5 @@
+import DateInput from '../../../../shared/components/DateInput.jsx';
+import { formatDate } from '../../../../shared/lib/date.js';
 import { t as tUi, tr as labelUi, useI18n } from '../../../../shared/i18n/useI18n.js';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -29,9 +31,10 @@ export default function BusinessReports({ report }) {
   const [result, setResult] = useState(null);
   const [revision, setRevision] = useState(0);
   const currency = settings.currency;
-  const valid = start && end && nights(start, end) > 0 && nights(start, end) <= 366;
+  const [startValid, setStartValid] = useState(true), [endValid, setEndValid] = useState(true);
+  const valid = startValid && endValid && start && end && nights(start, end) > 0 && nights(start, end) <= 366;
   const requestKey = [report, start, end, currency, revision, tenantId, authGeneration, workspaceRevision].join(':');
-  const data = result?.key === requestKey ? result.data : null;
+  const data = valid && result?.key === requestKey ? result.data : null;
   const error = result?.key === requestKey ? result.error : '';
   const loading = Boolean(valid && result?.key !== requestKey);
   const hasMoney = report !== 'nationality';
@@ -47,6 +50,7 @@ export default function BusinessReports({ report }) {
 
   const display = (value, key, isMoney) => {
     if (isMoney) return money(value, currency);
+    if (key === 'date') return formatDate(value);
     const displayed = key === 'kind' ? (discountNames[value] || value) : apiText(value);
     return displayed || (value === 0 ? 0 : '—');
   };
@@ -57,28 +61,28 @@ export default function BusinessReports({ report }) {
   );
 
   return <div className="pms-original pms-reports">
-    <header className="pms-reports-header"><div><h1>{config.title}</h1><p>Phân tích dữ liệu của khách sạn theo khoảng thời gian.</p></div><span className="pms-reports-demo" role="status"><Info size={14} aria-hidden="true" />{loading ? tUi("common.loading") : data ? 'Dữ liệu máy chủ' : 'Chưa tải dữ liệu'}</span></header>
-    <nav className="pms-reports-tabs" aria-label="Loại báo cáo">
-      <AccessLink to="/id/reports/revenue"><CircleDollarSign size={18} aria-hidden="true" />Doanh thu phòng</AccessLink>
+    <header className="pms-reports-header"><div><h1>{config.title}</h1><p>{labelUi("Phân tích dữ liệu của khách sạn theo khoảng thời gian.")}</p></div><span className="pms-reports-demo" role="status"><Info size={14} aria-hidden="true" />{loading ? tUi("common.loading") : data ? labelUi("Dữ liệu máy chủ") : labelUi("Chưa tải dữ liệu")}</span></header>
+    <nav className="pms-reports-tabs" aria-label={labelUi("Loại báo cáo")}>
+      <AccessLink to="/id/reports/revenue"><CircleDollarSign size={18} aria-hidden="true" />{labelUi("Doanh thu phòng")}</AccessLink>
       <AccessLink to="/id/reports/occupancy"><BarChart3 size={18} aria-hidden="true" />{tUi("nav.occupancy")}</AccessLink>
       <AccessLink to="/id/reports/source" aria-current="page"><BarChart3 size={18} aria-hidden="true" />{tUi("nav.advancedReports")}</AccessLink>
     </nav>
-    <section className="pms-reports-filter" aria-label="Bộ lọc báo cáo">
-      <div className="pms-reports-filter-title"><CalendarDays size={18} aria-hidden="true" />Khoảng thời gian</div>
+    <section className="pms-reports-filter" aria-label={labelUi("Bộ lọc báo cáo")}>
+      <div className="pms-reports-filter-title"><CalendarDays size={18} aria-hidden="true" />{labelUi("Khoảng thời gian")}</div>
       <div className="pms-reports-date-fields">
         <label htmlFor="business-report-type">{tUi("nav.reports")}<select id="business-report-type" value={report} onChange={event => navigate('/id/reports/' + event.target.value)}>{Object.entries(businessReports).map(([key, value]) => <option key={key} value={key}>{value.title}</option>)}</select></label>
-        <label htmlFor="business-report-start">{tUi("common.fromDate")}<input id="business-report-start" type="date" value={start} onChange={event => setStart(event.target.value)} aria-invalid={!valid} aria-describedby={!valid ? 'business-report-error' : undefined} /></label>
-        <label htmlFor="business-report-end">Đến ngày<input id="business-report-end" type="date" value={end} onChange={event => setEnd(event.target.value)} aria-invalid={!valid} aria-describedby={!valid ? 'business-report-error business-report-note' : 'business-report-note'} /></label>
+        <label htmlFor="business-report-start">{tUi("common.fromDate")}<DateInput id="business-report-start" value={start} onChange={setStart} onValidityChange={setStartValid} aria-invalid={!valid} aria-describedby={!valid ? 'business-report-error' : undefined} /></label>
+        <label htmlFor="business-report-end">{labelUi("Đến ngày")}<DateInput id="business-report-end" min={start ? addDays(start, 1) : undefined} value={end} onChange={setEnd} onValidityChange={setEndValid} aria-invalid={!valid} aria-describedby={!valid ? 'business-report-error business-report-note' : 'business-report-note'} /></label>
       </div>
-      <p id="business-report-note" className="pms-reports-filter-note">Không bao gồm ngày kết thúc. {report === 'nationality' ? 'Gồm khách của mọi loại tiền tệ.' : 'Số liệu cập nhật khi đổi bộ lọc.'}</p>
+      <p id="business-report-note" className="pms-reports-filter-note">Không bao gồm ngày kết thúc. {report === 'nationality' ? labelUi("Gồm khách của mọi loại tiền tệ.") : labelUi("Số liệu cập nhật khi đổi bộ lọc.")}</p>
     </section>
-    {!valid && <p id="business-report-error" role="alert" className="pms-reports-error">Chọn khoảng ngày từ 1 đến 366 ngày.</p>}
+    {!valid && <p id="business-report-error" role="alert" className="pms-reports-error">{labelUi("Chọn khoảng ngày từ 1 đến 366 ngày.")}</p>}
     {error && <p role="alert" className="pms-reports-error">{error} <button type="button" onClick={() => setRevision(value => value + 1)}>{tUi("common.retry")}</button></p>}
     <section className="pms-reports-table-card" aria-label={config.title} aria-busy={loading}>
       <div className="pms-reports-table-heading"><h2>{config.title}</h2><button type="button" className="pms-reports-export" onClick={exportRows} disabled={!data || !data.rows.length}><Download size={16} aria-hidden="true" />{tUi("common.exportCsv")}</button></div>
       <div className="pms-reports-table-scroll" tabIndex={0} role="region" aria-label={'Bảng ' + config.title.toLowerCase()}><table>
         <thead><tr>{config.columns.map(([key, label, isMoney]) => <th key={key} scope="col" className={isMoney || ['bookings', 'nights', 'servedNights', 'guests', 'guestNights'].includes(key) ? 'pms-reports-number' : undefined}>{labelUi(label)}</th>)}</tr></thead>
-        <tbody>{data?.rows.map((row, index) => <tr key={[row.id, row.label, row.date, row.source, row.nationality, row.code, index].join(':')}>{config.columns.map(([key, , isMoney]) => <td key={key} className={isMoney || typeof row[key] === 'number' ? 'pms-reports-number' : undefined}>{display(row[key], key, isMoney)}</td>)}</tr>)}{!data?.rows.length && <tr><td colSpan={config.columns.length} className="pms-reports-empty">{!valid ? 'Chọn khoảng ngày hợp lệ để xem báo cáo.' : loading ? tUi("dashboard.loading") : data ? 'Không có dữ liệu trong kỳ.' : tUi("dashboard.failed")}</td></tr>}</tbody>
+        <tbody>{data?.rows.map((row, index) => <tr key={[row.id, row.label, row.date, row.source, row.nationality, row.code, index].join(':')}>{config.columns.map(([key, , isMoney]) => <td key={key} className={isMoney || typeof row[key] === 'number' ? 'pms-reports-number' : undefined}>{display(row[key], key, isMoney)}</td>)}</tr>)}{!data?.rows.length && <tr><td colSpan={config.columns.length} className="pms-reports-empty">{!valid ? labelUi("Chọn khoảng ngày hợp lệ để xem báo cáo.") : loading ? tUi("dashboard.loading") : data ? labelUi("Không có dữ liệu trong kỳ.") : tUi("dashboard.failed")}</td></tr>}</tbody>
       </table></div>
     </section>
     {data && <div className="pms-reports-note"><Info size={16} aria-hidden="true" /><span>{noteKeys.map(key => apiText(data.definitions[key])).filter(Boolean).join(' ')}</span></div>}

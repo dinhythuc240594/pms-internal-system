@@ -440,7 +440,7 @@ class BookingIntegrationTests(DomainTestCase):
     def test_failed_booking_edit_rolls_back_existing_guest_profile_updates(self):
         row = self.make_booking()
         guest_id = row["guests"][0]["id"]
-        changed = {"id": guest_id, "name": "Must roll back", "phone": "Bad change"}
+        changed = {"id": guest_id, "name": "Must roll back", "phone": "0912345678"}
         over_capacity = self.request(
             "PATCH",
             f"/reservations/{row['id']}",

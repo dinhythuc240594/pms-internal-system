@@ -1,12 +1,13 @@
 from datetime import timedelta
 
-from domain_fixture import TEST_PASSWORD, DomainTestCase
-from sqlalchemy import select, text
+from sqlalchemy import func, select, text
 from sqlalchemy.exc import DBAPIError
 from werkzeug.security import check_password_hash
 
-from pms_api.core_models import AuthSession, User, utcnow
+from pms_api.core_models import AuthSession, LoginAttempt, User, utcnow
 from pms_api.extensions import db
+from pms_api.security import digest
+from tests.domain_fixture import TEST_PASSWORD, DomainTestCase
 
 
 class IdentityTests(DomainTestCase):
@@ -130,6 +131,23 @@ class IdentityTests(DomainTestCase):
             ).status_code,
             429,
         )
+
+    def test_blocked_ip_cannot_create_or_increment_email_counters(self):
+        with self.app.app_context():
+            db.session.get(LoginAttempt, digest("ip:127.0.0.1")).attempts = 60
+            email_key = digest("email:owner-a@test.local")
+            attempts = db.session.get(LoginAttempt, email_key).attempts
+            count = db.session.scalar(select(func.count()).select_from(LoginAttempt))
+            db.session.commit()
+        client = self.app.test_client()
+        for email in ("new-target@test.local", "owner-a@test.local"):
+            response = client.post(
+                "/api/auth/login", json={"email": email, "password": "wrong"}
+            )
+            self.assertEqual(response.status_code, 429, response.json)
+        with self.app.app_context():
+            self.assertEqual(db.session.scalar(select(func.count()).select_from(LoginAttempt)), count)
+            self.assertEqual(db.session.get(LoginAttempt, email_key).attempts, attempts)
 
     def test_admin_creates_hotel_owner_and_owner_creates_staff(self):
         admin, headers = self.login("admin@test.local")

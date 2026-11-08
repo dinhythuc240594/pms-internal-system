@@ -22,6 +22,7 @@ from pms_api.core_models import AuditLog
 from pms_api.extensions import db
 from pms_api.security import set_context
 from tests.domain_fixture import DomainTestCase
+from tests.system_scope_fixture import grant_system_access, linked_property
 
 PROPERTY = str(UUID(int=1))
 API_KEY = "fixture-tenant-api-key-private"
@@ -81,6 +82,7 @@ class ChannelCredentialTests(DomainTestCase):
         )
         environment_patch.start()
         self.addCleanup(environment_patch.stop)
+        linked_property(self, PROPERTY)
         self.saved(
             {
                 "environment": "staging",
@@ -91,6 +93,79 @@ class ChannelCredentialTests(DomainTestCase):
             }
         )
         return api_ref, webhook_ref
+
+    def test_legacy_payload_cannot_create_server_credential_binding(self):
+        snapshot = self.request("get", "/channels").json
+        api_ref = snapshot["expectedCredentialRef"]
+        webhook_ref = snapshot["expectedWebhookSecretRef"]
+        manager, headers = self.login("manager@test.local")
+        routes = (
+            ("/channels/config", self.client, self.headers),
+            (f"/api/admin/channex/tenants/{self.tenant_id}/channels/config", manager, headers),
+        )
+        with patch.dict(os.environ, {api_ref: LEGACY_KEY, webhook_ref: LEGACY_WEBHOOK}):
+            for path, client, auth_headers in routes:
+                for active in (False, True):
+                    with self.subTest(path=path, active=active):
+                        response = self.request("put", path, {
+                            "environment": "staging", "propertyId": PROPERTY,
+                            "credentialRef": api_ref, "webhookSecretRef": webhook_ref,
+                            "active": active,
+                        }, client=client, headers=auth_headers)
+                        self.assertEqual(response.status_code, 422, response.json)
+                        self.assertEqual(response.json["error"]["code"], "channel_api_key_required")
+                        self.assertIsNone(self.stored())
+        self.provider.assert_not_called()
+
+    def test_legacy_payload_cannot_repoint_server_credential_binding(self):
+        api_ref, webhook_ref = self.legacy()
+        original = self.stored()
+        manager, headers = self.login("manager@test.local")
+        routes = (
+            ("/channels/config", self.client, self.headers),
+            (f"/api/admin/channex/tenants/{self.tenant_id}/channels/config", manager, headers),
+        )
+        for path, client, auth_headers in routes:
+            for target in (
+                {"environment": "staging", "propertyId": str(UUID(int=99))},
+                {"environment": "production", "propertyId": PROPERTY},
+            ):
+                for active in (False, True):
+                    with self.subTest(path=path, target=target, active=active):
+                        response = self.request("put", path, {
+                            **target, "credentialRef": api_ref, "webhookSecretRef": webhook_ref,
+                            "active": active,
+                        }, client=client, headers=auth_headers)
+                        self.assertEqual(response.status_code, 422, response.json)
+                        self.assertEqual(response.json["error"]["code"], "channel_api_key_required")
+                        self.assertEqual(self.stored(), original)
+        self.provider.assert_not_called()
+
+    def test_legacy_same_target_preserves_credentials_and_normalizes_uuid(self):
+        api_ref, webhook_ref = self.legacy()
+        property_id = str(UUID("abcdefab-cdef-abcd-efab-cdefabcdefab"))
+        with self.app.app_context():
+            set_context(self.owner_id, self.tenant_id)
+            row = db.session.scalar(select(ChannelConnection))
+            row.property_id = property_id
+            db.session.commit()
+        with patch.dict(self.app.config, {"CHANNEX_ENCRYPTION_KEY": None}):
+            for active in (False, True):
+                with self.subTest(active=active):
+                    self.saved({
+                        "environment": "staging", "propertyId": property_id.upper(),
+                        "credentialRef": api_ref, "webhookSecretRef": webhook_ref,
+                        "active": active,
+                    })
+                    stored = self.stored()
+                    self.assertEqual(stored["property_id"], property_id)
+                    self.assertEqual(stored["environment"], "staging")
+                    self.assertEqual(stored["active"], active)
+                    self.assertIsNone(stored["secrets_ciphertext"])
+                    self.assertEqual(self.decoded(), {
+                        "apiKey": LEGACY_KEY, "webhookSecret": LEGACY_WEBHOOK,
+                    })
+        self.provider.assert_not_called()
 
     def test_verified_save_encrypts_secrets_and_only_exposes_status(self):
         response = self.saved()
@@ -124,6 +199,16 @@ class ChannelCredentialTests(DomainTestCase):
 
     def test_manager_links_system_source_without_returning_or_forwarding_keys(self):
         manager, headers = self.login("manager@test.local")
+        denied = self.request(
+            "put", "/channels/config",
+            json={"accountId": "system:staging", "propertyId": PROPERTY, "active": True},
+            client=manager, headers=headers,
+        )
+        self.assertEqual(denied.status_code, 403, denied.json)
+        self.assertEqual(denied.json["error"]["code"], "tenant_denied")
+        self.provider.assert_not_called()
+        grant_system_access(self)
+        linked_property(self, PROPERTY)
         source_key = "private-manager-staging-api-key"
         with patch.dict(self.app.config, {"CHANNEX_MANAGER_API_KEY_STAGING": source_key}):
             response = self.request(
@@ -150,6 +235,7 @@ class ChannelCredentialTests(DomainTestCase):
         self.assertIsNone(self.stored())
 
     def test_manager_source_rejects_other_hotel_keys_and_ambiguous_config(self):
+        grant_system_access(self)
         manager, headers = self.login("manager@test.local")
         for body in (
             {"accountId": "hotel:" + self.other_tenant_id, "propertyId": PROPERTY, "active": True},
@@ -166,7 +252,9 @@ class ChannelCredentialTests(DomainTestCase):
         self.saved()
         response = self.request("post", "/channels/jobs", json={"kind": "pull_bookings"})
         self.assertEqual(response.status_code, 202, response.json)
+        grant_system_access(self)
         manager, headers = self.login("manager@test.local")
+        self.provider.reset_mock()
         with patch.dict(self.app.config, {"CHANNEX_MANAGER_API_KEY_STAGING": API_KEY}):
             response = self.request(
                 "put",
@@ -175,8 +263,9 @@ class ChannelCredentialTests(DomainTestCase):
                 client=manager,
                 headers=headers,
             )
-        self.assertEqual(response.status_code, 409, response.json)
-        self.assertEqual(response.json["error"]["code"], "channel_has_history")
+        self.assertEqual(response.status_code, 403, response.json)
+        self.assertEqual(response.json["error"]["code"], "invalid_channel_source")
+        self.provider.assert_not_called()
         self.assertEqual(self.stored()["property_id"], PROPERTY)
 
     def test_downgrade_refuses_to_discard_encrypted_credentials(self):
@@ -192,15 +281,40 @@ class ChannelCredentialTests(DomainTestCase):
         self.assertEqual(response.status_code, 200, response.json)
 
     def test_system_roles_configure_explicit_hotel_without_writing_other_hotel(self):
+        from tests.test_channels_integration import ChannelTestCase
+
+        self.provider.side_effect = lambda method, path, **kwargs: (
+            {"data": ChannelTestCase.catalog(self, path[1:], PROPERTY), "meta": {"total": 1}}
+            if path in {"/room_types", "/rate_plans"}
+            else {"data": {"id": PROPERTY, "type": "property"}}
+        )
         prefix = f"/api/tenants/{self.other_tenant_id}/channels"
+        owner, owner_headers = self.login("owner-b@test.local")
         for index, actor in enumerate(("manager", "admin"), start=1):
             with self.subTest(actor=actor):
                 client, headers = self.login(f"{actor}@test.local")
                 session = client.get("/api/auth/session")
                 self.assertEqual(
                     {tenant["id"] for tenant in session.json["tenants"]},
-                    {self.tenant_id, self.other_tenant_id},
+                    set(),
                 )
+                denied = self.request(
+                    "put", prefix + "/config", json=self.config, client=client, headers=headers
+                )
+                self.assertEqual(denied.status_code, 403, denied.json)
+                self.assertEqual(denied.json["error"]["code"], "tenant_denied")
+                granted = self.request(
+                    "post", f"/api/tenants/{self.other_tenant_id}/users",
+                    {"userId": actor, "role": "HOTEL_OWNER"},
+                    client=owner, headers=owner_headers,
+                )
+                self.assertEqual(granted.status_code, 201, granted.json)
+                session = client.get("/api/auth/session")
+                self.assertEqual(
+                    {tenant["id"] for tenant in session.json["tenants"]},
+                    {self.other_tenant_id},
+                )
+                self.assertEqual(self.request("get", "/channels", client=client, headers=headers).status_code, 403)
                 saved = self.request(
                     "put", prefix + "/config", json=self.config, client=client, headers=headers
                 )
@@ -218,6 +332,16 @@ class ChannelCredentialTests(DomainTestCase):
                     headers=headers,
                 )
                 self.assertEqual(mapping.status_code, 200, mapping.json)
+                state = self.request("get", prefix, client=client, headers=headers)
+                reconciled = self.request(
+                    "post",
+                    prefix + "/onboarding/reconcile",
+                    json={"revision": state.json["onboarding"]["revision"], "confirm": True},
+                    client=client,
+                    headers=headers,
+                )
+                self.assertEqual(reconciled.status_code, 200, reconciled.json)
+                self.assertIsNotNone(reconciled.json["onboarding"]["reconciledAt"])
                 queued = self.request(
                     "post",
                     prefix + "/jobs",
@@ -237,7 +361,7 @@ class ChannelCredentialTests(DomainTestCase):
                 self.assertNotIn(API_KEY, snapshot.get_data(as_text=True))
                 self.assertNotIn("secrets_ciphertext", snapshot.get_data(as_text=True))
                 with self.app.app_context():
-                    set_context(actor, is_system=True)
+                    set_context(actor, is_system=True, is_service=True)
                     job = db.session.get(ChannelJob, queued.json["id"])
                     self.assertEqual((job.tenant_id, job.actor_id), (self.other_tenant_id, actor))
                     connection = db.session.scalar(select(ChannelConnection))
@@ -454,7 +578,7 @@ class ChannelCredentialTests(DomainTestCase):
         self.assertEqual(webhook.status_code, 401, webhook.json)
         result = self.request("post", "/channels/jobs", json={"kind": "pull_bookings"})
         self.assertEqual(result.status_code, 202, result.json)
-        with patch("pms_api.channels.factory.ChannexClient") as worker_provider:
+        with patch("pms_api.channels.service.channel_adapter") as worker_provider:
             with self.app.app_context():
                 self.assertEqual(process_jobs(self.tenant_id, 1), 1)
             worker_provider.assert_not_called()

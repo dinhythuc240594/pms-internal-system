@@ -6,7 +6,7 @@ export default function AutomaticDayPlan({ date, configuration, staff, rooms, sh
   const selectedRooms = Array.isArray(configuration.roomIds);
   function chooseShift(staffId, value) { onChange({ ...configuration, shifts: { ...configuration.shifts, [staffId]: value } }); }
   return <details className="hk-auto-day" open={open || undefined}>
-    <summary><strong>{shortDate(date)} · {date.slice(0, 4)}</strong><span>{selectedRooms ? tUi('hk.autoRoomCount', { count: configuration.roomIds.length }) : tUi('hk.autoRoomsAutomatic')}</span></summary>
+    <summary><strong>{shortDate(date)}</strong><span>{selectedRooms ? tUi('hk.autoRoomCount', { count: configuration.roomIds.length }) : tUi('hk.autoRoomsAutomatic')}</span></summary>
     <div className="hk-auto-day-content">
       <label>{tUi('hk.autoDayRooms')}<select value={selectedRooms ? 'selected' : 'automatic'} onChange={event => onChange({ ...configuration, roomIds: event.target.value === 'selected' ? [] : null })}><option value="automatic">{tUi('hk.autoRoomsAutomatic')}</option><option value="selected">{tUi('hk.autoRoomsSelected')}</option></select></label>
       {selectedRooms && <>

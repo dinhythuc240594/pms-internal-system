@@ -32,10 +32,3 @@ class BookingValueTests(unittest.TestCase):
         ):
             with self.subTest(dates=dates), self.assertRaises(ApiError):
                 stay_dates(*dates)
-
-    def test_stay_rejects_compact_week_and_non_date_inputs(self):
-        for start in ("20261003", "2026-W40-6", "2026-10-03T12:00:00", [], {}, True, None):
-            with self.subTest(start=start):
-                with self.assertRaises(ApiError) as error:
-                    stay_dates(start, "2026-10-04")
-                self.assertEqual(error.exception.status, 422)

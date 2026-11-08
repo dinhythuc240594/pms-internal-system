@@ -92,7 +92,7 @@ class PlanRoomLimitTests(DomainTestCase):
 
     def test_legacy_plan_can_receive_a_code_once_and_keep_effective_features(self):
         with self.app.app_context():
-            set_context(is_system=True)
+            set_context(is_system=True, is_service=True)
             db.session.add(
                 Plan(
                     id="legacy-plan", name="Legacy business", price=50, features={"POS_SALES": True}
@@ -127,7 +127,7 @@ class PlanRoomLimitTests(DomainTestCase):
 
     def test_unassigned_hotel_retains_room_reads_but_cannot_add_or_reactivate(self):
         with self.app.app_context():
-            set_context(is_system=True)
+            set_context(is_system=True, is_service=True)
             db.session.execute(delete(Subscription).where(Subscription.tenant_id == self.tenant_id))
             db.session.commit()
         self.assertEqual(self.request("GET", "/workspace").status_code, 200)
@@ -180,13 +180,13 @@ class PlanRoomLimitTests(DomainTestCase):
         public = self.app.test_client().get("/api/public/plans").json["plans"]
         self.assertIn(plan["id"], [row["id"] for row in public])
 
-    def test_registered_quantity_enforced_and_snapshotted_without_repricing(self):
+    def test_registered_quantity_enforced_and_amount_calculated_from_plan(self):
         plan = self.create_plan(maxRooms=None)
         assigned = self.assign(plan["id"], amount="777")
         self.assertEqual(assigned.status_code, 200, assigned.json)
         self.assertEqual(assigned.json["subscription"]["roomCount"], 3)
         self.assertEqual(assigned.json["history"][0]["roomCount"], 3)
-        self.assertEqual(assigned.json["history"][0]["amount"], "777.0000")
+        self.assertEqual(assigned.json["history"][0]["amount"], "1000.0000")
         third = self.request("POST", "/masters/rooms", {"number": "103", "typeId": "rt-a"})
         self.assertEqual(third.status_code, 201, third.json)
         fourth = self.request("POST", "/masters/rooms", {"number": "104", "typeId": "rt-a"})
@@ -215,7 +215,7 @@ class PlanRoomLimitTests(DomainTestCase):
 
     def test_preserved_legacy_overquota_does_not_block_unrelated_plan_edits(self):
         with self.app.app_context():
-            set_context(is_system=True)
+            set_context(is_system=True, is_service=True)
             db.session.get(Plan, "default-pro").max_rooms = 1
             db.session.commit()
         edited = self.admin_request(
@@ -249,7 +249,7 @@ class PlanRoomLimitTests(DomainTestCase):
             downgraded = runner.invoke(args=["db", "downgrade", "0014_manager_customers"])
             self.assertEqual(downgraded.exit_code, 0, downgraded.output)
             with engine.begin() as connection:
-                connection.execute(text("SELECT set_config('app.is_system','true',true)"))
+                connection.execute(text("SELECT set_config('app.is_system','true',true), set_config('app.is_service','true',true)"))
                 for suffix, name, code, cap, count in (
                     ("finite", "Finite legacy", None, 10, 2),
                     ("uncapped", "Pro", "PRO", None, 5),
@@ -295,7 +295,7 @@ class PlanRoomLimitTests(DomainTestCase):
             upgraded = runner.invoke(args=["db", "upgrade"])
             self.assertEqual(upgraded.exit_code, 0, upgraded.output)
             with engine.begin() as connection:
-                connection.execute(text("SELECT set_config('app.is_system','true',true)"))
+                connection.execute(text("SELECT set_config('app.is_system','true',true), set_config('app.is_service','true',true)"))
                 quantities = dict(
                     connection.execute(text("SELECT id,room_count FROM subscriptions")).all()
                 )

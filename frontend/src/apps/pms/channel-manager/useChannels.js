@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
-export function useChannels(requestTenant, tenantId, path = '/channels', enabled = true) {
+export function useChannels(requestTenant, tenantId, path = '/channels', enabled = true, refreshKey = 0) {
   const [result, setResult] = useState(null);
   const [revision, setRevision] = useState(0);
   useEffect(() => {
@@ -13,15 +13,15 @@ export function useChannels(requestTenant, tenantId, path = '/channels', enabled
       try {
         const data = await requestTenant(path);
         latestData = data;
-        if (current) setResult({ requestTenant, tenantId, path, revision, data, error: '' });
+        if (current) setResult({ requestTenant, tenantId, path, revision, refreshKey, data, error: '' });
       } catch (err) {
-        if (current) setResult({ requestTenant, tenantId, path, revision, data: latestData, error: err.message });
+        if (current) setResult({ requestTenant, tenantId, path, revision, refreshKey, data: latestData, error: err.message });
       } finally { pending = false; }
     }
     fetchSnapshot();
     return () => { current = false; };
-  }, [requestTenant, tenantId, path, revision, enabled]);
-  const loaded = enabled && result?.requestTenant === requestTenant && result?.tenantId === tenantId && result?.path === path && result?.revision === revision;
+  }, [requestTenant, tenantId, path, revision, enabled, refreshKey]);
+  const loaded = enabled && result?.requestTenant === requestTenant && result?.tenantId === tenantId && result?.path === path && result?.revision === revision && result?.refreshKey === refreshKey;
   const refresh = useCallback(() => setRevision(value => value + 1), []);
-  return { data: loaded ? result.data : null, error: loaded ? result.error : '', loading: enabled && !loaded, refresh };
+  return { data: loaded ? result.data : null, error: loaded ? result.error : '', loading: enabled && !loaded, refresh, revision };
 }

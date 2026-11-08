@@ -61,7 +61,7 @@ def seed_local():
 
     from .catalog.models import Master, PhysicalRoom, RoomType
 
-    set_context(is_system=True)
+    set_context(is_system=True, is_service=True)
     accounts = []
     for key, name, email, global_role in [
         ("local-admin", "Quản trị hệ thống", "admin@bluejay.vn", "SUPER_ADMIN"),
@@ -153,11 +153,13 @@ def database_check():
 def process_channel_jobs(tenant, limit, watch, interval):
     from .channels.models import ChannelConnection, ChannelJob
     from .channels.service import process_jobs
+    from .worker_health import record_worker_heartbeat
 
     current_app.logger.setLevel("INFO")
     while True:
         try:
-            set_context(is_system=True)
+            record_worker_heartbeat("channels", tenant_id=tenant, interval=interval)
+            set_context(is_system=True, is_service=True)
             statement = (
                 select(ChannelJob.tenant_id)
                 .where(ChannelJob.status.in_({"queued", "processing"}))
@@ -175,6 +177,7 @@ def process_channel_jobs(tenant, limit, watch, interval):
             count = sum(
                 process_jobs(tenant_id, limit=limit, schedule=True) for tenant_id in tenant_ids
             )
+            record_worker_heartbeat("channels", tenant_id=tenant, interval=interval, succeeded=True)
             if count or not watch:
                 click.echo(f"Processed {count} channel jobs.")
         except DBAPIError:
@@ -204,9 +207,11 @@ def process_housekeeping_plans(actor_email, tenant, watch, interval):
     Polls reuse task intents, including work already created by checkout or the API.
     """
     from .housekeeping.service import process_day_plan
+    from .worker_health import record_worker_heartbeat
 
     while True:
         try:
+            record_worker_heartbeat("housekeeping", tenant_id=tenant, interval=interval)
             actor = db.session.scalar(
                 select(User).where(
                     User.email == actor_email.strip().lower(),
@@ -220,13 +225,16 @@ def process_housekeeping_plans(actor_email, tenant, watch, interval):
                     "Actor must be an existing active SYSTEM_MANAGER or SUPER_ADMIN."
                 )
             actor_id = actor.id
-            set_context(actor_id, is_system=True)
+            set_context(actor_id, is_system=True, is_service=True)
             statement = select(Tenant.id).where(Tenant.status == "active").order_by(Tenant.id)
             if tenant:
                 statement = statement.where(Tenant.id == tenant)
             tenant_ids = db.session.scalars(statement).all()
             db.session.rollback()
             count = sum(process_day_plan(tenant_id, actor_id) for tenant_id in tenant_ids)
+            record_worker_heartbeat(
+                "housekeeping", tenant_id=tenant, interval=interval, succeeded=True
+            )
             if count or not watch:
                 click.echo(f"Created {count} housekeeping tasks.")
         except ApiError:

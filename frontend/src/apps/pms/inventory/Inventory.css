@@ -9,7 +9,7 @@
 .pms-inventory .inventory-dialog { width:min(960px,calc(100vw - 32px)); max-height:calc(100svh - 32px); overflow:auto; background:var(--bg-surface); border:1px solid var(--border-color); border-radius:12px; padding:16px; }
 .pms-inventory .inventory-dialog h2 { margin-bottom:0; }
 .pms-inventory .inventory-overlay,.pms-inventory .pms-legacy-overlay { position:fixed; inset:0; z-index:2000; background:#0f172a66; display:grid; place-items:center; padding:12px; }
-.pms-inventory .inventory-id { font-family:monospace; overflow-wrap:anywhere; font-size:12px; }
+.pms-inventory .inventory-id { font-family:var(--font-mono); overflow-wrap:anywhere; font-size:12px; }
 .pms-inventory .inventory-positive { color:#06704c; }
 .pms-inventory .inventory-low { color:#9a3412; font-weight:600; }
 .pms-inventory .inventory-detail { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; }

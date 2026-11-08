@@ -1,35 +1,43 @@
 """Durable bounded work; imports and ACK jobs commit before any remote ACK.
 
-Workers hold the normal tenant lock while publishing a fresh inventory snapshot.
-This serializes channel workers with booking/catalog writes. A process crash
-rolls back its work, so jobs remain queued and idempotent writes can be retried.
+Publishers serialize per hotel; ARI network calls release the tenant mutation
+lock after persisting a claim, publication footprint and cooldown. New hotel
+writes enqueue a fresh job while the previous snapshot is in flight.
 """
 
+from collections import defaultdict
 from datetime import date, timedelta
 from urllib.parse import quote
 
-from sqlalchemy import func, select
+from sqlalchemy import case, func, or_, select
 from sqlalchemy.exc import SQLAlchemyError
 
-from pms_api.catalog.application import capacity_for, date_range, money_value
+from pms_api.catalog.application import date_range, money_value
+from pms_api.composition import channel_adapter
+from pms_api.ports import runtime
 
 from ..bookings.models import ReservationRoom
-from ..catalog.models import DailyRate, RoomType
-from ..composition import channel_adapter
+from ..catalog.models import DailyRate, PhysicalRoom, RoomBlock, RoomType
 from ..core_models import TenantUser, User, utcnow
 from ..extensions import db
-from ..ports import runtime
 from ..pricing.engine import business_date
 from ..security import GLOBAL_ROLES, ApiError, audit, set_context
-from ..subscriptions import enforce_entitlements, feature_enabled, lock_tenant
+from ..subscriptions import enforce_entitlements, entitlement, feature_enabled, lock_tenant
 from .client import ProviderError, remote_id
 from .credentials import load_credentials
-from .models import ChannelConnection, ChannelJob, ChannelMapping, ChannelRevision
+from .models import (
+    ChannelBookingReview,
+    ChannelConnection,
+    ChannelJob,
+    ChannelMapping,
+    ChannelRevision,
+)
 from .policies import AvailabilityPolicy
-from .repository import SQLAlchemyRevisionRepository
 from .workflows import BookingRevisionWorkflow
 
 ARI_KINDS = ("push_ari", "pause_mapping")
+ACK_OUTCOMES = ("imported", "stale", "cancelled")
+DEFERRED = object()
 
 
 def window(start, end):
@@ -54,15 +62,21 @@ def queue_job(tenant_id, actor_id, kind, details, dedupe=None, *, retry_failed=F
     if kind in {"push_ari", "setup_webhook"} or (
         kind == "pull_bookings" and not details.get("revisionId")
     ):
+        job_payload = (
+            ChannelJob.payload.op("-")("priority") if kind == "push_ari" else ChannelJob.payload
+        )
         existing = db.session.scalar(
             select(ChannelJob).where(
                 ChannelJob.tenant_id == tenant_id,
                 ChannelJob.kind == kind,
                 ChannelJob.status == "queued",
-                ChannelJob.payload == details,
+                job_payload == details,
             )
         )
         if existing:
+            # Coalescing with the daily baseline must retain an inventory change's priority.
+            if kind == "push_ari" and (not dedupe or existing.dedupe_key is None):
+                existing.payload = {**existing.payload, "priority": "change"}
             if dedupe and existing.dedupe_key is None:
                 existing.dedupe_key = dedupe
             return existing
@@ -89,7 +103,7 @@ def queue_job(tenant_id, actor_id, kind, details, dedupe=None, *, retry_failed=F
     return row
 
 
-def authorize_actor(tenant_id, actor_id):
+def authorize_actor(tenant_id, actor_id, *, operation=None):
     user = db.session.get(User, actor_id)
     membership = db.session.scalar(
         select(TenantUser).where(
@@ -99,13 +113,15 @@ def authorize_actor(tenant_id, actor_id):
             TenantUser.role == "HOTEL_OWNER",
         )
     )
-    if not user or not user.active or (user.global_role not in GLOBAL_ROLES and not membership):
+    if not user or not user.active or (not membership and user.global_role not in GLOBAL_ROLES):
         raise ApiError(403, "channel_actor_revoked", "Người cấu hình kênh không còn quyền đồng bộ.")
     runtime().state.user, runtime().state.role = user, "HOTEL_OWNER"
-    set_context(user.id, tenant_id, user.global_role in GLOBAL_ROLES)
+    # System support jobs use the existing background scope for this hotel only.
+    # HTTP requests always keep their actor and use the narrower OTA policies.
+    set_context("" if user.global_role in GLOBAL_ROLES else user.id, tenant_id)
     if runtime().state.tenant.status != "active":
         raise ApiError(403, "tenant_suspended", "Khách sạn đang bị tạm ngưng.")
-    enforce_entitlements("channels.write")
+    enforce_entitlements("channels.write", operation=operation)
 
 
 def enqueue_audit(entry):
@@ -160,21 +176,68 @@ def enqueue_audit(entry):
         ranges.append((today, today + timedelta(days=366)))
     for first, last in ranges:
         first = max(today, first)
+        if first >= last:
+            continue
+        if connection.inventory_reconciled_at is None:
+            connection.pending_ari_start = min(connection.pending_ari_start or first, first)
+            connection.pending_ari_end = max(connection.pending_ari_end or last, last)
+            connection.pending_ari_since = connection.pending_ari_since or utcnow()
+            continue
         while first < last:
             end = min(last, first + timedelta(days=31))
+            try:
+                queue_job(
+                    entry.tenant_id,
+                    connection.actor_id,
+                    "push_ari",
+                    {"start": first.isoformat(), "end": end.isoformat()},
+                )
+            except ApiError as error:
+                if error.code != "channel_queue_full":
+                    raise
+                # Keep inventory intent in the booking transaction even under backpressure.
+                connection.pending_ari_start = min(connection.pending_ari_start or first, first)
+                connection.pending_ari_end = max(connection.pending_ari_end or last, last)
+                connection.pending_ari_since = connection.pending_ari_since or utcnow()
+                break
+            first = end
+
+
+def drain_pending_ari(connection):
+    if connection.inventory_reconciled_at is None:
+        return
+    first, last = connection.pending_ari_start, connection.pending_ari_end
+    if first is None:
+        return
+    first = max(first, business_date(runtime().state.tenant))
+    while first < last:
+        end = min(last, first + timedelta(days=31))
+        try:
             queue_job(
-                entry.tenant_id,
+                connection.tenant_id,
                 connection.actor_id,
                 "push_ari",
-                {"start": first.isoformat(), "end": end.isoformat()},
+                {
+                    "start": first.isoformat(),
+                    "end": end.isoformat(),
+                },
             )
-            first = end
+        except ApiError as error:
+            if error.code != "channel_queue_full":
+                raise
+            break
+        first = end
+    if first >= last:
+        connection.pending_ari_start = connection.pending_ari_end = None
+        connection.pending_ari_since = None
+    else:
+        connection.pending_ari_start = first
 
 
 def _relationship(entity, key):
     try:
         return entity["relationships"][key]["data"]["id"]
-    except (KeyError, TypeError):
+    except KeyError, TypeError:
         raise ProviderError("channel_mapping_invalid") from None
 
 
@@ -329,7 +392,7 @@ def publication_ranges(ranges):
     return [{"start": start.isoformat(), "end": end.isoformat()} for start, end in merged]
 
 
-def prepare_publication(tenant_id, job, connection, client):
+def prepare_publication(tenant_id, job, connection, client, *, validate=True):
     if job.kind != "push_ari":
         return False
     mappings = list(
@@ -355,7 +418,8 @@ def prepare_publication(tenant_id, job, connection, client):
         for mapping in mappings
     ):
         return False
-    ari_snapshot(tenant_id, connection, client, job.payload)
+    if validate:
+        ari_snapshot(tenant_id, connection, client, job.payload)
     for mapping in mappings:
         mapping.used_at = mapping.used_at or utcnow()
         mapping.published_ranges = recorded[mapping.id]
@@ -413,15 +477,65 @@ def pause_mapping(tenant_id, job, connection, client):
     audit("channel.paused", "room_type", mapping.room_type_id)
 
 
+def validate_mapping_target(connection, client, room_id, rate_id, inbound_ids, currency):
+    rooms = _catalog_index(client.catalog("room_types", connection.property_id))
+    rates = _catalog_index(client.catalog("rate_plans", connection.property_id))
+    if room_id not in rooms or _relationship(rooms[room_id], "property") != connection.property_id:
+        raise ProviderError("channel_mapping_invalid")
+    for identifier in [rate_id, *inbound_ids]:
+        rate = rates.get(identifier)
+        if (
+            not rate
+            or _relationship(rate, "property") != connection.property_id
+            or _relationship(rate, "room_type") != room_id
+            or rate["attributes"].get("currency") != currency
+        ):
+            raise ProviderError("channel_mapping_invalid")
+        if identifier == rate_id and not supported_rate_plan(rate["attributes"], currency):
+            raise ProviderError("channel_rate_plan_unsupported")
+
+
+def booking_inventory_hold(tenant_id):
+    """An unimported OTA revision can consume stock outside the locally recorded stay."""
+    return or_(
+        select(ChannelBookingReview.id)
+        .where(
+            ChannelBookingReview.tenant_id == tenant_id,
+            ChannelBookingReview.resolved_at.is_(None),
+        )
+        .exists(),
+        select(ChannelJob.id)
+        .where(
+            ChannelJob.tenant_id == tenant_id,
+            ChannelJob.kind == "pull_bookings",
+            ChannelJob.status.in_(["queued", "processing", "failed"]),
+            ChannelJob.payload["revisionId"].astext.is_not(None),
+            ~select(ChannelRevision.id)
+            .where(
+                ChannelRevision.tenant_id == tenant_id,
+                ChannelRevision.revision_id == ChannelJob.payload["revisionId"].astext,
+            )
+            .correlate(ChannelJob)
+            .exists(),
+        )
+        .exists(),
+    )
+
+
 def ari_snapshot(tenant_id, connection, client, details):
+    from .onboarding import require_reconciled
+
+    require_reconciled(connection)
     days = window(details.get("start"), details.get("end"))
-    mappings = list(
-        db.session.scalars(
-            select(ChannelMapping)
+    targets = list(
+        db.session.execute(
+            select(ChannelMapping, booking_inventory_hold(tenant_id))
             .where(ChannelMapping.tenant_id == tenant_id, ChannelMapping.active.is_(True))
             .order_by(ChannelMapping.id)
         )
     )
+    mappings = [mapping for mapping, _hold in targets]
+    inventory_hold = any(hold for _mapping, hold in targets)
     if not mappings or len(mappings) > 50:
         raise ProviderError("channel_mapping_required")
     # Validate property ownership and per-room manual rate currency before sending
@@ -430,6 +544,63 @@ def ari_snapshot(tenant_id, connection, client, details):
     remote_rates = _catalog_index(client.catalog("rate_plans", connection.property_id))
     availability, restrictions = [], []
     currency = (runtime().state.tenant.settings or {}).get("currency", "VND")
+    type_ids = {mapping.room_type_id for mapping in mappings}
+    room_types = {
+        r.id: r
+        for r in db.session.scalars(
+            select(RoomType).where(
+                RoomType.tenant_id == tenant_id,
+                RoomType.id.in_(type_ids),
+            )
+        )
+    }
+    overrides = {
+        (r.room_type_id, r.date): r
+        for r in db.session.scalars(
+            select(DailyRate).where(
+                DailyRate.tenant_id == tenant_id,
+                DailyRate.room_type_id.in_(type_ids),
+                DailyRate.date.in_(days),
+            )
+        )
+    }
+    rooms_by_type = defaultdict(set)
+    for room_id, type_id in db.session.execute(
+        select(PhysicalRoom.id, PhysicalRoom.room_type_id).where(
+            PhysicalRoom.tenant_id == tenant_id,
+            PhysicalRoom.room_type_id.in_(type_ids),
+            PhysicalRoom.active.is_(True),
+            PhysicalRoom.condition != "maintenance",
+        )
+    ):
+        rooms_by_type[type_id].add(room_id)
+    blocked, booked = defaultdict(set), defaultdict(int)
+    for block in db.session.scalars(
+        select(RoomBlock).where(
+            RoomBlock.tenant_id == tenant_id,
+            RoomBlock.start_date <= days[-1],
+            RoomBlock.end_date > days[0],
+        )
+    ):
+        for day in days:
+            if block.start_date <= day < block.end_date:
+                blocked[day].add(block.room_id)
+    for type_id, start, end in db.session.execute(
+        select(
+            ReservationRoom.room_type_id,
+            ReservationRoom.check_in,
+            ReservationRoom.check_out,
+        ).where(
+            ReservationRoom.tenant_id == tenant_id,
+            ReservationRoom.room_type_id.in_(type_ids),
+            ReservationRoom.active.is_(True),
+            ReservationRoom.check_in <= days[-1],
+            ReservationRoom.check_out > days[0],
+        )
+    ):
+        for day in days:
+            if start <= day < end:
+                booked[type_id, day] += 1
     for mapping in mappings:
         remote_room, remote_rate = (
             remote_rooms.get(mapping.remote_room_type_id),
@@ -446,63 +617,84 @@ def ari_snapshot(tenant_id, connection, client, details):
         attributes = remote_rate.get("attributes", {})
         if not supported_rate_plan(attributes, currency):
             raise ProviderError("channel_rate_plan_unsupported")
-        room_type = db.session.scalar(
-            select(RoomType).where(
-                RoomType.tenant_id == tenant_id, RoomType.id == mapping.room_type_id
-            )
-        )
-        overrides = {
-            r.date: r
-            for r in db.session.scalars(
-                select(DailyRate).where(
-                    DailyRate.tenant_id == tenant_id,
-                    DailyRate.room_type_id == room_type.id,
-                    DailyRate.date.in_(days),
-                )
-            )
-        }
+        room_type = room_types[mapping.room_type_id]
         for day in days:
-            booked = db.session.scalar(
-                select(func.count())
-                .select_from(ReservationRoom)
-                .where(
-                    ReservationRoom.tenant_id == tenant_id,
-                    ReservationRoom.room_type_id == room_type.id,
-                    ReservationRoom.active.is_(True),
-                    ReservationRoom.check_in <= day,
-                    ReservationRoom.check_out > day,
-                )
-            )
-            override = overrides.get(day)
+            capacity = len(rooms_by_type[room_type.id] - blocked[day]) if room_type.active else 0
+            override = overrides.get((room_type.id, day))
             available, stop_sell = AvailabilityPolicy().calculate(
-                capacity=capacity_for(tenant_id, room_type.id, day),
-                booked=booked,
+                capacity=capacity,
+                booked=booked[room_type.id, day],
+                inventory_hold=inventory_hold,
                 pause_requested=mapping.pause_requested,
                 room_active=room_type.active,
                 stop_sell=bool(override and override.stop_sell),
             )
+            price = override.price if override else room_type.base_price
+            if price <= 0 and not stop_sell:
+                raise ProviderError("channel_rate_invalid")
             availability.append(
                 {
                     "property_id": connection.property_id,
                     "room_type_id": mapping.remote_room_type_id,
                     "date": day.isoformat(),
-                    "availability": 0 if stop_sell else available,
+                    "availability": available,
                 }
             )
-            restrictions.append(
-                {
-                    "property_id": connection.property_id,
-                    "rate_plan_id": mapping.remote_rate_plan_id,
-                    "date": day.isoformat(),
-                    "rate": str(override.price if override else room_type.base_price),
-                    "stop_sell": stop_sell,
-                }
-            )
+            restriction = {
+                "property_id": connection.property_id,
+                "rate_plan_id": mapping.remote_rate_plan_id,
+                "date": day.isoformat(),
+                "stop_sell": stop_sell,
+            }
+            if price > 0:
+                restriction["rate"] = str(price)
+            restrictions.append(restriction)
     return availability, restrictions
 
 
+def verify_cancellation(client, entity, property_id):
+    """An all-properties key is not evidence that a booking belongs to this hotel."""
+    from .importer import invalid, revision_identity
+
+    try:
+        requested = revision_identity(entity, property_id)
+        booking = client.booking(requested["bookingId"])
+        if (
+            not isinstance(booking, dict)
+            or booking.get("id") != requested["bookingId"]
+            or booking.get("type") != "booking"
+            or not isinstance(booking.get("attributes"), dict)
+            or booking["attributes"].get("status") != "cancelled"
+            or booking["attributes"].get("property_id", property_id) != property_id
+        ):
+            invalid("channel_cancellation_unverified")
+        latest_id = remote_id(booking["attributes"].get("revision_id"))
+        latest = revision_identity(
+            entity if latest_id == requested["id"] else client.revision(latest_id), property_id
+        )
+        if (
+            latest["id"] != latest_id
+            or latest["bookingId"] != requested["bookingId"]
+            or latest["status"] != "cancelled"
+            or latest["insertedAt"] < requested["insertedAt"]
+        ):
+            invalid("channel_cancellation_unverified")
+        return latest
+    except ProviderError as error:
+        if error.retryable:
+            raise
+        invalid("channel_cancellation_unverified")
+    except ApiError:
+        invalid("channel_cancellation_unverified")
+
+
 def _run_job(tenant_id, job, connection, client):
-    if job.kind == "pause_mapping":
+    if job.kind == "load_bookings":
+        from .onboarding import validate_load
+
+        validate_load(client, connection, job.payload.get("channelId"), job.payload.get("target"))
+        client.load_future_reservations(job.payload["channelId"])
+    elif job.kind == "pause_mapping":
         pause_mapping(tenant_id, job, connection, client)
     elif job.kind == "setup_webhook":
         base_url = runtime().config.get("CHANNEX_WEBHOOK_BASE_URL")
@@ -520,19 +712,113 @@ def _run_job(tenant_id, job, connection, client):
         ):
             return  # Jobs queued before the last mapping paused must not reopen its inventory.
         availability, restrictions = ari_snapshot(tenant_id, connection, client, job.payload)
-        client.push_availability(availability)
-        client.push_restrictions(restrictions)
+        from .publication import stage_ari
+
+        stage_ari(client, availability, restrictions)
+        if db.session.scalar(select(booking_inventory_hold(tenant_id))):
+            raise ProviderError("channel_bookings_pending", retryable=True)
+        if any(row["availability"] > 0 for row in availability):
+            client.push_availability(availability)
     elif job.kind == "pull_bookings":
         from .importer import import_revision
 
         revision_id = job.payload.get("revisionId")
         if revision_id:
-            workflow = BookingRevisionWorkflow(
-                client, SQLAlchemyRevisionRepository(db.session, queue_job), import_revision
+            receipt = db.session.scalar(
+                select(ChannelRevision).where(
+                    ChannelRevision.tenant_id == tenant_id,
+                    ChannelRevision.revision_id == revision_id,
+                )
             )
-            workflow.receive(tenant_id, job.actor_id, connection.property_id, revision_id)
+            review = db.session.scalar(
+                select(ChannelBookingReview).where(
+                    ChannelBookingReview.tenant_id == tenant_id,
+                    ChannelBookingReview.revision_id == revision_id,
+                    ChannelBookingReview.resolved_at.is_(None),
+                )
+            )
+            first_review = review is None
+            retry_review = bool(job.payload.get("retryReview"))
+            if receipt is None and (review is None or retry_review):
+                workflow = BookingRevisionWorkflow(
+                    client,
+                    runtime().revisions,
+                    lambda hotel_id, entity, property_id: import_revision(
+                        hotel_id,
+                        entity,
+                        property_id,
+                        retry_review=retry_review,
+                        verify_cancellation=lambda: verify_cancellation(
+                            client, entity, property_id
+                        ),
+                    ),
+                )
+                receipt = workflow.fetch_and_import(tenant_id, connection.property_id, revision_id)
+            elif receipt is None:
+                receipt = review
+            if receipt.outcome in ACK_OUTCOMES:
+                previous_jobs = db.session.scalars(
+                    select(ChannelJob)
+                    .join(
+                        ChannelRevision,
+                        (ChannelRevision.tenant_id == ChannelJob.tenant_id)
+                        & (ChannelRevision.revision_id == ChannelJob.payload["revisionId"].astext),
+                    )
+                    .where(
+                        ChannelJob.tenant_id == tenant_id,
+                        ChannelJob.kind == "pull_bookings",
+                        ChannelJob.status == "needs_review",
+                        ChannelRevision.booking_id == receipt.booking_id,
+                        ChannelRevision.outcome.in_(ACK_OUTCOMES),
+                    )
+                ).all()
+                for previous in previous_jobs:
+                    previous.status, previous.error_code, previous.completed_at = (
+                        "succeeded",
+                        None,
+                        utcnow(),
+                    )
+                # The receipt and replacement ACK atomically reuse this import's queue slot.
+                job.status = "succeeded"
+                queue_job(
+                    tenant_id,
+                    job.actor_id,
+                    "ack_revision",
+                    {"revisionId": receipt.revision_id},
+                    "ack:" + receipt.revision_id,
+                )
+                for previous in previous_jobs:
+                    previous_revision = previous.payload["revisionId"]
+                    try:
+                        queue_job(
+                            tenant_id,
+                            job.actor_id,
+                            "ack_revision",
+                            {"revisionId": previous_revision},
+                            "ack:" + previous_revision,
+                        )
+                    except ApiError as error:
+                        if error.code != "channel_queue_full":
+                            raise
+                        break  # The feed recovers older ACKs from their committed receipts.
+            return receipt, first_review
         else:
-            for entity in client.feed(connection.property_id):
+            page = job.payload.get("feedPage", 1)
+            feed_run = job.payload.get("feedRun", job.id)
+            if (
+                type(page) is not int
+                or not 1 <= page <= 2**31 - 1
+                or not isinstance(feed_run, str)
+                or not 1 <= len(feed_run) <= 40
+            ):
+                raise ProviderError("provider_invalid_response")
+            entities = (
+                client.feed(connection.property_id)
+                if page == 1
+                else client.feed(connection.property_id, page=page)
+            )
+            retry_failed = job.payload.get("retryFailed", False)
+            for entity in entities:
                 if (
                     not isinstance(entity, dict)
                     or not isinstance(entity.get("attributes"), dict)
@@ -540,13 +826,21 @@ def _run_job(tenant_id, job, connection, client):
                 ):
                     raise ProviderError("provider_invalid_response")
                 revision_id = remote_id(entity.get("id"))
-                retry_failed = job.payload.get("retryFailed", False)
-                committed = retry_failed and db.session.scalar(
-                    select(ChannelRevision.id).where(
+                receipt = db.session.scalar(
+                    select(ChannelRevision).where(
                         ChannelRevision.tenant_id == tenant_id,
                         ChannelRevision.revision_id == revision_id,
                     )
                 )
+                if db.session.scalar(
+                    select(ChannelBookingReview.id).where(
+                        ChannelBookingReview.tenant_id == tenant_id,
+                        ChannelBookingReview.revision_id == revision_id,
+                        ChannelBookingReview.resolved_at.is_(None),
+                    )
+                ):
+                    continue
+                committed = receipt is not None and receipt.outcome in ACK_OUTCOMES
                 queue_job(
                     tenant_id,
                     job.actor_id,
@@ -555,12 +849,22 @@ def _run_job(tenant_id, job, connection, client):
                     ("ack:" if committed else "revision:") + revision_id,
                     retry_failed=retry_failed,
                 )
+            if len(entities) == 100:
+                details = {"feedPage": page + 1, "feedRun": feed_run}
+                if retry_failed:
+                    details["retryFailed"] = True
+                queue_job(
+                    tenant_id,
+                    job.actor_id,
+                    "pull_bookings",
+                    details,
+                    f"feed-page:{feed_run}:{page + 1}",
+                )
     else:
         revision_id = job.payload.get("revisionId")
-        workflow = BookingRevisionWorkflow(
-            client, SQLAlchemyRevisionRepository(db.session, queue_job), None
+        BookingRevisionWorkflow(client, runtime().revisions, None).acknowledge(
+            tenant_id, revision_id
         )
-        workflow.acknowledge(tenant_id, revision_id)
 
 
 def schedule_jobs(tenant_id):
@@ -581,30 +885,46 @@ def schedule_jobs(tenant_id):
             if not connection:
                 db.session.rollback()
                 return 0
-            authorize_actor(tenant_id, connection.actor_id)
+            authorize_actor(tenant_id, connection.actor_id, operation="pull_bookings")
             before = db.session.scalar(
                 select(func.count())
                 .select_from(ChannelJob)
                 .where(ChannelJob.tenant_id == tenant_id)
             )
             bucket = int(utcnow().timestamp()) // 60
-            queue_job(tenant_id, connection.actor_id, "pull_bookings", {}, f"poll:{bucket}")
-            if db.session.scalar(
-                select(ChannelMapping.id)
-                .where(ChannelMapping.tenant_id == tenant_id, ChannelMapping.active.is_(True))
-                .limit(1)
+            try:
+                queue_job(tenant_id, connection.actor_id, "pull_bookings", {}, f"poll:{bucket}")
+            except ApiError as error:
+                if error.code != "channel_queue_full":
+                    raise
+            inbound_only = bool(entitlement(tenant_id)["blockedReason"])
+            if not inbound_only:
+                drain_pending_ari(connection)
+            if (
+                not inbound_only
+                and connection.inventory_reconciled_at is not None
+                and db.session.scalar(
+                    select(ChannelMapping.id)
+                    .where(ChannelMapping.tenant_id == tenant_id, ChannelMapping.active.is_(True))
+                    .limit(1)
+                )
             ):
                 today = business_date(runtime().state.tenant)
                 first, last = today, today + timedelta(days=366)
                 while first < last:
                     end = min(last, first + timedelta(days=31))
-                    queue_job(
-                        tenant_id,
-                        connection.actor_id,
-                        "push_ari",
-                        {"start": first.isoformat(), "end": end.isoformat()},
-                        f"daily:{today}:{first}",
-                    )
+                    try:
+                        queue_job(
+                            tenant_id,
+                            connection.actor_id,
+                            "push_ari",
+                            {"start": first.isoformat(), "end": end.isoformat()},
+                            f"daily:{today}:{first}",
+                        )
+                    except ApiError as error:
+                        if error.code != "channel_queue_full":
+                            raise
+                        break
                     first = end
             db.session.flush()
             after = db.session.scalar(
@@ -622,21 +942,34 @@ def schedule_jobs(tenant_id):
 
 
 def process_jobs(tenant_id, limit=10, *, schedule=False):
+    from .publication import publisher_lock, recover_publications
+
+    if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= 100:
+        raise ValueError("limit must be 1..100")
+    with publisher_lock(tenant_id) as acquired:
+        if not acquired:
+            return 0
+        with runtime().request_scope("/api/_channel_recover", method="POST"):
+            recover_publications(tenant_id)
+        return _process_jobs(tenant_id, limit, schedule=schedule)
+
+
+def _process_jobs(tenant_id, limit=10, *, schedule=False):
     """Return processed count; caller supplies app context only, never an actor.
 
     Each iteration has its own request and DB transaction. Retriable transport
     failures back off 30/60/120/240 seconds (5 attempts), then need owner retry.
-    A transaction rolls back on crash: no processing lease can get stranded.
+    ARI claims survive a crash; the next owner of the publisher lock recovers
+    them after observing the persisted cooldown. Other jobs remain transactional.
     """
-    # shortcut: a crash/DB failure can lose cooldown; reserve before writes if strict pacing is needed.
     if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= 100:
         raise ValueError("limit must be 1..100")
     if schedule:
         schedule_jobs(tenant_id)
     count = 0
     for _ in range(limit):
-        job_id, actor_id = None, None
-        ari_savepoint = None
+        job_id, actor_id, attempts_before = None, None, None
+        job_savepoint = None
         with runtime().request_scope("/api/_channel_worker", method="POST"):
             try:
                 set_context(tenant_id=tenant_id)
@@ -656,81 +989,136 @@ def process_jobs(tenant_id, limit=10, *, schedule=False):
                 )
                 if ari_cooling:
                     ready = ready.where(ChannelJob.kind.not_in(ARI_KINDS))
+                if connection and connection.inventory_reconciled_at is None:
+                    ready = ready.where(ChannelJob.kind != "push_ari")
                 job = db.session.scalar(
-                    ready.order_by(ChannelJob.created_at, ChannelJob.id)
+                    ready.order_by(
+                        case(
+                            (ChannelJob.kind == "ack_revision", 0),
+                            (
+                                (ChannelJob.kind == "push_ari")
+                                & ChannelJob.dedupe_key.startswith("daily:")
+                                & (
+                                    func.coalesce(ChannelJob.payload["priority"].astext, "")
+                                    != "change"
+                                ),
+                                2,
+                            ),
+                            else_=1,
+                        ),
+                        ChannelJob.created_at,
+                        ChannelJob.id,
+                    )
                     .with_for_update(skip_locked=True)
                     .limit(1)
                 )
                 if job is None:
                     db.session.rollback()
                     break
-                job_id, actor_id = job.id, job.actor_id
-                if job.kind in ARI_KINDS:
-                    ari_savepoint = db.session.begin_nested()
-                authorize_actor(tenant_id, actor_id)
+                job_id, actor_id, attempts_before = job.id, job.actor_id, job.attempts
+                job_savepoint = db.session.begin_nested()
+                authorize_actor(tenant_id, actor_id, operation=job.kind)
                 if not connection or not connection.active:
                     raise ProviderError("channel_inactive")
                 client = channel_adapter(
                     connection.environment, load_credentials(connection)["apiKey"]
                 )
-                while prepare_publication(tenant_id, job, connection, client):
-                    # Persist the footprint while the job stays queued, before any remote write.
+                if job.kind == "push_ari" and db.session.scalar(
+                    select(ChannelMapping.id)
+                    .where(
+                        ChannelMapping.tenant_id == tenant_id,
+                        ChannelMapping.active.is_(True),
+                    )
+                    .limit(1)
+                ):
+                    from .publication import publish_ari
+
+                    job_savepoint = None
+                    job, connection = publish_ari(tenant_id, job, connection, client)
+                    result = None
+                elif job.kind == "load_bookings":
+                    # A committed claim prevents a crash after the POST from replaying it.
+                    job.status, job.attempts = "processing", job.attempts + 1
+                    job_savepoint = None
                     db.session.commit()
-                    ari_savepoint = None
                     set_context(tenant_id=tenant_id)
                     runtime().state.tenant = lock_tenant(tenant_id)
-                    job = db.session.scalar(
-                        select(ChannelJob)
-                        .where(ChannelJob.tenant_id == tenant_id, ChannelJob.id == job_id)
-                        .with_for_update()
-                    )
-                    if not job or job.status != "queued" or job.available_at > utcnow():
-                        break
-                    ari_savepoint = db.session.begin_nested()
-                    actor_id = job.actor_id
                     authorize_actor(tenant_id, actor_id)
                     connection = db.session.scalar(
                         select(ChannelConnection).where(ChannelConnection.tenant_id == tenant_id)
                     )
                     if not connection or not connection.active:
                         raise ProviderError("channel_inactive")
-                    ari_cooling = (
-                        connection.ari_available_at and connection.ari_available_at > utcnow()
-                    )
-                    if ari_cooling:
-                        break
                     client = channel_adapter(
                         connection.environment, load_credentials(connection)["apiKey"]
                     )
-                if (
-                    not job
-                    or job.status != "queued"
-                    or job.available_at > utcnow()
-                    or (job.kind in ARI_KINDS and ari_cooling)
-                ):
-                    db.session.rollback()
-                    continue
-                job.status, job.attempts = "processing", job.attempts + 1
-                _run_job(tenant_id, job, connection, client)
-                job.status, job.error_code, job.completed_at = "succeeded", None, utcnow()
+                    job = db.session.get(ChannelJob, job_id)
+                    result = _run_job(tenant_id, job, connection, client)
+                else:
+                    job.status, job.attempts = "processing", job.attempts + 1
+                    try:
+                        result = _run_job(tenant_id, job, connection, client)
+                    except ApiError as error:
+                        if error.code != "channel_queue_full":
+                            raise
+                        # Commit imported receipts/queued revisions; resume this page after capacity frees.
+                        result = DEFERRED
+                deferred = result is DEFERRED
+                needs_review = (
+                    result is not None and not deferred and result[0].outcome == "needs_review"
+                )
+                job.status = (
+                    "queued" if deferred else "needs_review" if needs_review else "succeeded"
+                )
+                job.error_code = (
+                    "channel_queue_full"
+                    if deferred
+                    else result[0].error_code
+                    if needs_review
+                    else None
+                )
+                job.completed_at = None if deferred else utcnow()
+                if deferred:
+                    job.attempts -= 1
+                    job.available_at = utcnow() + timedelta(seconds=15)
                 if job.kind in ARI_KINDS:
                     connection.ari_available_at = utcnow() + timedelta(seconds=7)
-                audit("channel.synced", "channel_job", job.id, {"kind": job.kind})
-                log_details = (tenant_id, job.id, job.kind, job.payload.get("revisionId", "-"))
+                if needs_review:
+                    if result[1]:
+                        audit(
+                            "channel.sync_error",
+                            "channel_job",
+                            job.id,
+                            {
+                                "kind": job.kind,
+                                "errorCode": job.error_code,
+                                "status": job.status,
+                            },
+                        )
+                elif not deferred:
+                    audit("channel.synced", "channel_job", job.id, {"kind": job.kind})
+                log_details = (
+                    tenant_id,
+                    job.id,
+                    job.kind,
+                    job.payload.get("revisionId", "-"),
+                    job.status,
+                    job.error_code or "-",
+                )
                 db.session.commit()
                 runtime().logger.info(
-                    "Channex job tenant=%s job=%s kind=%s revision=%s status=succeeded",
+                    "Channex job tenant=%s job=%s kind=%s revision=%s status=%s error=%s",
                     *log_details,
                 )
                 count += 1
             except (ApiError, ProviderError, SQLAlchemyError) as error:
                 if (
                     isinstance(error, (ApiError, ProviderError))
-                    and ari_savepoint is not None
-                    and ari_savepoint.is_active
+                    and job_savepoint is not None
+                    and job_savepoint.is_active
                 ):
-                    # Keep the tenant lock until the ARI cooldown and retry are durable.
-                    ari_savepoint.rollback()
+                    # Keep the tenant lock until terminal status or retry is durable.
+                    job_savepoint.rollback()
                 else:
                     db.session.rollback()
                 if not job_id:
@@ -743,13 +1131,30 @@ def process_jobs(tenant_id, limit=10, *, schedule=False):
                     .where(ChannelJob.tenant_id == tenant_id, ChannelJob.id == job_id)
                     .with_for_update()
                 )
-                failed.attempts += 1
+                claimed = failed is not None and failed.status == "processing"
+                expected_attempts = attempts_before + 1 if claimed else attempts_before
+                if (
+                    not failed
+                    or failed.status not in {"queued", "processing"}
+                    or failed.attempts != expected_attempts
+                ):
+                    db.session.rollback()
+                    count += 1
+                    continue
+                if not claimed:
+                    failed.attempts += 1
                 failed.error_code = (
                     error.code
                     if isinstance(error, (ApiError, ProviderError))
                     else "channel_database_conflict"
                 )
-                retry = isinstance(error, ProviderError) and error.retryable and failed.attempts < 5
+                # Loading old bookings has no upstream idempotency contract; retries are explicit.
+                retry = (
+                    failed.kind != "load_bookings"
+                    and isinstance(error, ProviderError)
+                    and error.retryable
+                    and failed.attempts < 5
+                )
                 failed.status = "queued" if retry else "failed"
                 failed.available_at = (
                     utcnow() + timedelta(seconds=30 * 2 ** (failed.attempts - 1))
@@ -764,7 +1169,7 @@ def process_jobs(tenant_id, limit=10, *, schedule=False):
                     if connection:
                         delay = 60 if isinstance(error, ProviderError) and error.retryable else 7
                         connection.ari_available_at = max(
-                            connection.ari_available_at or utcnow(),
+                            utcnow() if claimed else connection.ari_available_at or utcnow(),
                             utcnow() + timedelta(seconds=delay),
                             failed.available_at,
                         )

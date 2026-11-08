@@ -33,7 +33,7 @@ class InventoryIntegrationTests(DomainTestCase):
             categoryId=self.category["id"],
             minStock="2",
         )
-        self.supplier = self.master("suppliers", "Supplier", phone="123")
+        self.supplier = self.master("suppliers", "Supplier", phone="0901234567")
 
     def key(self):
         self.sequence += 1
@@ -478,7 +478,7 @@ class InventoryIntegrationTests(DomainTestCase):
         foreign = self.request("get", f"/api/tenants/{self.other_tenant_id}/inventory/masters")
         self.assertEqual(foreign.status_code, 403, foreign.json)
         with self.app.app_context():
-            set_context(is_system=True)
+            set_context(is_system=True, is_service=True)
             plan = db.session.get(Plan, "default-pro")
             plan.features = {**plan.features, "INVENTORY_WAREHOUSE": False}
             db.session.commit()
@@ -600,7 +600,7 @@ class InventoryIntegrationTests(DomainTestCase):
         self.assertEqual(self.post_invoice(original).status_code, 201)
         draft = self.invoice("1")
         with self.app.app_context():
-            set_context(is_system=True)
+            set_context(is_system=True, is_service=True)
             plan = db.session.get(Plan, "default-pro")
             plan.features = {**plan.features, "INVENTORY_WAREHOUSE": False}
             db.session.commit()

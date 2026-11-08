@@ -4,19 +4,26 @@ import hashlib
 import hmac
 import secrets
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 
+from pms_api.composition import channel_adapter
 from pms_api.ports import runtime
 
 from ..catalog.models import RoomType
-from ..composition import channel_adapter
 from ..core_models import utcnow
 from ..extensions import db
 from ..security import GLOBAL_ROLES, ApiError, audit, set_context
-from ..subscriptions import enforce_entitlements, lock_tenant
+from ..subscriptions import lock_tenant
 from .client import BASES, ProviderError, remote_id
 from .credentials import encrypt_credentials, load_credentials, storage_available, valid_secret
-from .models import ChannelBooking, ChannelConnection, ChannelJob, ChannelMapping
+from .models import (
+    ChannelBooking,
+    ChannelBookingReview,
+    ChannelConnection,
+    ChannelJob,
+    ChannelMapping,
+)
+from .onboarding import invalidate_inventory, onboarding_json, require_reconciled
 
 PREFIX = "/api/tenants/<tenant_id>/channels"
 
@@ -48,6 +55,7 @@ def mapping_json(row):
         "roomTypeId": row.room_type_id,
         "channexRoomTypeId": row.remote_room_type_id,
         "channexRatePlanId": row.remote_rate_plan_id,
+        "inboundRatePlanIds": row.inbound_rate_plan_ids or [],
         "active": row.active,
         "targetLocked": row.used_at is not None,
         "pauseRequested": row.pause_requested,
@@ -55,15 +63,22 @@ def mapping_json(row):
 
 
 def job_json(row):
+    details = row.payload if isinstance(row.payload, dict) else {}
+
+    def public_text(key, maximum):
+        value = details.get(key)
+        return value if isinstance(value, str) and len(value) <= maximum else None
+
     return {
         "id": row.id,
         "kind": row.kind,
-        "revisionId": row.payload.get("revisionId"),
+        "channelId": public_text("channelId", 36),
+        "revisionId": public_text("revisionId", 36),
         "status": row.status,
         "attempts": row.attempts,
         "errorCode": row.error_code,
-        "start": row.payload.get("start"),
-        "end": row.payload.get("end"),
+        "start": public_text("start", 10),
+        "end": public_text("end", 10),
         "createdAt": row.created_at.isoformat(),
         "completedAt": row.completed_at.isoformat() if row.completed_at else None,
     }
@@ -87,6 +102,9 @@ def connection_json(row):
         "credentialSource": "encrypted" if row.secrets_ciphertext is not None else "environment",
         "credentialError": error_code,
         "verifiedAt": row.verified_at.isoformat() if row.verified_at else None,
+        "inventoryReconciledAt": row.inventory_reconciled_at.isoformat()
+        if row.inventory_reconciled_at
+        else None,
     }
 
 
@@ -110,6 +128,7 @@ def handle_snapshot(tenant_id):
         "expectedCredentialRef": refs[0],
         "expectedWebhookSecretRef": refs[1],
         "connection": connection_json(row) if row else None,
+        "onboarding": onboarding_json(row),
         "mappings": [
             mapping_json(m)
             for m in db.session.scalars(
@@ -123,10 +142,18 @@ def handle_snapshot(tenant_id):
             for j in db.session.scalars(
                 select(ChannelJob)
                 .where(ChannelJob.tenant_id == tenant_id)
-                .order_by(ChannelJob.created_at.desc())
+                .order_by(ChannelJob.created_at.desc(), ChannelJob.id.desc())
                 .limit(50)
             )
         ],
+        "bookingReviewCount": db.session.scalar(
+            select(func.count())
+            .select_from(ChannelBookingReview)
+            .where(
+                ChannelBookingReview.tenant_id == tenant_id,
+                ChannelBookingReview.resolved_at.is_(None),
+            )
+        ),
         "roomTypes": [
             {"id": r.id, "name": r.name}
             for r in db.session.scalars(
@@ -135,6 +162,66 @@ def handle_snapshot(tenant_id):
                 .order_by(RoomType.name)
             )
         ],
+    }
+
+
+def handle_booking_reviews(tenant_id):
+    from pms_api.admin.channex_remote_application import page_number, query_values
+
+    args = query_values({"page", "pageSize"})
+    page, size = page_number(args.get("page", "1")), page_number(args.get("pageSize", "25"))
+    if size > 100:
+        raise ApiError(422, "invalid_pagination", "Mỗi trang tối đa 100 hồ sơ cần xử lý.")
+    pending = select(ChannelBookingReview).where(
+        ChannelBookingReview.tenant_id == tenant_id,
+        ChannelBookingReview.resolved_at.is_(None),
+    )
+    count = db.session.scalar(select(func.count()).select_from(pending.subquery()))
+    reviews = list(
+        db.session.scalars(
+            pending.order_by(
+                ChannelBookingReview.created_at.desc(),
+                ChannelBookingReview.id.desc(),
+            )
+            .offset((page - 1) * size)
+            .limit(size)
+        )
+    )
+    revision_ids = [row.revision_id for row in reviews]
+    jobs = {}
+    if revision_ids:
+        for job in db.session.scalars(
+            select(ChannelJob)
+            .where(
+                ChannelJob.tenant_id == tenant_id,
+                ChannelJob.kind == "pull_bookings",
+                ChannelJob.payload["revisionId"].astext.in_(revision_ids),
+            )
+            .order_by(ChannelJob.created_at.desc(), ChannelJob.id.desc())
+        ):
+            jobs.setdefault(job.payload["revisionId"], job)
+    return {
+        "items": [
+            {
+                "id": row.id,
+                "revisionId": row.revision_id,
+                "bookingId": row.booking_id,
+                "jobId": jobs[row.revision_id].id if row.revision_id in jobs else None,
+                "jobStatus": jobs[row.revision_id].status if row.revision_id in jobs else None,
+                "errorCode": row.error_code,
+                "providerStatus": row.provider_status,
+                "revisionAt": row.revision_at.isoformat(),
+                "createdAt": row.created_at.isoformat(),
+                "details": row.details,
+            }
+            for row in reviews
+        ],
+        "pagination": {
+            "page": page,
+            "pageSize": size,
+            "totalItems": count,
+            "totalPages": (count + size - 1) // size,
+        },
     }
 
 
@@ -186,9 +273,23 @@ def manager_source_config(tenant_id, data):
             "invalid_channel_source",
             "Chọn tài khoản hệ thống hoặc nguồn của chính khách sạn này.",
         )
+    existing = connection(tenant_id)
+    if (
+        account_id in MANAGER_KEYS
+        and not (runtime().request.endpoint or "").startswith("channels.support_")
+        and (
+            existing is None
+            or existing.property_id != uuid_input(data["propertyId"])
+            or existing.environment != MANAGER_KEYS[account_id][0]
+        )
+    ):
+        raise ApiError(
+            403,
+            "invalid_channel_source",
+            "Nguồn hệ thống chỉ được dùng cho kết nối khách sạn đã được cấp quyền.",
+        )
     environment, source = account_client(account_id)
     if account_id.startswith("hotel:"):
-        existing = connection(tenant_id)
         if uuid_input(data["propertyId"]) != existing.property_id:
             raise ApiError(
                 422,
@@ -246,9 +347,8 @@ def handle_save_config(tenant_id):
                 "Không đổi khách sạn hoặc môi trường sau khi có lịch sử đồng bộ.",
             )
     api_key = data.get("apiKey", "").strip()
-    if (not legacy and not same_target and not api_key) or (
-        legacy and row and row.secrets_ciphertext is not None and not same_target
-    ):
+    # A server-held legacy key cannot authorize a caller-selected property.
+    if not same_target and (legacy or not api_key):
         raise ApiError(422, "channel_api_key_required", "Nhập API key để xác minh khách sạn này.")
     ciphertext = row.secrets_ciphertext if same_target else None
     verified_at = row.verified_at if same_target else None
@@ -295,6 +395,8 @@ def handle_save_config(tenant_id):
         row.webhook_id if same_target else None,
     )
     db.session.flush()
+    if not same_target or reactivated:
+        invalidate_inventory(row)
     if (
         row.active
         and row.secrets_ciphertext is not None
@@ -316,12 +418,14 @@ def handle_save_config(tenant_id):
 def handle_save_mapping(tenant_id):
     data = runtime().payload()
     if (
-        set(data) != {"roomTypeId", "channexRoomTypeId", "channexRatePlanId", "active"}
+        not {"roomTypeId", "channexRoomTypeId", "channexRatePlanId", "active"} <= set(data)
+        or set(data)
+        - {"roomTypeId", "channexRoomTypeId", "channexRatePlanId", "active", "inboundRatePlanIds"}
         or not isinstance(data["active"], bool)
         or not isinstance(data["roomTypeId"], str)
     ):
         raise ApiError(422, "invalid_channel_mapping", "Ánh xạ loại phòng không hợp lệ.")
-    connection(tenant_id)
+    configuration = connection(tenant_id)
     room_type = db.session.scalar(
         select(RoomType).where(RoomType.tenant_id == tenant_id, RoomType.id == data["roomTypeId"])
     )
@@ -336,6 +440,19 @@ def handle_save_mapping(tenant_id):
         uuid_input(data["channexRoomTypeId"]),
         uuid_input(data["channexRatePlanId"]),
     )
+    inbound = data.get("inboundRatePlanIds", row.inbound_rate_plan_ids if row else [])
+    if (
+        not isinstance(inbound, list)
+        or len(inbound) > 99
+        or any(not isinstance(identifier, str) for identifier in inbound)
+        or len(set(inbound)) != len(inbound)
+        or remote_rate in inbound
+    ):
+        raise ApiError(422, "invalid_channel_mapping", "Danh sách gói nhận đặt phòng không hợp lệ.")
+    inbound = sorted(uuid_input(identifier) for identifier in inbound)
+    if len(set(inbound)) != len(inbound) or remote_rate in inbound:
+        raise ApiError(422, "invalid_channel_mapping", "Danh sách gói nhận đặt phòng bị trùng.")
+    inbound_changed = row is not None and inbound != sorted(row.inbound_rate_plan_ids or [])
     target_changed = row and (row.remote_room_type_id, row.remote_rate_plan_id) != (
         remote_room,
         remote_rate,
@@ -346,8 +463,14 @@ def handle_save_mapping(tenant_id):
             "channel_mapping_has_history",
             "Ghép nối có dữ liệu hoặc lịch sử gửi cần bảo vệ; không thể đổi mã phòng/gói giá. Có thể yêu cầu tạm dừng để đóng bán.",
         )
+    if row and row.used_at and not set(row.inbound_rate_plan_ids or []) <= set(inbound):
+        raise ApiError(
+            409,
+            "channel_mapping_has_history",
+            "Không bỏ gói nhận đặt phòng khỏi ghép nối đã sử dụng; cần giữ lịch sử đồng bộ.",
+        )
     if row and row.pause_requested:
-        if target_changed or data["active"]:
+        if target_changed or inbound_changed or data["active"]:
             raise ApiError(
                 409,
                 "channel_mapping_pause_pending",
@@ -355,6 +478,12 @@ def handle_save_mapping(tenant_id):
             )
         return mapping_json(row)
     if row and row.active and not data["active"] and row.used_at is not None:
+        if inbound_changed:
+            raise ApiError(
+                409,
+                "channel_mapping_has_history",
+                "Giữ nguyên các gói đã ghép khi yêu cầu đóng bán.",
+            )
         from .service import queue_job
 
         connection(tenant_id, active=True)
@@ -362,6 +491,34 @@ def handle_save_mapping(tenant_id):
         row.pause_requested = True
         audit("channel.pause_requested", "room_type", room_type.id)
         return mapping_json(row)
+    target_modified = (
+        row is None or target_changed or inbound_changed or (data["active"] and not row.active)
+    )
+    if data["active"] or target_modified:
+        if not configuration:
+            raise ApiError(409, "channel_inactive", "Thiết lập kết nối trước khi ghép gói giá.")
+        from .service import validate_mapping_target
+
+        try:
+            client = channel_adapter(
+                configuration.environment, load_credentials(configuration)["apiKey"]
+            )
+            validate_mapping_target(
+                configuration,
+                client,
+                remote_room,
+                remote_rate,
+                inbound,
+                (runtime().state.tenant.settings or {}).get("currency", "VND"),
+            )
+        except ProviderError as error:
+            raise ApiError(
+                503 if error.retryable or error.code == "credentials_unavailable" else 422,
+                error.code,
+                "Chưa xác minh được ghép nối. Kiểm tra khách sạn, phòng, gói giá và tiền tệ Channex.",
+            ) from None
+    if configuration and target_modified:
+        invalidate_inventory(configuration)
     if row is None:
         row = ChannelMapping(tenant_id=tenant_id, room_type_id=room_type.id)
         db.session.add(row)
@@ -370,6 +527,7 @@ def handle_save_mapping(tenant_id):
         remote_rate,
         data["active"],
     )
+    row.inbound_rate_plan_ids = inbound
     db.session.flush()
     audit("channel.mapped", "room_type", room_type.id)
     return mapping_json(row)
@@ -386,9 +544,10 @@ def handle_create_job(tenant_id):
         or set(data) - {"kind", "start", "end"}
     ):
         raise ApiError(422, "invalid_channel_job", "Tác vụ đồng bộ không hợp lệ.")
-    connection(tenant_id, active=True)
+    configuration = connection(tenant_id, active=True)
     details = {}
     if kind == "push_ari":
+        require_reconciled(configuration)
         days = window(data.get("start"), data.get("end"))
         details = {"start": days[0].isoformat(), "end": data["end"]}
     elif set(data) != {"kind"}:
@@ -413,9 +572,13 @@ def handle_retry_job(tenant_id, job_id):
     )
     if not row:
         raise ApiError(404, "not_found", "Không tìm thấy tác vụ.")
-    if row.status != "failed":
+    if row.status not in {"failed", "needs_review"}:
         raise ApiError(409, "channel_job_not_failed", "Tác vụ chưa ở trạng thái lỗi.")
-    connection(tenant_id, active=True)
+    configuration = connection(tenant_id, active=True)
+    if row.kind == "load_bookings":
+        invalidate_inventory(configuration)
+    if row.status == "needs_review":
+        row.payload = {**row.payload, "retryReview": True}
     (
         row.status,
         row.error_code,
@@ -435,11 +598,46 @@ def handle_retry_job(tenant_id, job_id):
     return job_json(row), 202
 
 
+def handle_reconcile_inventory(tenant_id):
+    from .service import drain_pending_ari
+
+    data = runtime().payload()
+    if set(data) != {"revision", "confirm"} or data["confirm"] is not True:
+        raise ApiError(
+            422,
+            "channel_confirmation_required",
+            "Xác nhận đã nhập đủ booking tương lai và đối chiếu tồn phòng với các OTA.",
+        )
+    row = connection(tenant_id, active=True)
+    state = onboarding_json(row)
+    if not isinstance(data["revision"], str) or data["revision"] != state["revision"]:
+        raise ApiError(
+            409,
+            "channel_onboarding_changed",
+            "Thiết lập đã thay đổi. Tải lại và đối chiếu trước khi xác nhận.",
+        )
+    if state["pendingBookings"] or state["reviewCount"]:
+        raise ApiError(
+            409,
+            "channel_onboarding_busy",
+            "Còn tác vụ booking hoặc hồ sơ cần đối soát. Xử lý xong trước khi xác nhận tồn phòng.",
+        )
+    if row.inventory_reconciled_at is None:
+        row.inventory_reconciled_at = utcnow()
+        audit(
+            "channel.inventory_reconciled",
+            "channel_connection",
+            row.id,
+            {"propertyId": row.property_id, "revision": row.inventory_revision},
+        )
+    drain_pending_ari(row)
+    return {"onboarding": onboarding_json(row)}
+
+
 def handle_webhook(tenant_id):
     from .service import queue_job
 
-    # No session cookie is required here. A per-tenant secret replaces provider HMAC,
-    # which Channex does not support: webhook-collection#authentication-and-security.
+    # The registered custom header authenticates this callback before reading JSON.
     set_context(tenant_id=tenant_id)
     row = connection(tenant_id, active=True)
     try:
@@ -454,32 +652,33 @@ def handle_webhook(tenant_id):
         or not hmac.compare_digest(secret.encode(), supplied.encode())
     ):
         raise ApiError(401, "invalid_webhook_secret", "Webhook không được xác thực.")
-    if runtime().request.content_length is None or runtime().request.content_length > 16384:
+    if runtime().request.content_length is None or runtime().request.content_length > 131072:
         raise ApiError(413, "webhook_too_large", "Webhook vượt giới hạn.")
     data = runtime().payload()
-    if (
-        not isinstance(data.get("event"), str)
-        or data["event"]
-        not in {
-            "booking",
-            "booking_new",
-            "booking_modification",
-            "booking_cancellation",
-            "non_acked_booking",
-        }
-        or data.get("property_id") != row.property_id
-    ):
+    if not isinstance(data.get("event"), str) or data.get("property_id") != row.property_id:
         raise ApiError(422, "invalid_channel_webhook", "Webhook không đúng khách sạn hoặc sự kiện.")
+    from pms_api.channels.exceptions_application import INCIDENT_EVENTS, receive_incident
+
+    from .service import authorize_actor
+
+    runtime().state.tenant = lock_tenant(tenant_id)
+    authorize_actor(tenant_id, row.actor_id, operation="pull_bookings")
+    if data["event"] in INCIDENT_EVENTS:
+        incident = receive_incident(tenant_id, data)
+        return {"accepted": True, "incidentId": incident.id}, 202
+    if data["event"] not in {
+        "booking",
+        "booking_new",
+        "booking_modification",
+        "booking_cancellation",
+        "non_acked_booking",
+    }:
+        return {"accepted": True, "ignored": True}, 202
     body = data.get("payload") or {}
     if not isinstance(body, dict) or body.get("property_id", row.property_id) != row.property_id:
         raise ApiError(422, "invalid_channel_webhook", "Nội dung webhook không hợp lệ.")
     revision = body.get("revision_id") or body.get("booking_revision_id")
     details = {"revisionId": uuid_input(revision)} if revision else {}
-    from .service import authorize_actor
-
-    runtime().state.tenant = lock_tenant(tenant_id)
-    authorize_actor(tenant_id, row.actor_id)
-    enforce_entitlements("channels.write")
     queue_job(
         tenant_id,
         row.actor_id,

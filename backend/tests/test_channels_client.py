@@ -1,4 +1,4 @@
-"""Provider contract checks use no application context, credentials, database or network."""
+"""Provider contract checks use no Flask, credentials, database or network."""
 
 import io
 import json
@@ -17,6 +17,58 @@ class Response(io.BytesIO):
 
 
 class ChannexClientTests(unittest.TestCase):
+    def test_ari_readback_uses_property_and_inclusive_date_filters(self):
+        from urllib.parse import parse_qs, urlsplit
+
+        identifier = str(UUID(int=1))
+        for method, resource in (
+            ("availability", "availability"),
+            ("restrictions", "restrictions"),
+        ):
+            with self.subTest(method=method):
+                provider, transport = self.provider({"data": {"fixture": {}}})
+                self.assertEqual(
+                    getattr(provider, method)(identifier, "2030-01-01", "2030-01-02"),
+                    {"fixture": {}},
+                )
+                request = transport.open.call_args.args[0]
+                target = urlsplit(request.full_url)
+                query = parse_qs(target.query)
+                self.assertTrue(target.path.endswith("/" + resource))
+                self.assertEqual(query["filter[property_id]"], [identifier])
+                self.assertEqual(query["filter[date][gte]"], ["2030-01-01"])
+                self.assertEqual(query["filter[date][lte]"], ["2030-01-02"])
+                if method == "restrictions":
+                    self.assertEqual(query["filter[restrictions]"], ["rate,stop_sell"])
+                transport.open.return_value = Response(b'{"data": []}')
+                with self.assertRaises(client.ProviderError):
+                    getattr(provider, method)(identifier, "2030-01-01", "2030-01-02")
+
+    def test_booking_lookup_checks_entity_identity_and_uses_fixed_endpoint(self):
+        identifier = str(UUID(int=4))
+        entity = {
+            "id": identifier,
+            "type": "booking",
+            "attributes": {"revision_id": str(UUID(int=14))},
+        }
+        provider, transport = self.provider({"data": entity})
+        self.assertEqual(provider.booking(identifier), entity)
+        request = transport.open.call_args.args[0]
+        self.assertEqual(request.method, "GET")
+        self.assertEqual(
+            request.full_url, "https://staging.channex.io/api/v1/bookings/" + identifier
+        )
+        for invalid in (
+            {},
+            {**entity, "id": str(UUID(int=5))},
+            {**entity, "type": "booking_revision"},
+            {**entity, "attributes": []},
+        ):
+            with self.subTest(entity=invalid):
+                transport.open.return_value = Response(json.dumps({"data": invalid}).encode())
+                with self.assertRaises(client.ProviderError):
+                    provider.booking(identifier)
+
     def test_async_envelopes_are_explicit_and_keep_actual_status(self):
         provider, transport = self.provider({"async_meta": {"id": "fixture-operation"}})
         transport.open.return_value.status = 202
@@ -128,6 +180,40 @@ class ChannexClientTests(unittest.TestCase):
         for environment, key in [("http://localhost", "a"), ("production", "a\nb")]:
             with self.assertRaises(client.ProviderError):
                 client.ChannexClient(environment, key)
+
+    def test_feed_pagination_preserves_rows_and_verifies_page_metadata(self):
+        identifier = str(UUID(int=1))
+        rows = [{"id": str(UUID(int=2))}]
+        provider, transport = self.provider(
+            {"data": rows, "meta": {"page": 2, "limit": 100, "total": 101}}
+        )
+        self.assertEqual(provider.feed(identifier, page=2), rows)
+        req = transport.open.call_args.args[0]
+        self.assertIn("pagination%5Bpage%5D=2", req.full_url)
+        self.assertIn("pagination%5Blimit%5D=100", req.full_url)
+        self.assertIn("order%5Binserted_at%5D=asc", req.full_url)
+        self.assertEqual(transport.open.call_count, 1)
+        for meta in (
+            {"page": 1},
+            {"page": True},
+            {"limit": 50},
+            {"total": -1},
+            {"total": True},
+        ):
+            with self.subTest(meta=meta):
+                transport.open.return_value = Response(
+                    json.dumps({"data": rows, "meta": meta}).encode()
+                )
+                with self.assertRaises(client.ProviderError):
+                    provider.feed(identifier, page=2)
+
+    def test_feed_page_is_bounded_before_any_remote_request(self):
+        provider, transport = self.provider({"data": []})
+        for page in (True, 0, -1, "2", 2**31):
+            with self.subTest(page=page):
+                with self.assertRaises(client.ProviderError):
+                    provider.feed(str(UUID(int=1)), page=page)
+        transport.open.assert_not_called()
 
     def test_ari_warnings_are_not_success(self):
         provider, _ = self.provider({"data": [], "meta": {"warnings": [{"warning": "invalid"}]}})
@@ -251,10 +337,10 @@ class ChannexClientTests(unittest.TestCase):
             "type": "webhook",
             "attributes": {
                 "callback_url": callback,
-                "event_mask": "booking",
+                "event_mask": "*",
                 "is_global": False,
                 "is_active": True,
-                "send_data": False,
+                "send_data": True,
                 "request_params": {},
                 "headers": {"X-Channex-Webhook-Secret": secret},
             },
@@ -279,11 +365,11 @@ class ChannexClientTests(unittest.TestCase):
         body = call.kwargs.get("body", call.args[2] if len(call.args) > 2 else None)["webhook"]
         self.assertEqual(body["property_id"], property_id)
         self.assertEqual(body["callback_url"], callback)
-        self.assertEqual(body["event_mask"], "booking")
+        self.assertEqual(body["event_mask"], "*")
         self.assertEqual(body["headers"], {"X-Channex-Webhook-Secret": secret})
         self.assertIs(body["is_active"], True)
         self.assertIs(body["is_global"], False)
-        self.assertIs(body["send_data"], False)
+        self.assertIs(body["send_data"], True)
 
     def test_webhook_retry_adopts_existing_without_duplicate(self):
         property_id = "11111111-1111-1111-1111-111111111111"

@@ -1,4 +1,4 @@
-.booking-detail-panel { width: min(1120px, 100vw); height: 100dvh; display: flex; flex-direction: column; min-width: 0; overflow: hidden; overscroll-behavior: none; background: var(--bg-main, #f3f7fa); color: var(--text-primary, #122b44); font-family: Inter, sans-serif; font-size: 14px; box-shadow: -8px 0 32px #122b4426; }
+.booking-detail-panel { width: min(1120px, 100vw); height: 100dvh; display: flex; flex-direction: column; min-width: 0; overflow: hidden; overscroll-behavior: none; background: var(--bg-main, #f3f7fa); color: var(--text-primary, #122b44); font-family: var(--font-sans); font-size: 14px; box-shadow: -8px 0 32px #122b4426; }
 .booking-detail-panel *, .booking-detail-panel *::before, .booking-detail-panel *::after { box-sizing: border-box; }
 .booking-detail-header { flex-shrink: 0; padding: 20px 24px 0; background: var(--bg-card, #fff); border-bottom: 1px solid var(--border-color, #dce5ee); }
 .booking-detail-heading, .booking-detail-summary, .booking-detail-lifecycle { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
@@ -136,3 +136,8 @@
   .booking-detail-table-wrap td[colspan] { display: block; }
   .booking-detail-table-wrap td:last-child { border-bottom: 0; }
 }
+.stay-change-form { min-width: 0; overflow-wrap: anywhere; }
+.stay-change-form .booking-detail-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr)); align-items: start; }
+.stay-change-form .booking-detail-summary > div { min-width: 0; }
+.stay-change-form dd { margin-inline-start: 0; }
+.stay-change-form .booking-detail-button { min-height: 2.75rem; }

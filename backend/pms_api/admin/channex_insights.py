@@ -1,4 +1,4 @@
-"""HTTP adapters. Business operations live in the application module."""
+"""HTTP entry points; business behavior is implemented in the application layer."""
 
 from common import CommonMethodView
 

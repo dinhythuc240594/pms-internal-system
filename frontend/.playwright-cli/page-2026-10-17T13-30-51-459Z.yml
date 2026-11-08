@@ -1,0 +1,101 @@
+- generic [ref=f3e3]:
+  - generic [ref=f3e4]:
+    - button "Switch hotel (hotel-a)" [ref=f3e5]
+    - button "Toggle read only" [ref=f3e6]
+    - button "Toggle error" [ref=f3e7]
+    - button "Toggle empty" [ref=f3e8]
+  - generic [ref=f3e9]:
+    - banner [ref=f3e10]:
+      - generic [ref=f3e11]:
+        - paragraph [ref=f3e12]: PHÂN PHỐI & BÁN PHÒNG
+        - heading "Lịch sử đồng bộ" [level=1] [ref=f3e13]
+        - paragraph [ref=f3e14]: Theo dõi yêu cầu trao đổi giá, phòng trống và đặt phòng với Channex.
+      - button "Tải lại lịch sử" [ref=f3e16] [cursor=pointer]
+    - navigation "Quản lý kênh OTA" [ref=f3e22]:
+      - link "Kênh OTA" [ref=f3e23] [cursor=pointer]:
+        - /url: /id/ota
+      - link "Lịch sử đồng bộ" [ref=f3e27] [cursor=pointer]:
+        - /url: /id/ota-history
+    - status [ref=f3e624]:
+      - paragraph [ref=f3e628]: Đã xếp hàng thử lại. Tải lại lịch sử để xem kết quả sau khi yêu cầu được xử lý.
+    - region [ref=f3e31]:
+      - generic [ref=f3e32]:
+        - generic [ref=f3e33]:
+          - heading "Đặt phòng cần xử lý" [level=2] [ref=f3e34]
+          - paragraph [ref=f3e35]: PMS chưa áp dụng các cập nhật này. Đối soát dữ liệu và tồn phòng trước khi thử lại; hệ thống không tự thử lại.
+        - status [ref=f3e1207]: 26 đặt phòng cần xử lý
+      - region "Đặt phòng cần xử lý, có thể cuộn ngang" [ref=f3e37]:
+        - table "Đặt phòng Channex chưa được áp dụng vào PMS" [ref=f3e1208]:
+          - rowgroup [ref=f3e1209]:
+            - row [ref=f3e1210]:
+              - columnheader "Đặt phòng" [ref=f3e1211]
+              - columnheader "Kỳ lưu trú & giá trị" [ref=f3e1212]
+              - columnheader "Nguyên nhân" [ref=f3e1213]
+              - columnheader "Thao tác" [ref=f3e1214]
+          - rowgroup [ref=f3e1215]:
+            - row [ref=f3e1216]:
+              - 'cell "TEST-1025 Kênh: Booking.com Mã Channex: booking-25 Mã cập nhật: revision-25 Đặt phòng mới · 16:00 16/10/2026" [ref=f3e1217]':
+                - strong [ref=f3e1218]: TEST-1025
+                - generic [ref=f3e1219]: "Kênh: Booking.com"
+                - generic [ref=f3e1220]: "Mã Channex: booking-25"
+                - generic [ref=f3e1221]: "Mã cập nhật: revision-25"
+                - generic [ref=f3e1222]: Đặt phòng mới · 16:00 16/10/2026
+              - cell "19/10/2026 → 22/10/2026 1.234,56 USD" [ref=f3e1223]:
+                - generic [ref=f3e1224]: 19/10/2026 → 22/10/2026
+                - generic [ref=f3e1225]: 1.234,56 USD
+                - group [ref=f3e1226]:
+                  - generic "1 phòng · Xem ghép nối" [ref=f3e1227] [cursor=pointer]
+              - cell "Cần xử lý Chưa ghép đúng loại phòng và gói giá của cập nhật. Kiểm tra ghép nối rồi thử lại." [ref=f3e1228]:
+                - generic [ref=f3e1229]: Cần xử lý
+                - paragraph [ref=f3e1230]: Chưa ghép đúng loại phòng và gói giá của cập nhật. Kiểm tra ghép nối rồi thử lại.
+              - cell [ref=f3e1231]:
+                - button "Thử lại sau khi xử lý" [ref=f3e1233] [cursor=pointer]
+      - generic [ref=f3e1237]:
+        - status [ref=f3e1238]: Trang 2 / 2 · 26 đặt phòng
+        - navigation "Phân trang đặt phòng cần xử lý" [ref=f3e1239]:
+          - button "Trang trước" [ref=f3e1240] [cursor=pointer]
+          - button "Trang sau" [disabled] [ref=f3e1241]
+    - region [ref=f3e576]:
+      - generic [ref=f3e577]:
+        - generic [ref=f3e578]:
+          - heading "Hoạt động gần đây" [level=2] [ref=f3e579]
+          - paragraph [ref=f3e580]: Tối đa 50 yêu cầu mới nhất của khách sạn.
+        - generic [ref=f3e581]:
+          - generic [ref=f3e582]:
+            - text: Trạng thái
+            - combobox "Trạng thái" [ref=f3e583]:
+              - option "Tất cả trạng thái" [selected]
+              - option "Đang chờ"
+              - option "Đang xử lý"
+              - option "Thành công"
+              - option "Cần xử lý"
+              - option "Cần kiểm tra"
+          - generic [ref=f3e1169]: 1 / 1 yêu cầu
+      - region "Bảng lịch sử đồng bộ, có thể cuộn ngang" [ref=f3e585]:
+        - table "Danh sách yêu cầu đồng bộ" [ref=f3e1170]:
+          - rowgroup [ref=f3e1171]:
+            - row [ref=f3e1172]:
+              - columnheader "Yêu cầu đồng bộ" [ref=f3e1173]
+              - columnheader "Ngày tạo" [ref=f3e1174]
+              - columnheader "Khoảng ngày" [ref=f3e1175]
+              - columnheader "Trạng thái" [ref=f3e1176]
+              - columnheader "Số lần xử lý" [ref=f3e1177]
+              - columnheader "Kết quả" [ref=f3e1178]
+              - columnheader "Thao tác" [ref=f3e1179]
+          - rowgroup [ref=f3e1180]:
+            - row [ref=f3e1181]:
+              - 'cell "Xử lý cập nhật đặt phòng Mã cập nhật: revision-0" [ref=f3e1182]':
+                - strong [ref=f3e1188]: Xử lý cập nhật đặt phòng
+                - generic [ref=f3e1189]: "Mã cập nhật: revision-0"
+              - cell [ref=f3e1190]:
+                - time [ref=f3e1191]: 16:00 16/10/2026
+              - cell "Không áp dụng khoảng ngày" [ref=f3e1192]
+              - cell "Đang chờ" [ref=f3e1194]
+              - cell "1 lần" [ref=f3e1197]
+              - cell "Không đủ tồn phòng phù hợp cho toàn bộ kỳ lưu trú. Kiểm tra tồn phòng và liên hệ kênh bán trước khi xử lý lại. Đã xếp hàng tự động thử lại Kết thúc 16:01 16/10/2026" [ref=f3e1198]:
+                - text: Không đủ tồn phòng phù hợp cho toàn bộ kỳ lưu trú. Kiểm tra tồn phòng và liên hệ kênh bán trước khi xử lý lại.
+                - generic [ref=f3e1199]: Đã xếp hàng tự động thử lại
+                - generic [ref=f3e1200]: Kết thúc 16:01 16/10/2026
+              - cell "—" [ref=f3e1201]
+      - paragraph [ref=f3e1206]: Các yêu cầu đang chờ sẽ được xử lý lần lượt. Tải lại để xem kết quả đồng bộ mới nhất.
+  - generic "Observed requests" [ref=f3e623]: hotel-a GET /channels hotel-a GET /channels/booking-reviews?page=1&pageSize=25 hotel-a POST /channels/jobs/job-0/retry hotel-a GET /channels hotel-a GET /channels/booking-reviews?page=1&pageSize=25 hotel-a GET /channels/booking-reviews?page=2&pageSize=25

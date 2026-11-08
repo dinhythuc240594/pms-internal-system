@@ -3,6 +3,7 @@
 import os
 import unittest
 from decimal import Decimal
+from uuid import uuid4
 
 from sqlalchemy import text
 from werkzeug.security import generate_password_hash
@@ -46,6 +47,13 @@ class DomainTestCase(unittest.TestCase):
         if result.exit_code:
             raise RuntimeError("Domain fixture migration failed") from result.exception
 
+    @classmethod
+    def tearDownClass(cls):
+        with cls.app.app_context():
+            db.session.remove()
+            db.engine.dispose()
+        super().tearDownClass()
+
     def setUp(self):
         from sqlalchemy import create_engine
 
@@ -59,7 +67,7 @@ class DomainTestCase(unittest.TestCase):
         finally:
             engine.dispose()
         with self.app.app_context():
-            set_context(is_system=True)
+            set_context(is_system=True, is_service=True)
             hashed = generate_password_hash(TEST_PASSWORD)
             for key, role in [
                 ("owner-a", "USER"),
@@ -177,4 +185,20 @@ class DomainTestCase(unittest.TestCase):
         extra = dict(self.headers if headers is None else headers)
         if key:
             extra["Idempotency-Key"] = key
+        if method.upper() == "POST" and path.endswith("/reservations"):
+            # Each legacy fixture call represents a distinct booking intent.
+            extra.setdefault("Idempotency-Key", str(uuid4()))
+        # Legacy workflow fixtures act on the latest form. Version-contract tests use raw HTTP.
+        parts = path.split("/")
+        booking_mutation = (
+            len(parts) >= 6 and parts[4] == "reservations" and (
+                method.upper() == "PATCH" and len(parts) == 6
+                or method.upper() == "POST" and len(parts) == 7 and parts[6] == "status"
+            )
+        )
+        if booking_mutation and isinstance(json, dict) and "expectedVersion" not in json:
+            detail_path = "/".join(parts[:6])
+            detail = (client or self.client).get(detail_path, headers=extra)
+            if detail.status_code == 200:
+                json = {**json, "expectedVersion": detail.json["version"]}
         return (client or self.client).open(path, method=method.upper(), json=json, headers=extra)

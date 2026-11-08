@@ -1,9 +1,5 @@
 # LOHA PMS Backend
 
-Kiến trúc backend: xem [ánh xạ design pattern và phạm vi refactor](ARCHITECTURE.md).
-HTTP views đã tách sang lớp application; tài liệu ghi rõ phần domain/repository,
-transaction, khả năng tương thích và giới hạn kiểm chứng PostgreSQL.
-
 Backend Flask/PostgreSQL đã có nền tảng quyền/RLS, phòng/khách/booking, thanh toán, POS/quỹ, buồng phòng, kho, giá và tỷ giá, báo cáo, thuê bao và tích hợp Channex. Frontend dùng API thật; chỉ lựa chọn khách sạn được lưu trong trình duyệt. Dữ liệu demo cũ trong localStorage không được nhập tự động. Xem [hợp đồng API](API_CONTRACT.md) và [báo cáo cập nhật 14/10/2026](../docs/reports/reviews/remaining-functions-2026-10-14.md) để phân biệt phần đã triển khai, giới hạn và phần còn cần nghiệm thu.
 
 ## Bổ sung nghiệp vụ — 14/10/2026
@@ -39,16 +35,33 @@ và dùng cùng bộ tạo kế hoạch với nút trên giao diện. Lặp lạ
 booking thêm sau lần chạy trước vẫn được bổ sung. Web API không tự khởi động
 worker này. Worker Channex vẫn là tiến trình riêng như hướng dẫn bên dưới.
 
-Night Audit/chốt ngày và tự ghi doanh thu từng đêm chưa triển khai; quy tắc ghi
-nhận cần được chốt trước khi thêm bút toán. Các phần còn lại nằm trong báo cáo
-ngày 14/10, không coi toàn bộ thiết kế hệ thống đã hoàn thành.
+## Hoàn thiện P1 nghiệp vụ — 29/10/2026
+
+BIZ-01–07 đã có API và giao diện: chuyển phòng/gia hạn/trả sớm sau check-in,
+Night Audit khóa ngày và ghi nhận doanh thu, đối soát/thu hồi hoa hồng, xử lý
+ngoại lệ và sự cố OTA, hoàn/đảo thu SaaS và quyền vận hành tạm khi thuê bao hết hạn.
+Xem [báo cáo triển khai và kiểm chứng](../docs/reports/reviews/full-p1-business-fixes-2026-10-29.md).
+
+Áp migration theo chuỗi `0037_channel_rate_safety` → `0038_commission_review` →
+`0039_saas_recovery` → `0040_channel_exceptions` → `0041_operational_days` bằng
+`python manage.py db upgrade`, rồi `python manage.py db-check` và `/api/ready`.
+Các bảng tiền/đối soát/ngày đã chốt giữ lịch sử bất biến và RLS; downgrade từ chối
+xóa lịch sử đã phát sinh. Nâng cấp API/worker cùng phiên bản trước khi mở frontend.
+Kiểm thử ở database riêng không áp migration vào database nghiệp vụ.
+
+Night Audit nằm ở **Báo cáo → Đối soát ngày**, tách khỏi nút lưu xác nhận đối soát
+cũ. Lần chốt đầu chọn ngày bắt đầu sổ doanh thu, không ghi lại các ngày trước đó;
+sau đó đóng lần lượt từng ngày đã kết thúc theo múi giờ khách sạn. Thu/hoàn tiền
+vẫn dùng sổ quỹ; Night Audit không tạo lại tiền thu. Điều chỉnh sau chốt ghi vào
+ngày mở. Xem [hướng dẫn vận hành](../docs/runbooks/operations-and-restore.md).
 
 ## Chạy trên Windows
 
-Thực hiện các lệnh PowerShell sau từ thư mục `backend`. Hỗ trợ Python 3.13 trở lên; image production dùng Python 3.14. Cần bộ công cụ PostgreSQL (`initdb`, `pg_ctl`, `psql`; đã kiểm tra với 17). Script tạo một PostgreSQL local riêng để phát triển, không sử dụng database trên Coolify.
+Thực hiện các lệnh PowerShell sau từ thư mục `backend`. Cần Python 3.14 và bộ công cụ PostgreSQL 18 (`initdb`, `pg_ctl`, `psql`). Script tạo một PostgreSQL local riêng để phát triển, không sử dụng database trên Coolify.
 
 ```powershell
-python -m venv .venv
+py -3.14 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements-installer.txt
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\python.exe scripts/local_postgres.py start
 .\.venv\Scripts\python.exe manage.py db upgrade
@@ -133,6 +146,13 @@ Commit/push đưa code và migration lên Git, không đưa URL bí mật hay d�
 
 Chuỗi migration: `0001_backend_baseline` → `0002_identity` → `0003_catalog` → `0004_booking`. Có extension `btree_gist` để PostgreSQL chặn hai booking đang hoạt động trùng phòng/ngày. Tài khoản migration cần quyền database owner để cài extension này. Không chạy `db init` lại vì thư mục migrations đã có trong Git. File do `db migrate` sinh ra cần được kiểm tra trước khi áp dụng; Alembic không tự phát hiện đầy đủ mọi thay đổi schema. [Tài liệu Flask-Migrate](https://flask-migrate.readthedocs.io/en/latest/)
 
+Sau khi hợp nhất các nhánh có migration, `python manage.py db heads` phải trả về
+một head duy nhất. Revision `0033_merge_room_history` hợp nhất
+`0032_channel_job_history` và `0032_room_locations`, giữ nguyên hai revision đã
+phát hành. Nếu gặp lỗi `Multiple head revisions`, cập nhật backend lên bản có
+revision hợp nhất rồi chạy lại `python manage.py db upgrade`. Lệnh này áp dụng
+nhánh còn thiếu từ trạng thái hiện tại và hợp nhất lịch sử, không đặt lại dữ liệu.
+
 ## Tài khoản và nghiệp vụ local
 
 `seed-local` chỉ chạy khi APP_ENV=development, host loopback, database pms_local và chưa có tài khoản. Nó tạo hai khách sạn độc lập, phòng 101–103 và danh mục tối thiểu, không tạo booking hoặc gói thương mại. Email/mật khẩu ngẫu nhiên nằm trong `backend/.local-postgres/demo-users.json` (được Git ignore). Mật khẩu demo cũ `password123` không còn dùng. Có Owner, Lễ tân, Buồng phòng, Kế toán và Super Admin; Owner quản lý nhân viên, Admin tạo khách sạn/cấp Owner.
@@ -141,13 +161,30 @@ Trên môi trường khác, chạy `python manage.py init-admin` trong terminal 
 
 Luồng thử: Owner → Settings tạo phòng/nguồn/dịch vụ/phương thức thanh toán/quỹ → Reservations tạo booking → tab Thanh toán thu cọc → nhận phòng (trong ngày lưu trú, tất cả phòng sạch) → thêm dịch vụ/thuế/phí hoặc chiết khấu → thanh toán hết → trả phòng → Housekeeping dọn phòng. Booking mới luôn CONFIRMED. Nhận phòng không đổi phòng/ngày trong luồng hiện tại. Checkout bị chặn khi còn nợ; trả phòng chuyển tất cả phòng sang bẩn. Giá từng đêm được snapshot; đổi danh mục/giá không thay booking cũ. Đổi tiền tệ sau khi đã có booking bị chặn; đa tiền tệ thuộc BE-11.
 
-Các khoản thu và hoàn tạo ledger cùng transaction, không xóa giao dịch cũ. Hoàn tiền có lý do và không vượt số đã thu; có thể hoàn cho booking đã hủy, điều chỉnh sau checkout thuộc BE-06. `Idempotency-Key` bắt buộc cho thu/hoàn/thêm chi phí; UI giữ cùng mã khi thử lại một thao tác, kể cả tải lại sau lỗi chưa rõ kết quả. Trình duyệt chỉ giữ fingerprint đã hash và mã thao tác trong sessionStorage, không giữ nội dung tiền hoặc token đăng nhập. Cùng mã khác nội dung bị từ chối. Quỹ có loại `cash` hoặc `bank`, không thể đổi loại khi đã có giao dịch. Thuế/phí hiện được nhập rõ thành dòng cộng; chiết khấu thành dòng trừ, không tự áp chính sách thuế chưa chốt.
+Các khoản thu và hoàn tạo ledger cùng transaction, không xóa giao dịch cũ. Hoàn tiền có lý do và không vượt số đã thu; có thể hoàn cho booking đã hủy, điều chỉnh sau checkout thuộc BE-06. `Idempotency-Key` bắt buộc cho tạo booking và thu/hoàn/thêm chi phí; sửa booking, đổi trạng thái và thêm ghi chú cũng hỗ trợ gửi lại cùng mã. UI giữ cùng mã khi thử lại một thao tác, kể cả tải lại sau lỗi chưa rõ kết quả. Cùng mã khác nội dung bị từ chối. Quỹ có loại `cash` hoặc `bank`, không thể đổi loại khi đã có giao dịch. Thuế/phí hiện được nhập rõ thành dòng cộng; chiết khấu thành dòng trừ, không tự áp chính sách thuế chưa chốt.
+
+Kết quả ghi và tải lại workspace được xử lý riêng: server đã trả thành công thì UI báo đã lưu và giữ ID kết quả, kể cả lượt tải lại trả 503. Thông báo đồng bộ và nút tải lại cho phép cập nhật dữ liệu mà không gửi lại giao dịch. Intent đã ghi được giữ đến khi workspace tải thành công; intent chưa rõ kết quả chỉ được giải quyết bằng gửi lại cùng mã. sessionStorage giữ fingerprint đã hash, mã thao tác và metadata xác nhận (đường dẫn, người thao tác, ID kết quả), không giữ nội dung biểu mẫu, số tiền hoặc token đăng nhập.
 
 ## Frontend và Coolify
 
 Local chạy frontend bằng `npm run dev`; Vite proxy `/api` đến `http://127.0.0.1:5000`. Production cần route `/api` đến backend tại cùng domain, hoặc đặt biến build frontend `VITE_API_BASE_URL=https://api.example.com` với API cùng site với frontend. Biến này chỉ là URL API công khai, tuyệt đối không dùng DATABASE_URL ở frontend. Backend đặt `CORS_ORIGINS=https://pms.example.com` đúng origin frontend; cookie HttpOnly/SameSite=Lax và Secure ở production, mutation có CSRF. Khi đi qua Tunnel/proxy, vẫn cần origin HTTPS thật trong CORS_ORIGINS.
 
 Runtime `pms_app` phải không là superuser, BYPASSRLS hoặc owner các bảng. Default privileges phải cấp SELECT/INSERT/UPDATE/DELETE cho các bảng do migrator tạo; RLS bảo vệ dữ liệu theo transaction-local tenant context. Các bảng identity/session/login-limit là dữ liệu global nội bộ; audit có tenant nullable cho sự kiện quản trị hệ thống. Các dòng tiền và audit có trigger chặn sửa/xóa. [PostgreSQL RLS](https://www.postgresql.org/docs/current/ddl-rowsecurity.html)
+
+Migration `0034_pms_tenant_authorization` tách quyền quản trị SaaS khỏi dữ liệu PMS.
+Chạy `python manage.py db upgrade` trước khi khởi động API/worker phiên bản này.
+SUPER_ADMIN/SYSTEM_MANAGER chỉ vào PMS khi chủ khách sạn dùng tài khoản khách hàng
+cấp membership đang hoạt động và chỉ được dùng vai trò đã cấp. Tài khoản hệ thống
+không tự cấp hoặc thu hồi membership, kể cả khi được cấp HOTEL_OWNER. Nếu kết nối
+OTA cũ dùng tài khoản hệ thống làm actor, chủ khách sạn cần cấp quyền phù hợp hoặc
+lưu lại cấu hình bằng tài khoản owner; không tự tạo quyền trong migration.
+
+Migration `0035_owner_saas_billing` nối tiếp `0034_pms_tenant_authorization`, cấp
+quyền SELECT hóa đơn/thanh toán SaaS cho membership HOTEL_OWNER đang hoạt động
+theo tenant. Tab Hồ sơ → Đơn hàng dùng API chỉ đọc; nhân viên không có quyền xem.
+Tài khoản hệ thống cũng cần được chủ khách sạn cấp membership HOTEL_OWNER để dùng
+API này. Chạy `python manage.py db upgrade` trước khi bật tab; downgrade chỉ thu
+hồi quyền đọc, giữ nguyên lịch sử hóa đơn và thanh toán.
 
 POS đầy đủ, phiếu thu/chi độc lập, phân ca buồng phòng, báo cáo kế toán, kho, billing/hai gói và OTA thuộc BE-06 trở đi. Các luồng này không được báo lưu thành công bằng dữ liệu demo. Chưa deploy hoặc kiểm chứng Coolify trong lần triển khai local này.
 
@@ -216,13 +253,88 @@ Migration chạy lúc triển khai, không chạy trong Docker image build hoặ
 
 Backend đọc URL từ cấu hình Coolify sau khi deploy. Việc kết nối PostgreSQL local thành công không xác nhận backend trên Coolify đã kết nối; cần kiểm tra `/api/ready` tại môi trường đó.
 
+### `database_unavailable` khi tải gói cước hoặc tổng quan Manager
+
+`GET /api/plans` và `GET /api/manager/overview` đều đọc bảng `plans`. Từ revision
+`0043_plan_room_pricing`, hai API cần cột `plans.pricing_rules`. Nếu triển khai
+code mới nhưng database chưa áp dụng migration này, PostgreSQL báo thiếu cột
+(`42703`) và API trả `database_unavailable` HTTP 503. Mã lỗi này cũng có thể do
+mất kết nối hoặc thiếu quyền; cần đối chiếu readiness và log trước khi kết luận.
+
+Bản migration `0043` trước khi sửa dùng `sa.text` cho JSON mặc định; các phần
+`:15`, `:30`, `:50`, `:100` bị hiểu thành tham số SQL và sinh JSON sai. Nếu lần
+nâng cấp trước thất bại ở bước này, triển khai bản đã sửa trước khi chạy lại
+`db upgrade`.
+
+Kiểm tra `/api/ready` trên đúng backend đang gặp lỗi:
+
+- `database: ok, schema: pending`: kết nối được nhưng migration chưa khớp code.
+- `database: unavailable`: kiểm tra PostgreSQL, URL runtime, mạng và tài khoản.
+- `database: unsafe_role`: tài khoản runtime production đang có quyền superuser
+  hoặc BYPASSRLS; cấu hình lại tài khoản runtime theo hướng dẫn ở trên.
+
+Nếu schema đang pending, mở Terminal của **container backend phiên bản mới**,
+kiểm tra revision rồi áp dụng migration bằng cấu hình của chính môi trường đó:
+
+```sh
+python manage.py db current
+python manage.py db heads
+python manage.py db upgrade
+python manage.py db-check
+```
+
+Với phiên bản hiện tại, head là `0043_plan_room_pricing`. Migration này bổ sung
+cột và giá trị mặc định cho các gói hiện có. Không cần tạo lại database, seed hoặc
+đặt revision bằng `db stamp`. `DATABASE_URL` và `DATABASE_MIGRATION_URL` phải trỏ
+đến cùng database; URL migration dùng tài khoản có quyền thay đổi schema.
+
+Sau khi `db-check` thành công, `/api/ready` cần trả HTTP 200 với
+`database: ok, schema: ok`, rồi tải lại trang Manager. `/api/health` trả 200 chỉ
+xác nhận tiến trình web đang chạy. Nếu còn lỗi, log `database_failure` ghi
+`endpoint`, `phase`, `sqlstate` và loại lỗi driver để phân biệt nguyên nhân;
+không ghi SQL, tham số hoặc chuỗi kết nối.
+
 ## Chạy kiểm thử
 
+Workflow [CI](../.github/workflows/ci.yml) chạy backend lint và toàn bộ test trên
+PostgreSQL 18 riêng, runtime không superuser/BYPASSRLS và migrator tách biệt;
+frontend lint/test/build. `scripts/run_ci_tests.py` thất bại nếu thiếu URL test
+hoặc có test bị skip. `scripts/ci_database.py` tạo/xóa database và role UUID trên
+PostgreSQL loopback chỉ định rõ bằng `CI_DATABASE_ADMIN_URL`; không dùng database
+nghiệp vụ. Đặt hai job `backend`/`frontend` thành required checks riêng.
+
+## S03 — Sức khỏe tác vụ và diễn tập phục hồi
+
+Migration `0027_worker_health` bổ sung heartbeat lưu riêng với transaction
+nghiệp vụ cho worker OTA và lập kế hoạch buồng. Manager → Tổng quan hiển thị
+worker thiếu/quá hạn và phạm vi tác vụ đã ghi nhận heartbeat. API
+`GET /api/admin/operations` yêu cầu phiên `SYSTEM_MANAGER`/`SUPER_ADMIN`;
+không đọc hoặc trả queue OTA, booking cần kiểm tra, tồn/giá chờ gửi hay dữ liệu
+nghiệp vụ khách sạn. Chi tiết đồng bộ được xem trong PMS theo quyền khách sạn
+được chủ khách sạn cấp.
+`/api/health` và `/api/ready` vẫn giữ ý nghĩa liveness và database/schema.
+
+Xem [runbook vận hành và restore](../docs/runbooks/operations-and-restore.md)
+cho cách xử lý và `scripts/verify_restore.py`. Script chỉ phục hồi archive tin
+cậy vào database `pms_restore_test_<UUID>` mới trên loopback, kiểm tra schema,
+RLS và invariant phòng, rồi xóa đúng sandbox vừa tạo. Không tự đổi backup,
+cảnh báo, branch protection hoặc cấu hình Coolify.
+
+### Chạy kiểm thử local
+
 ```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements-installer.txt
 .\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
 .\.venv\Scripts\python.exe -m ruff check .
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
 ```
+
+Các file `requirements*.txt` là lock có hash và chỉ cho cài wheel; bước installer
+đưa pip lên bản đã vá trước khi cài app. Sau khi duyệt thay đổi một phiên bản,
+chạy `python scripts/hash_requirements.py`, review diff hash rồi kiểm tra bằng
+`python scripts/hash_requirements.py --check`. Script không tự chọn phiên bản.
+Chính sách CI và cách chạy audit nằm trong
+[báo cáo bảo mật](../docs/reports/security-owasp-2026-10-26.md).
 
 Các kiểm thử tích hợp PostgreSQL chỉ chạy khi đặt rõ cả `TEST_DATABASE_URL` và `TEST_DATABASE_MIGRATION_URL`. Dùng URL runtime và migration của cùng một database kiểm thử riêng, tên bắt đầu bằng `pms_test_`, ví dụ `pms_test_backend`. Suite được phép thay đổi schema trong database này và từ chối tên database ngoài tiền tố đó; không trỏ vào `pms_local` hay database production. Các tests khác chạy mà không cần database thật.
 
@@ -263,7 +375,8 @@ cấp đã chọn cho BE-12, chưa có đồng bộ OTA trong hai nhóm này.
 
 Trang Channex của Manager/Super Admin đọc property, loại phòng/gói giá, lịch sử
 booking và tồn/giá trực tiếp từ Channex qua backend. Manager chọn nguồn và môi
-trường rõ ràng; backend không tự chuyển nguồn khi lỗi. Có thể dùng khóa kết nối
+trường rõ ràng; phần nghiệp vụ yêu cầu membership của đúng khách sạn và property
+đã liên kết. Backend không tự chuyển nguồn khi lỗi. Có thể dùng khóa kết nối
 đã lưu của từng khách sạn hoặc cấu hình thêm nguồn hệ thống bằng hai biến runtime
 backend tùy chọn `CHANNEX_MANAGER_API_KEY_STAGING` và
 `CHANNEX_MANAGER_API_KEY_PRODUCTION`. Không cần tạo khóa mới nếu nguồn khách sạn
@@ -272,7 +385,7 @@ backend tùy chọn `CHANNEX_MANAGER_API_KEY_STAGING` và
 Property Channex chưa liên kết LOHA vẫn hiện trong danh sách. Đọc dữ liệu không
 tạo khách sạn, import/ACK booking hay đẩy tồn/giá. Dữ liệu tồn thiếu được hiển thị
 là chưa biết. Giao diện LOHA thêm/sửa loại phòng và gói giá qua API Channex,
-có CSRF và kiểm tra quyền hệ thống. Loại phòng đã ghép LOHA chỉ đổi tên; số phòng
+có CSRF, kiểm tra quyền hệ thống và quyền nghiệp vụ tại khách sạn. Loại phòng đã ghép LOHA chỉ đổi tên; số phòng
 và sức chứa được bảo vệ. Chỉ sửa giá mặc định của gói manual/per-room đơn giản;
 gói phức tạp vẫn xem được. Tab Kênh OTA lấy danh mục adapter thật từ Channex,
 cho tạo kết nối, kiểm tra thông tin, đọc phòng/gói giá OTA để ghép nối, đổi tên,
@@ -292,6 +405,8 @@ Xem hợp đồng các endpoint `/api/admin/channex/...` tại [API_CONTRACT.md]
 Manager/Super Admin có danh sách Channex tập trung qua `GET /api/admin/channex`:
 trạng thái kết nối, số phòng/loại phòng, ghép nối đang bật/đang đóng bán và tác vụ
 mới nhất, lấy từ database local, không gọi Channex hay trả khóa/tham chiếu bí mật.
+Danh sách chỉ gồm khách sạn có membership được cấp quyền xem kênh OTA; chưa được
+cấp quyền thì danh sách rỗng.
 `GET /api/tenants/<tenant_id>/channels/catalog` tải loại phòng/gói giá của property
 đã lưu cho dropdown, kể cả khi kết nối đang tạm dừng. API vẫn kiểm tra quyền
 `channels.view`/`OTA_SYNC`, xác thực dữ liệu và giới hạn 100 mục mỗi danh mục;
@@ -338,6 +453,11 @@ trước mỗi lần thử để tránh tạo trùng sau lỗi giao dịch. Theo
 trong OTA/lịch sử; lưu khóa thành công chưa có nghĩa webhook đã sẵn sàng. Nếu chưa
 có HTTPS công khai, để trống biến này và dùng poll. Cấu hình cũ dùng biến theo
 tenant vẫn hoạt động; nhập lại API key sẽ chuyển sang mã hóa, không tự chuyển đổi.
+Payload cấu hình legacy chỉ được giữ nguyên property/môi trường đã liên kết;
+không được tạo hoặc chuyển liên kết bằng tên biến môi trường, kể cả khi tạm dừng.
+Kết nối mới dùng API key do chủ khách sạn nhập hoặc nguồn `accountId` được quản trị
+cấp quyền. Khi nâng cấp, kiểm tra lại assignment của các kết nối legacy hiện có
+nếu khóa cũ được cấp quyền trên nhiều property.
 
 Chạy worker riêng bằng cùng image/code và runtime database:
 
@@ -387,6 +507,31 @@ Tắt toàn bộ kết nối chỉ dừng worker, không đóng bán trên OTA; 
 bán trước khi tắt kết nối. ARI hiện gửi giá cơ bản hoặc giá theo ngày, chưa chuyển
 quy tắc LOS, voucher và khuyến mãi PMS thành rate plan OTA.
 
+An toàn giá (migration `0037_channel_rate_safety`): mỗi hạng phòng có một gói chính
+để gửi giá và danh sách gói bổ sung chỉ nhận booking, được kiểm tra cùng property,
+phòng và tiền tệ khi lưu. Xem trước giá OTA dùng cùng snapshot với worker; gói kế
+thừa không bị tự tính lại theo giá PMS. Chuyển phòng vật lý cùng hạng/ngày giữ
+tiền và tỷ giá booking OTA; đổi ngày/hạng/số phòng/nguồn cần đối soát.
+
+Lượt xuất ARI yêu cầu đóng tồn về 0 và đọc lại, gửi/đọc lại giá rồi kiểm tra
+snapshot mới trước mở tồn. Mỗi lượt vì vậy có thêm request và có thể tạm ngừng
+bán các ngày liên quan; nếu lỗi có thể còn đóng hoặc chưa rõ trạng thái upstream.
+Kiểm tra lịch sử, giá/tồn Channex và OTA trước xử lý lại. Bước mở cuối giữ khóa
+ghi khách sạn tối đa timeout HTTP 15 giây. Đọc lại Channex không chứng minh mọi
+OTA đã nhận xong. Booking có thuế chưa hỗ trợ được giữ để đối soát, không ACK;
+hoa hồng OTA dạng số tiền được giữ chính xác, không tự ghi thanh toán.
+
+Khi còn hồ sơ booking cần đối soát hoặc revision cụ thể chưa nhập được, các lượt
+ARI giữ tồn bằng 0 và stop-sell trên cửa sổ đang gửi. Lượt gửi giữ trạng thái chờ
+`channel_bookings_pending`, chưa mở bán lại. Sau xử lý booking, hệ thống thử lại
+bằng snapshot mới; nếu đã hết số lần thử cần retry tác vụ ARI. Preview có cảnh báo
+`inventoryHeld`. Đây là bảo vệ khi xuất ARI, không hủy booking hoặc xác nhận mọi
+OTA đã đóng ngay tại thời điểm một hồ sơ lỗi xuất hiện.
+
+Áp dụng migration trước chạy phiên bản này. Migration không sửa tiền booking cũ;
+rollback schema bị chặn sau khi có gói bổ sung/lịch sử tiền/hoa hồng dạng số tiền,
+để tránh mất dữ liệu. Không bỏ guard hoặc ép downgrade trên dữ liệu đã vận hành.
+
 Webhook mới dùng sự kiện `booking`, `send_data=false` và header ngẫu nhiên
 `X-Channex-Webhook-Secret` do hệ thống tạo. Cấu hình cũ có thể giữ webhook đã đăng
 ký thủ công. Booking không xử lý được giữ
@@ -400,7 +545,8 @@ Manager có thể tạo Property Channex ngay trong LOHA bằng
 được dùng, kèm phiên đăng nhập và CSRF. Body gồm
 `{accountId,name,currency,timezone,country?,city?,address?,email?,phone?}`;
 `accountId` phải là `system:staging` hoặc `system:production`, dùng khóa hệ thống
-có quyền tạo Property (ví dụ All Properties). Tiền tệ hỗ trợ `VND`/`USD`, múi giờ
+có quyền tạo Property (ví dụ All Properties). Tiền tệ hỗ trợ 20 mã phổ biến trong
+danh mục chung `pms_api/currencies.py`, múi giờ
 IANA; các trường tùy chọn trống được bỏ qua. Property được tạo với loại `hotel`
 trong Default Group của tài khoản Channex. Response 201 gồm
 `{environment,property:{id,name,currency,timezone,city,country,linkedHotel:null}}`.
@@ -493,6 +639,22 @@ trước frontend vì model mới đọc `deleted`, `room_count` và `room_types
 - Đơn vị tính mặc định được lưu cho từng khách sạn; giữ đơn vị tùy chỉnh và không
   tự bật lại đơn vị đã tắt. Settings lưu trực tiếp; không cần nút Thêm mới dư.
 - Booking tạo trực tiếp mặc định VND; OTA giữ tiền tệ Channex gửi về, không suy ra
-  từ quốc tịch khách. Hiện hỗ trợ VND/USD; cần tỷ giá cấu hình khi khác tiền cơ sở.
+  từ quốc tịch khách. Hỗ trợ danh mục tiền tệ khách sạn chung; cần tỷ giá cấu hình
+  khi khác tiền cơ sở.
 
 Xem chi tiết payload và quyền tại [API_CONTRACT.md](API_CONTRACT.md).
+
+## Tiền tệ khách sạn và Channex staging
+
+Form tạo khách sạn và Property Channex hỗ trợ 20 tiền tệ phổ biến: VND, USD,
+EUR, GBP, JPY, KRW, CNY, HKD, SGD, THB, AUD, CAD, CHF, NZD, MYR, IDR, PHP,
+INR, AED và TWD. Các mã này đã được xác nhận trong
+[danh mục công khai của staging](https://staging.channex.io/api/v1/currencies)
+ngày 30/10/2026. Gói dịch vụ và hóa đơn SaaS tiếp tục có chính sách tiền tệ riêng.
+
+Trước khi đưa các lựa chọn mới vào môi trường đang chạy, triển khai backend và
+chạy `python manage.py db upgrade` trong thư mục `backend` bằng tài khoản migrator,
+rồi cập nhật frontend. Migration `0042_hotel_currencies` mở rộng điều kiện tiền tệ
+cho tỷ giá và các bản ghi tài chính; giữ nguyên số tiền/tỷ giá đã lưu. Downgrade
+bị chặn khi cấu hình hoặc dữ liệu đã sử dụng tiền tệ mới. Mapping gói giá Channex
+vẫn yêu cầu khớp tiền tệ khách sạn; quy đổi cần tỷ giá do khách sạn cấu hình.

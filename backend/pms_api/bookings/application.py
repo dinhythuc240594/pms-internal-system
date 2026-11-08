@@ -2,13 +2,13 @@
 
 import hashlib
 import json
-from collections import Counter
 from datetime import date, datetime
 from decimal import Decimal
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import delete, func, select, text
 
+from pms_api.auth.application import validate_email
 from pms_api.catalog.application import (
     adjust_inventory,
     lock_inventory,
@@ -24,10 +24,12 @@ from pms_api.housekeeping.application import (
 from pms_api.ports import runtime
 
 from ..catalog.models import Master, PhysicalRoom, RoomType
+from ..channels.models import ChannelBooking
 from ..core_models import AuditLog, Tenant, User, utcnow
 from ..extensions import db
 from ..pricing.engine import money_json, redeem_voucher, rounded, snapshot_money
 from ..security import ApiError, audit
+from ..validation import phone_value
 from .domain import ACTIVE as ACTIVE
 from .domain import MONEY_LIMIT as MONEY_LIMIT
 from .domain import commission_snapshot as commission_snapshot
@@ -49,7 +51,7 @@ from .models import (
     ReservationNight,
     ReservationRoom,
 )
-from .ports import ReservationRepository
+from .room_stays import inventory_adjustments, room_stays
 
 PREFIX = "/api/tenants/<tenant_id>"
 
@@ -67,19 +69,33 @@ def guest_json(row):
 
 
 def find_reservation(tenant_id, reservation_id, *, locked=False):
-    return reservation_repository().find_reservation(tenant_id, reservation_id, locked=locked)
+    return runtime().reservations.find_reservation(tenant_id, reservation_id, locked=locked)
+
+
+def require_booking_version(row, data):
+    version = data.get("expectedVersion")
+    if isinstance(version, bool) or not isinstance(version, int) or not 1 <= version <= 2147483647:
+        raise ApiError(
+            422, "version_required", "Cần phiên bản đặt phòng đã tải trước khi chỉnh sửa."
+        )
+    if version != row.version:
+        raise ApiError(
+            409,
+            "stale_booking",
+            "Đặt phòng đã thay đổi. Vui lòng tải lại dữ liệu trước khi tiếp tục.",
+        )
 
 
 def rows_for(model, tenant_id, reservation_id=None):
-    return reservation_repository().rows_for(model, tenant_id, reservation_id)
+    return runtime().reservations.rows_for(model, tenant_id, reservation_id)
 
 
 def totals(row):
-    return reservation_repository().totals(row)
+    return runtime().reservations.totals(row)
 
 
 def load_booking_data(tenant_id, reservation_id=None):
-    return reservation_repository().load_booking_data(tenant_id, reservation_id)
+    return runtime().reservations.load_booking_data(tenant_id, reservation_id)
 
 
 def reservation_json(row, data=None, *, redact=False):
@@ -88,10 +104,12 @@ def reservation_json(row, data=None, *, redact=False):
     if redact:
         return {
             "id": row.id,
+            "version": row.version,
             "guest": "Khách lưu trú",
             "phone": "",
             "room": rooms[0].room_number if rooms else "",
             "rooms": [room.room_number for room in rooms],
+            "roomStays": room_stays(data[ReservationNight][row.id]),
             "source": "",
             "checkIn": iso(row.check_in),
             "checkOut": iso(row.check_out),
@@ -134,10 +152,12 @@ def reservation_json(row, data=None, *, redact=False):
 
     return {
         "id": row.id,
+        "version": row.version,
         "guest": row.guest_name,
         "phone": row.guest_phone,
         "room": rooms[0].room_number if rooms else "",
         "rooms": [room.room_number for room in rooms],
+        "roomStays": room_stays(data[ReservationNight][row.id]),
         "source": row.source_name,
         "sourceId": row.source_id,
         "checkIn": iso(row.check_in),
@@ -339,12 +359,9 @@ def guest_input(tenant_id, data, row=None):
         ("nationality", "nationality", 80),
     ):
         setattr(row, field, string_value(data.get(api_key, getattr(row, field)), api_key, length))
-    if row.email and (
-        row.email.count("@") != 1
-        or not all(row.email.split("@"))
-        or any(char.isspace() for char in row.email)
-    ):
-        raise ApiError(422, "invalid_guest", "Email khách không hợp lệ.")
+    row.phone = phone_value(row.phone)
+    if row.email:
+        row.email = validate_email(row.email)
     if "active" in data:
         if not isinstance(data["active"], bool):
             raise ApiError(422, "invalid_guest", "Trạng thái khách không hợp lệ.")
@@ -355,6 +372,11 @@ def guest_input(tenant_id, data, row=None):
 
 
 def resolve_guests(tenant_id, data, current=None):
+    linked_ids = (
+        {link.guest_id for link in rows_for(ReservationGuest, tenant_id, current.id)}
+        if current
+        else set()
+    )
     if "guests" not in data:
         existing = [] if current is None else rows_for(ReservationGuest, tenant_id, current.id)
         if existing and "guest" not in data and "phone" not in data:
@@ -368,8 +390,10 @@ def resolve_guests(tenant_id, data, current=None):
             160,
             required=True,
         )
-        phone = string_value(
-            data.get("phone", current.guest_phone if current else ""), "Điện thoại", 40
+        phone = phone_value(
+            string_value(
+                data.get("phone", current.guest_phone if current else ""), "Điện thoại", 40
+            )
         )
         if current and name == current.guest_name and phone == current.guest_phone and existing:
             return [
@@ -418,6 +442,16 @@ def resolve_guests(tenant_id, data, current=None):
                 if key in value
             }
             if profile:
+                # Attaching a shared profile is link-only; its editing form belongs to an existing stay.
+                if row.id not in linked_ids and any(
+                    value != getattr(row, {"identityNumber": "identity_number"}.get(key, key))
+                    for key, value in profile.items()
+                ):
+                    raise ApiError(
+                        409,
+                        "stale_guest",
+                        "Hồ sơ khách đã khác dữ liệu đã chọn. Vui lòng tải lại và sửa trong đặt phòng đang liên kết.",
+                    )
                 row = guest_input(tenant_id, profile, row)
                 audit("guest.updated", "guest", row.id, {"fields": sorted(profile)})
         else:
@@ -510,6 +544,7 @@ def add_stay(row, rooms, quote):
                 reservation_id=row.id,
                 room_id=nightly["roomId"],
                 room_number=nightly["room"],
+                room_type_id=nightly["roomTypeId"],
                 date=date.fromisoformat(nightly["date"]),
                 price=money_value(nightly["price"], allow_zero=True),
                 base_currency=quote["baseCurrency"],
@@ -520,14 +555,8 @@ def add_stay(row, rooms, quote):
 
 
 def inventory(tenant_id, rooms, start, end, delta):
-    counts = Counter(room.room_type_id for room in rooms)
-    adjust_inventory(
-        tenant_id,
-        sorted(counts),
-        start,
-        end,
-        {kind: count * delta for kind, count in counts.items()},
-    )
+    for first, last, counts in inventory_adjustments(rooms, start, end, delta):
+        adjust_inventory(tenant_id, sorted(counts), first, last, counts)
 
 
 def check_guest_capacity(tenant_id, rooms, guests):
@@ -554,9 +583,15 @@ def handle_reservation_detail(tenant_id, reservation_id):
 
 def handle_create_reservation(tenant_id):
     data = runtime().payload()
+    key, fingerprint, replay = begin_write(tenant_id, data)
+    if replay is not None:
+        return replay, 201
     if data.get("status", "CONFIRMED") != "CONFIRMED":
         raise ApiError(422, "invalid_status", "Đặt phòng mới bắt đầu ở trạng thái đã xác nhận.")
     start, end = stay_dates(data.get("checkIn"), data.get("checkOut"))
+    from ..reconciliation.business_days import ensure_open_day
+
+    ensure_open_day(tenant_id, start)
     numbers = room_numbers(data)
     # Serialize the first booking with currency configuration changes, without
     # serializing bookings in independent rooms with each other.
@@ -615,12 +650,16 @@ def handle_create_reservation(tenant_id):
         {"rooms": numbers, "checkIn": iso(start), "checkOut": iso(end)},
     )
     db.session.flush()
-    return reservation_json(row), 201
+    return finish_write(tenant_id, key, fingerprint, reservation_json(row), status=201)
 
 
 def handle_edit_reservation(tenant_id, reservation_id):
     data = runtime().payload()
     row = find_reservation(tenant_id, reservation_id, locked=True)
+    key, fingerprint, replay = begin_write(tenant_id, data, required=False)
+    if replay is not None:
+        return replay
+    require_booking_version(row, data)
     if "currency" in data and data["currency"] != row.currency:
         raise ApiError(409, "booking_currency_frozen", "Không đổi tiền tệ của đặt phòng đã tạo.")
     voucher_policy = (row.pricing_snapshot or {}).get("discount")
@@ -656,9 +695,31 @@ def handle_edit_reservation(tenant_id, reservation_id):
         tenant_id, sorted(set(numbers) | {room.room_number for room in old_rooms})
     )
     rooms = [room for room in locked_rooms if room.number in numbers]
+    channel_booking = db.session.scalar(
+        select(ChannelBooking.id).where(
+            ChannelBooking.tenant_id == tenant_id,
+            ChannelBooking.reservation_id == row.id,
+        )
+    )
+    if channel_booking and (
+        start != old_start
+        or end != old_end
+        or sorted(room.room_type_id for room in rooms)
+        != sorted(room.room_type_id for room in old_rooms)
+        or ("source" in data or "sourceId" in data)
+        and (data.get("sourceId") or data.get("source")) not in (row.source_id, row.source_name)
+    ):
+        raise ApiError(
+            409,
+            "channel_booking_requires_review",
+            "Thay đổi ngày, hạng/số phòng hoặc nguồn đặt phòng OTA cần được đối soát với kênh.",
+        )
     guests = resolve_guests(tenant_id, data, row)
     check_guest_capacity(tenant_id, rooms, guests)
     if changed:
+        from ..reconciliation.business_days import ensure_open_day
+
+        ensure_open_day(tenant_id, min(start, row.check_in))
         # Lock the union of old/new inventory ranges before releasing any old occupancy.
         kinds = sorted({room.room_type_id for room in locked_rooms})
         lock_inventory(tenant_id, kinds, min(start, row.check_in), max(end, row.check_out))
@@ -666,43 +727,58 @@ def handle_edit_reservation(tenant_id, reservation_id):
         quote = quote_stay(
             tenant_id, numbers, start, end, currency=row.currency, voucher_policy=voucher_policy
         )
-        old_total, paid, _ = totals(row)
-        old_nights = sum(
-            (night.price for night in rows_for(ReservationNight, tenant_id, row.id)), Decimal(0)
-        )
-        new_total = old_total - old_nights + Decimal(quote["total"])
-        if new_total < paid:
-            raise ApiError(
-                409,
-                "refund_required",
-                "Cần hoàn phần tiền dư trước khi giảm giá trị đặt phòng.",
+        if channel_booking:
+            # Keep retained rooms' own OTA rates when only some rooms are moved.
+            old_ids = {room.room_id for room in old_rooms}
+            assigned = {room.id: room for room in rooms if room.id in old_ids}
+            remaining = [room for room in rooms if room.id not in old_ids]
+            for previous in sorted(old_rooms, key=lambda room: room.room_number):
+                if previous.room_id not in assigned:
+                    replacement = next(
+                        room for room in remaining if room.room_type_id == previous.room_type_id
+                    )
+                    assigned[previous.room_id] = replacement
+                    remaining.remove(replacement)
+            for stay in [*old_rooms, *rows_for(ReservationNight, tenant_id, row.id)]:
+                replacement = assigned[stay.room_id]
+                stay.room_id, stay.room_number = replacement.id, replacement.number
+        else:
+            old_total, paid, _ = totals(row)
+            old_nights = sum(
+                (night.price for night in rows_for(ReservationNight, tenant_id, row.id)), Decimal(0)
             )
-        cancel_reservation_tasks(row, locked_rooms, "stay_changed")
-        inventory(tenant_id, old_rooms, row.check_in, row.check_out, -1)
-        db.session.execute(
-            delete(ReservationNight).where(
-                ReservationNight.tenant_id == tenant_id,
-                ReservationNight.reservation_id == row.id,
+            new_total = old_total - old_nights + Decimal(quote["total"])
+            if new_total < paid:
+                raise ApiError(
+                    409,
+                    "refund_required",
+                    "Cần hoàn phần tiền dư trước khi giảm giá trị đặt phòng.",
+                )
+            inventory(tenant_id, old_rooms, row.check_in, row.check_out, -1)
+            db.session.execute(
+                delete(ReservationNight).where(
+                    ReservationNight.tenant_id == tenant_id,
+                    ReservationNight.reservation_id == row.id,
+                )
             )
-        )
-        db.session.execute(
-            delete(ReservationRoom).where(
-                ReservationRoom.tenant_id == tenant_id, ReservationRoom.reservation_id == row.id
+            db.session.execute(
+                delete(ReservationRoom).where(
+                    ReservationRoom.tenant_id == tenant_id, ReservationRoom.reservation_id == row.id
+                )
             )
-        )
-        row.check_in, row.check_out = start, end
-        row.base_currency, row.exchange_rate, row.base_amount = (
-            quote["baseCurrency"],
-            Decimal(quote["exchangeRate"]),
-            Decimal(quote["baseAmount"]),
-        )
-        commission = (row.pricing_snapshot or {}).get("commission")
-        row.pricing_snapshot = {
-            **quote["pricingSnapshot"],
-            **({"commission": commission} if commission else {}),
-        }
-        add_stay(row, rooms, quote)
-        inventory(tenant_id, rooms, start, end, 1)
+            row.check_in, row.check_out = start, end
+            row.base_currency, row.exchange_rate, row.base_amount = (
+                quote["baseCurrency"],
+                Decimal(quote["exchangeRate"]),
+                Decimal(quote["baseAmount"]),
+            )
+            commission = (row.pricing_snapshot or {}).get("commission")
+            row.pricing_snapshot = {
+                **quote["pricingSnapshot"],
+                **({"commission": commission} if commission else {}),
+            }
+            add_stay(row, rooms, quote)
+            inventory(tenant_id, rooms, start, end, 1)
     if "source" in data or "sourceId" in data:
         requested_source = data.get("sourceId") or data.get("source")
         if requested_source not in (row.source_id, row.source_name):
@@ -714,6 +790,7 @@ def handle_edit_reservation(tenant_id, reservation_id):
                     "commission": commission_snapshot(source),
                 }
     set_booking_guests(row, guests)
+    row.version += 1
     audit(
         "reservation.updated",
         "reservation",
@@ -728,19 +805,25 @@ def handle_edit_reservation(tenant_id, reservation_id):
         },
     )
     db.session.flush()
-    return reservation_json(row)
+    db.session.refresh(row, attribute_names=["version"])
+    return finish_write(tenant_id, key, fingerprint, reservation_json(row))
 
 
 def handle_change_status(tenant_id, reservation_id):
-    status = runtime().payload().get("status")
+    data = runtime().payload()
+    status = data.get("status")
     if not isinstance(status, str):
         raise ApiError(422, "invalid_status", "Trạng thái đặt phòng phải là chuỗi ký tự.")
     row = find_reservation(tenant_id, reservation_id, locked=True)
+    key, fingerprint, replay = begin_write(tenant_id, data, required=False)
+    if replay is not None:
+        return replay
+    require_booking_version(row, data)
     transitions = {
         "CONFIRMED": {"IN_HOUSE", "CANCELLED", "NO_SHOW"},
         "IN_HOUSE": {"CHECKED_OUT"},
     }
-    if status not in transitions.get(row.status, set()):
+    if not isinstance(status, str) or status not in transitions.get(row.status, set()):
         raise ApiError(
             409, "invalid_transition", "Trạng thái đặt phòng không cho phép thao tác này."
         )
@@ -760,28 +843,6 @@ def handle_change_status(tenant_id, reservation_id):
         if any(room.condition != "clean" or not room.active for room in rooms):
             raise ApiError(
                 409, "room_not_ready", "Tất cả phòng phải sạch và đang hoạt động để nhận phòng."
-            )
-        # Calendar intervals may be adjacent while the previous guest is still
-        # physically in the room. The room locks also serialize that checkout.
-        occupied = db.session.scalar(
-            select(ReservationRoom.id)
-            .join(
-                Reservation,
-                (Reservation.id == ReservationRoom.reservation_id)
-                & (Reservation.tenant_id == ReservationRoom.tenant_id),
-            )
-            .where(
-                ReservationRoom.tenant_id == tenant_id,
-                ReservationRoom.room_id.in_([room.id for room in rooms]),
-                ReservationRoom.active.is_(True),
-                ReservationRoom.reservation_id != row.id,
-                Reservation.status == "IN_HOUSE",
-            )
-            .limit(1)
-        )
-        if occupied:
-            raise ApiError(
-                409, "room_occupied", "Phòng vẫn có khách đang ở; cần trả phòng lượt trước."
             )
         row.checked_in_at = utcnow()
         for room in rooms:
@@ -811,7 +872,6 @@ def handle_change_status(tenant_id, reservation_id):
             cancel_reservation_tasks(row, rooms, "no_show")
         else:
             row.cancelled_at = utcnow()
-            cancel_reservation_tasks(row, rooms, "cancelled")
         lock_inventory(
             tenant_id,
             sorted({room.room_type_id for room in linked}),
@@ -835,7 +895,7 @@ def handle_change_status(tenant_id, reservation_id):
         },
     )
     db.session.flush()
-    return reservation_json(row)
+    return finish_write(tenant_id, key, fingerprint, reservation_json(row))
 
 
 def handle_room_condition(tenant_id, number):
@@ -881,47 +941,69 @@ def handle_room_condition(tenant_id, number):
     }
 
 
-def begin_money(row, data, *, record_model=IdempotencyRecord):
+def begin_write(
+    tenant_id, data, *, required=True, record_model=IdempotencyRecord, legacy_money=False
+):
+    """Serialize an intent and replay its committed result in this transaction."""
     key = runtime().request.headers.get("Idempotency-Key", "")
+    if not key and not required and "Idempotency-Key" not in runtime().request.headers:
+        return None, None, None
     if not 8 <= len(key) <= 128 or any(ord(char) < 33 or ord(char) > 126 for char in key):
         raise ApiError(
-            422, "idempotency_required", "Thao tác tiền cần Idempotency-Key ổn định (8–128 ký tự)."
+            422, "idempotency_required", "Thao tác ghi cần Idempotency-Key ổn định (8–128 ký tự)."
         )
     try:
-        encoded = json.dumps(
-            {"path": runtime().request.path, "actor": runtime().state.user.id, "body": data},
-            sort_keys=True,
-            separators=(",", ":"),
-            ensure_ascii=False,
-            allow_nan=False,
-        ).encode()
-    except (TypeError, ValueError):
+        identity = {"path": runtime().request.path, "actor": runtime().state.user.id, "body": data}
+
+        def digest(value):
+            return hashlib.sha256(
+                json.dumps(
+                    value,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                    ensure_ascii=False,
+                    allow_nan=False,
+                ).encode()
+            ).hexdigest()
+
+        fingerprint = digest({**identity, "method": runtime().request.method})
+        # Pending money intents from earlier deployments use the original digest.
+        legacy_fingerprint = digest(identity) if legacy_money else None
+    except TypeError, ValueError:
         raise ApiError(422, "invalid_amount", "Nội dung có giá trị số không hợp lệ.") from None
-    fingerprint = hashlib.sha256(encoded).hexdigest()
+    # Keep the shared money namespace while older deployments may still retry.
     db.session.execute(
         text("SELECT pg_advisory_xact_lock(hashtextextended(:key,0))"),
-        {"key": f"{row.tenant_id}:money:{key}"},
+        {"key": f"{tenant_id}:money:{key}"},
     )
     existing = db.session.execute(
-        select(record_model).where(record_model.tenant_id == row.tenant_id, record_model.key == key)
+        select(record_model).where(record_model.tenant_id == tenant_id, record_model.key == key)
     ).scalar_one_or_none()
     if existing:
-        if existing.fingerprint != fingerprint:
+        if existing.fingerprint not in {fingerprint, legacy_fingerprint}:
             raise ApiError(409, "idempotency_conflict", "Mã thao tác đã dùng cho nội dung khác.")
         return key, fingerprint, existing.response
     return key, fingerprint, None
 
 
+def finish_write(
+    tenant_id, key, fingerprint, response, *, status=200, record_model=IdempotencyRecord
+):
+    if key is not None:
+        db.session.add(
+            record_model(tenant_id=tenant_id, key=key, fingerprint=fingerprint, response=response)
+        )
+        db.session.flush()
+    return response, status
+
+
+def begin_money(row, data, *, record_model=IdempotencyRecord):
+    return begin_write(row.tenant_id, data, record_model=record_model, legacy_money=True)
+
+
 def finish_money(row, key, fingerprint):
     db.session.flush()
-    response = reservation_json(row)
-    db.session.add(
-        IdempotencyRecord(
-            tenant_id=row.tenant_id, key=key, fingerprint=fingerprint, response=response
-        )
-    )
-    db.session.flush()
-    return response, 201
+    return finish_write(row.tenant_id, key, fingerprint, reservation_json(row), status=201)
 
 
 def refund_snapshot(payment, amount):
@@ -958,7 +1040,7 @@ def handle_add_charge(tenant_id, reservation_id):
         return replay, 201
     financial_open(row)
     kind = data.get("type", "service")
-    if not isinstance(kind, str) or kind not in {"service", "fee", "tax", "discount"}:
+    if kind not in {"service", "fee", "tax", "discount"}:
         raise ApiError(422, "invalid_charge", "Loại chi phí không hợp lệ.")
     service = master(tenant_id, "services", data["serviceId"]) if data.get("serviceId") else None
     if service and kind != "service":
@@ -1280,18 +1362,18 @@ def handle_adjust_closed_stay(tenant_id, reservation_id):
 
 
 def handle_add_note(tenant_id, reservation_id):
+    data = runtime().payload()
     row = find_reservation(tenant_id, reservation_id, locked=True)
+    key, fingerprint, replay = begin_write(tenant_id, data, required=False)
+    if replay is not None:
+        return replay, 201
     note = BookingNote(
         tenant_id=tenant_id,
         reservation_id=row.id,
-        text=string_value(runtime().payload().get("text"), "Ghi chú", 2000, required=True),
+        text=string_value(data.get("text"), "Ghi chú", 2000, required=True),
         user_id=runtime().state.user.id,
     )
     db.session.add(note)
     audit("reservation.note", "reservation", row.id)
     db.session.flush()
-    return reservation_json(row), 201
-
-
-def reservation_repository() -> ReservationRepository:
-    return runtime().reservations
+    return finish_write(tenant_id, key, fingerprint, reservation_json(row), status=201)

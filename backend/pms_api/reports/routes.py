@@ -1,4 +1,4 @@
-"""HTTP adapters. Business operations live in the application module."""
+"""HTTP entry points; business behavior is implemented in the application layer."""
 
 from common import CommonMethodView
 
@@ -39,6 +39,4 @@ def __getattr__(name):
         from importlib import import_module
 
         return getattr(import_module(".urls", __package__), name)
-    if hasattr(application, name):
-        return getattr(application, name)
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    return getattr(application, name)

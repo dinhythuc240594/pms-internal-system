@@ -65,17 +65,17 @@ export default function Blog() {
     <>
       <section className="loha-page-intro">
         <div className="loha-container">
-          <span className="loha-kicker">BLOG · SỔ TAY VẬN HÀNH</span>
-          <h1>Những việc nhỏ.<br />Một ca trực tốt hơn.</h1>
-          <p>Hướng dẫn ngắn dành cho lễ tân và người quản lý: ghi nhận rõ ràng, phối hợp nhịp nhàng và chăm sóc từng lượt khách.</p>
+          <span className="loha-kicker">{labelUi("BLOG · SỔ TAY VẬN HÀNH")}</span>
+          <h1>{labelUi("Những việc nhỏ.")}<br />{labelUi("Một ca trực tốt hơn.")}</h1>
+          <p>{labelUi("Hướng dẫn ngắn dành cho lễ tân và người quản lý: ghi nhận rõ ràng, phối hợp nhịp nhàng và chăm sóc từng lượt khách.")}</p>
         </div>
       </section>
 
-      <section className="loha-section" aria-label="Hướng dẫn vận hành">
+      <section className="loha-section" aria-label={labelUi("Hướng dẫn vận hành")}>
         <div className="loha-container loha-blog-layout">
-          <aside className="loha-blog-sidebar" aria-label="Lọc bài viết">
-            <span className="loha-kicker">CHỌN CHỦ ĐỀ</span>
-            <div className="loha-blog-filters" role="group" aria-label="Chủ đề bài viết">
+          <aside className="loha-blog-sidebar" aria-label={labelUi("Lọc bài viết")}>
+            <span className="loha-kicker">{labelUi("CHỌN CHỦ ĐỀ")}</span>
+            <div className="loha-blog-filters" role="group" aria-label={labelUi("Chủ đề bài viết")}>
               {topics.map(item => (
                 <button type="button" key={item} aria-pressed={topic === item} onClick={() => setTopic(item)}>
                   {item}<ArrowRight size={15} aria-hidden="true" />
@@ -84,8 +84,8 @@ export default function Blog() {
             </div>
             <div className="loha-blog-note">
               <ClipboardCheck size={25} aria-hidden="true" />
-              <p><strong>Đọc, rồi áp dụng.</strong> Dùng các bước như một danh sách kiểm tra và điều chỉnh theo quy trình của cơ sở bạn.</p>
-              <Link className="loha-text-link" to="/id/login">Mở LOHA <ArrowRight size={16} aria-hidden="true" /></Link>
+              <p><strong>{labelUi("Đọc, rồi áp dụng.")}</strong>{" "}{labelUi("Dùng các bước như một danh sách kiểm tra và điều chỉnh theo quy trình của cơ sở bạn.")}</p>
+              <Link className="loha-text-link" to="/id/login">{labelUi("Mở LOHA")}{" "}<ArrowRight size={16} aria-hidden="true" /></Link>
             </div>
           </aside>
 
@@ -98,14 +98,14 @@ export default function Blog() {
                 <p className="loha-blog-excerpt">{excerpt}</p>
                 <details className="loha-blog-details">
                   <summary aria-describedby={`loha-blog-title-${id}`}>
-                    <span className="loha-blog-read">Đọc hướng dẫn</span><span className="loha-blog-close">Thu gọn hướng dẫn</span>
+                    <span className="loha-blog-read">{labelUi("Đọc hướng dẫn")}</span><span className="loha-blog-close">{labelUi("Thu gọn hướng dẫn")}</span>
                     <ArrowRight size={16} aria-hidden="true" />
                   </summary>
                   <div className="loha-blog-article-body">
                     <p>{intro}</p>
-                    <h3>Các bước thực hành</h3>
+                    <h3>{labelUi("Các bước thực hành")}</h3>
                     <ol>{steps.map(step => <li key={step}>{step}</li>)}</ol>
-                    <p className="loha-blog-takeaway"><strong>Ghi nhớ:</strong> {takeaway}</p>
+                    <p className="loha-blog-takeaway"><strong>{labelUi("Ghi nhớ:")}</strong> {takeaway}</p>
                   </div>
                 </details>
               </article>

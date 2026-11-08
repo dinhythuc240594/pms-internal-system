@@ -118,14 +118,14 @@ class ClientProfileTests(DomainTestCase):
                     with self.assertRaises(DBAPIError):
                         db.session.flush()
                     db.session.rollback()
-            set_context(is_system=True)
+            set_context(is_system=True, is_service=True)
             record = db.session.get(AuditLog, entry_id)
             self.assertEqual(record.user_id, self.owner_id)
             record.event = "sessions.revoked"
             with self.assertRaises(DBAPIError):
                 db.session.flush()
             db.session.rollback()
-            set_context(is_system=True)
+            set_context(is_system=True, is_service=True)
             db.session.delete(db.session.get(AuditLog, entry_id))
             with self.assertRaises(DBAPIError):
                 db.session.flush()

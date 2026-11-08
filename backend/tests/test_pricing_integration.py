@@ -334,7 +334,7 @@ class PricingIntegrationTests(DomainTestCase):
         self.config("promotions", {"name": "Pro promo", "kind": "earlybird", "percent": "50"})
         self.config("vouchers", {"name": "Pro voucher", "code": "PRO", "value": "10"})
         with self.app.app_context():
-            set_context(is_system=True)
+            set_context(is_system=True, is_service=True)
             plan = db.session.get(Plan, "default-pro")
             plan.features = {**plan.features, "VOUCHER_PROMO": False, "MULTI_CURRENCY": False}
             db.session.commit()

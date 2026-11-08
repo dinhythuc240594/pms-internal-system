@@ -16,11 +16,15 @@ class BookingRevisionWorkflow:
         self.repository = repository
         self.importer = importer
 
-    def receive(self, tenant_id, actor_id, property_id, revision_id):
+    def fetch_and_import(self, tenant_id, property_id, revision_id):
+        """Import only; the worker releases its queue slot before scheduling the ACK."""
         entity = self.adapter.revision(revision_id)
         if not isinstance(entity, dict) or entity.get("id") != revision_id:
             raise ProviderError("provider_invalid_response")
-        receipt = self.importer(tenant_id, entity, property_id)
+        return self.importer(tenant_id, entity, property_id)
+
+    def receive(self, tenant_id, actor_id, property_id, revision_id):
+        receipt = self.fetch_and_import(tenant_id, property_id, revision_id)
         self.repository.enqueue_ack(tenant_id, actor_id, receipt.revision_id)
         return receipt
 

@@ -15,7 +15,7 @@ def rounded(value):
         if not result.is_finite() or abs(result) > LIMIT:
             raise ValueError
         return result
-    except (InvalidOperation, ValueError, TypeError):
+    except InvalidOperation, ValueError, TypeError:
         raise ApiError(422, "invalid_amount", "Giá trị tiền vượt giới hạn.") from None
 
 

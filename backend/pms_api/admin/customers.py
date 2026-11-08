@@ -1,13 +1,14 @@
 import re
 
-from sqlalchemy import func, select
+from sqlalchemy import select
 
-from pms_api.auth.application import tenant_json, validate_email
+from pms_api.auth.application import validate_email
 
-from ..catalog.models import PhysicalRoom
 from ..core_models import Tenant, TenantUser, User
+from ..currencies import normalize_hotel_currency
 from ..extensions import db
 from ..security import ApiError
+from ..validation import phone_value, tax_id_value
 from .client_models import TenantClientProfile
 
 CLIENT_FIELDS = {
@@ -22,6 +23,10 @@ CLIENT_FIELDS = {
 }
 
 
+def hotel_currency(value):
+    return normalize_hotel_currency(value)
+
+
 def client_values(data):
     result = {}
     for key, (column, limit) in CLIENT_FIELDS.items():
@@ -33,6 +38,10 @@ def client_values(data):
         value = value.strip()
         if key == "contactEmail" and value:
             value = validate_email(value)
+        if key == "contactPhone":
+            value = phone_value(value)
+        if key == "taxId":
+            value = tax_id_value(value)
         if key == "domain" and value:
             value = value.lower()
             labels = value.split(".")
@@ -44,6 +53,46 @@ def client_values(data):
                 )
         result[column] = value
     return result
+
+
+def customer_account_json(user):
+    return {
+        "id": user.id,
+        "name": user.name,
+        "email": user.email,
+        "active": user.active,
+        "createdAt": user.created_at.isoformat(),
+    }
+
+
+def customer_accounts(search):
+    users = db.session.scalars(
+        select(User)
+        .where(
+            User.active.is_(True),
+            User.global_role == "USER",
+            User.name.icontains(search, autoescape=True)
+            | User.email.icontains(search, autoescape=True),
+        )
+        .order_by(User.name, User.email, User.id)
+        .limit(20)
+    ).all()
+    memberships = {user.id: [] for user in users}
+    for membership, tenant in db.session.execute(
+        select(TenantUser, Tenant)
+        .join(Tenant, Tenant.id == TenantUser.tenant_id)
+        .where(TenantUser.user_id.in_(memberships))
+        .order_by(Tenant.name, Tenant.id)
+    ):
+        memberships[membership.user_id].append(
+            {
+                "tenantId": tenant.id,
+                "tenantName": tenant.name,
+                "role": membership.role,
+                "active": membership.active,
+            }
+        )
+    return [{**customer_account_json(user), "memberships": memberships[user.id]} for user in users]
 
 
 def customer_tenants(tenant_id=None):
@@ -66,13 +115,6 @@ def customer_tenants(tenant_id=None):
         .order_by(TenantUser.active.desc(), User.active.desc(), User.id)
     ):
         owners.setdefault(tid, owner)
-    room_counts = dict(
-        db.session.execute(
-            select(PhysicalRoom.tenant_id, func.count())
-            .where(PhysicalRoom.tenant_id.in_(ids), PhysicalRoom.active.is_(True))
-            .group_by(PhysicalRoom.tenant_id)
-        ).all()
-    )
     result = []
     for tenant in rows:
         owner, profile = owners.get(tenant.id), profiles.get(tenant.id)
@@ -85,10 +127,13 @@ def customer_tenants(tenant_id=None):
                 fields[key] = getattr(owner, attribute)
         result.append(
             {
-                **tenant_json(tenant),
+                "id": tenant.id,
+                "name": tenant.name,
+                "status": tenant.status,
+                "currency": (tenant.settings or {}).get("currency", "VND"),
                 **{key: value or "" for key, value in fields.items()},
-                "rooms": room_counts.get(tenant.id, 0),
                 "createdAt": tenant.created_at.isoformat(),
+                "owner": customer_account_json(owner) if owner else None,
             }
         )
     return result

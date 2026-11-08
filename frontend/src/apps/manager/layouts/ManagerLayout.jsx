@@ -40,6 +40,7 @@ export default function ManagerLayout() {
     <div className={`manager-shell${isCollapsed ? ' manager-shell-collapsed' : ''}`} data-theme={isDarkMode ? 'dark' : 'light'} style={{
       '--manager-ink': theme.textPrimary, '--manager-muted': theme.textSecondary,
       '--manager-accent': theme.primaryText, '--manager-accent-bg': theme.primaryBg,
+      '--manager-primary': theme.primary, '--manager-primary-hover': theme.primaryHover,
       '--manager-surface': theme.bgSurface, '--manager-soft': theme.bgMain,
       '--manager-line': theme.border, '--manager-lime': '#def09f',
       '--manager-danger': theme.danger, '--manager-warning': theme.warning, '--manager-input': theme.bgInput,

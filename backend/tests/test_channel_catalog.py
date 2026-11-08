@@ -15,15 +15,17 @@ from pms_api.channels.models import ChannelConnection, ChannelJob, ChannelMappin
 from pms_api.core_models import Plan, utcnow
 from pms_api.extensions import db
 from pms_api.security import set_context
+from tests.system_scope_fixture import grant_system_access
 from tests.test_channels_integration import PROPERTY, REMOTE_RATE, REMOTE_ROOM, ChannelTestCase
 
 
 class ChannelCatalogTests(ChannelTestCase):
     def setUp(self):
         super().setUp()
-        provider_patch = patch("pms_api.channels.factory.ChannexClient", return_value=self.provider)
+        provider_patch = patch("pms_api.channels.application.channel_adapter", return_value=self.provider)
         provider_patch.start()
         self.addCleanup(provider_patch.stop)
+        self.provider.catalog.reset_mock()
 
     def catalog(self, resource, property_id):
         rows = super().catalog(resource, property_id)
@@ -63,15 +65,20 @@ class ChannelCatalogTests(ChannelTestCase):
             ("hk", 403),
             ("accountant", 403),
             ("owner-b", 403),
-            ("manager", 200),
-            ("admin", 200),
+            ("manager", 403),
+            ("admin", 403),
         ):
             with self.subTest(user=user):
                 client, headers = self.login(f"{user}@test.local")
                 response = self.request("get", "/channels/catalog", client=client, headers=headers)
                 self.assertEqual(response.status_code, expected, response.json)
+                if user in {"manager", "admin"}:
+                    self.assertEqual(response.json["error"]["code"], "tenant_denied")
+                    grant_system_access(self, user)
+                    response = self.request("get", "/channels/catalog", client=client, headers=headers)
+                    self.assertEqual(response.status_code, 200, response.json)
         with self.app.app_context():
-            set_context(is_system=True)
+            set_context(is_system=True, is_service=True)
             db.session.get(Plan, "default-pro").features = {"OTA_SYNC": False}
             db.session.commit()
         response = self.request("get", "/channels/catalog")
@@ -201,7 +208,7 @@ class ChannelCatalogTests(ChannelTestCase):
     def test_manager_roster_is_local_and_returns_only_safe_fields_and_scoped_counts(self):
         now = utcnow()
         with self.app.app_context():
-            set_context(is_system=True)
+            set_context(is_system=True, is_service=True)
             db.session.add(
                 TenantClientProfile(
                     tenant_id=self.tenant_id, city="Huế", customer_notes="private notes"
@@ -250,6 +257,7 @@ class ChannelCatalogTests(ChannelTestCase):
             client, headers = self.login(f"{user}@test.local")
             response = self.request("get", "/api/admin/channex", client=client, headers=headers)
             self.assertEqual(response.status_code, 200, response.json)
+            self.assertEqual(client.get("/api/auth/session").json["user"]["memberships"], [])
             hotels = {hotel["tenantId"]: hotel for hotel in response.json["hotels"]}
             self.assertEqual(set(hotels), {self.tenant_id, self.other_tenant_id})
             first, second = hotels[self.tenant_id], hotels[self.other_tenant_id]
@@ -313,9 +321,12 @@ class ChannelCatalogTests(ChannelTestCase):
         response = self.request("get", "/channels/catalog")
         self.assertEqual(response.status_code, 200, response.json)
         self.assertEqual(response.json, {"roomTypes": [], "ratePlans": []})
+        grant_system_access(self)
         client, headers = self.login("manager@test.local")
         response = self.request("get", "/api/admin/channex", client=client, headers=headers)
         self.assertEqual(response.status_code, 200, response.json)
+        self.assertEqual({hotel["tenantId"] for hotel in response.json["hotels"]},
+                         {self.tenant_id, self.other_tenant_id})
         self.assertTrue(all(hotel["latestJob"] is None for hotel in response.json["hotels"]))
 
     def test_roster_denies_tenant_users_and_keeps_broken_credentials_as_status(self):
@@ -326,6 +337,7 @@ class ChannelCatalogTests(ChannelTestCase):
             set_context(self.owner_id, self.tenant_id)
             db.session.scalar(select(ChannelConnection)).secrets_ciphertext = "private-ciphertext"
             db.session.commit()
+        grant_system_access(self)
         client, headers = self.login("manager@test.local")
         response = self.request("get", "/api/admin/channex", client=client, headers=headers)
         self.assertEqual(response.status_code, 200, response.json)

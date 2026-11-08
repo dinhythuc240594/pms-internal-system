@@ -1,3 +1,5 @@
+import { emailInput } from '../../../../shared/lib/validation.js';
+
 export const SYSTEM_ROLES = ['SUPER_ADMIN', 'SYSTEM_MANAGER'];
 
 export function systemUserInput(draft, id) {
@@ -7,8 +9,7 @@ export function systemUserInput(draft, id) {
   if (typeof draft.active !== 'boolean') throw new Error('Trạng thái tài khoản không hợp lệ.');
   const input = { name, globalRole: draft.globalRole, active: draft.active };
   if (id) return { id, ...input };
-  const email = draft.email.trim();
-  if (email.length > 254 || !/^[^\s@]+@[^\s@]+$/.test(email)) throw new Error('Vui lòng nhập email hợp lệ.');
+  const email = emailInput(draft.email);
   if (draft.password.length < 12 || draft.password.length > 128) throw new Error('Mật khẩu ban đầu cần từ 12 đến 128 ký tự.');
   return { ...input, email, password: draft.password };
 }

@@ -1,8 +1,8 @@
-import { getIntlLocale } from '../../../../shared/i18n/store.js';
-import { t as tUi, useI18n } from '../../../../shared/i18n/useI18n.js';
+import { formatDate } from '../../../../shared/lib/date.js';
+import { tr as labelUi, t as tUi, useI18n } from '../../../../shared/i18n/useI18n.js';
 import React, { useState } from 'react';
 import { usePms } from '../../data/usePms';
-import { bookingRooms, today, addDays, nights, money, overlaps, roomIsBlocked } from '../../data/model';
+import { bookingRoomStays, today, addDays, nights, money, overlaps, roomIsBlocked } from '../../data/model';
 import BookingDetailPanel from '../../reservations/components/BookingDetailPanel';
 import { ChevronLeft, ChevronRight, Search, Filter, Calendar as CalendarIcon } from 'lucide-react';
 import './ARI.css';
@@ -20,28 +20,28 @@ export default function ARI() {
   const isWeekend = date => date.getDay() === 0 || date.getDay() === 6;
   const isToday = date => date.toLocaleDateString('en-CA') === today(settings.timezone);
   const groups = roomTypes.filter(t => !typeFilter || t.id === typeFilter).map(t => ({ ...t, price: money(t.price,settings.currency), rooms: rooms.filter(r => r.active !== false && r.typeId === t.id).map(r => ({ ...r, name: 'R - ' + r.id, blocked: roomIsBlocked(r, roomBlocks, currentDate, addDays(currentDate, 14)) })), available: dates.map((_, i) => available(addDays(currentDate, i), addDays(currentDate, i + 1), t.id).length) }));
-  const bookings = reservations.filter(b => overlaps(b, currentDate, addDays(currentDate, 14)) && (b.guest + ' ' + b.id).toLowerCase().includes(query.toLowerCase())).flatMap(b => bookingRooms(b).map(number => ({ ...b, room: number, colStart: Math.max(0, nights(currentDate, b.checkIn)), colSpan: Math.min(14, nights(currentDate, b.checkOut)) - Math.max(0, nights(currentDate, b.checkIn)), bgColor: b.status === 'IN_HOUSE' ? '#10b981' : '#3b82f6', payment: Number(b.balance) === 0 ? 'paid' : Number(b.paid)>0 ? 'partial' : 'unpaid' })));
+  const bookings = reservations.filter(b => overlaps(b, currentDate, addDays(currentDate, 14)) && (b.guest + ' ' + b.id).toLowerCase().includes(query.toLowerCase())).flatMap(b => bookingRoomStays(b).filter(stay => stay.start < addDays(currentDate, 14) && stay.end > currentDate).map(stay => ({ ...b, room: String(stay.room), colStart: Math.max(0, nights(currentDate, stay.start)), colSpan: Math.min(14, nights(currentDate, stay.end)) - Math.max(0, nights(currentDate, stay.start)), bgColor: b.status === 'IN_HOUSE' ? '#10b981' : '#3b82f6', payment: Number(b.balance) === 0 ? 'paid' : Number(b.paid)>0 ? 'partial' : 'unpaid' })));
 
   return (
-    <div className="pms-original pms-legacy-timeline" style={{ display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: '#f4f5f7', fontFamily: 'Inter, Arial, sans-serif' }}>
+    <div className="pms-original pms-legacy-timeline" style={{ display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: '#f4f5f7', fontFamily: 'var(--font-sans)' }}>
       
       {/* Header Toolbar */}
       <div className="ari-toolbar" style={{ backgroundColor: '#fff', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h1 style={{ fontSize: '20px', fontWeight: 'bold', color: '#111827', margin: '0 0 4px 0' }}>Lịch đặt phòng (Tape Chart)</h1>
-          <p style={{ color: '#6b7280', margin: 0, fontSize: '13px' }}>Click để xem chi tiết, nhận phòng hoặc trả phòng</p>
+          <h1 style={{ fontSize: '20px', fontWeight: 'bold', color: '#111827', margin: '0 0 4px 0' }}>{labelUi("Lịch đặt phòng (Tape Chart)")}</h1>
+          <p style={{ color: '#6b7280', margin: 0, fontSize: '13px' }}>{labelUi("Click để xem chi tiết, nhận phòng hoặc trả phòng")}</p>
         </div>
         
         <div className="ari-toolbar-actions" style={{ display: 'flex', alignItems: 'center' }}>
           <div className="ari-date-navigation" style={{ display: 'flex', alignItems: 'center', backgroundColor: '#f3f4f6', borderRadius: '8px', padding: '4px' }}>
-            <button aria-label="14 ngày trước" onClick={() => setCurrentDate(addDays(currentDate, -14))} style={{ border: 'none', background: 'none', padding: '6px', cursor: 'pointer', borderRadius: '4px' }}><ChevronLeft size={18} /></button>
-            <span className="ari-date-label" style={{ fontWeight: '600', color: '#374151' }}>{new Date(currentDate + 'T00:00:00').toLocaleDateString(getIntlLocale(), { month: 'long', year: 'numeric' })}</span>
-            <button aria-label="14 ngày sau" onClick={() => setCurrentDate(addDays(currentDate, 14))} style={{ border: 'none', background: 'none', padding: '6px', cursor: 'pointer', borderRadius: '4px' }}><ChevronRight size={18} /></button>
+            <button aria-label={labelUi("14 ngày trước")} onClick={() => setCurrentDate(addDays(currentDate, -14))} style={{ border: 'none', background: 'none', padding: '6px', cursor: 'pointer', borderRadius: '4px' }}><ChevronLeft size={18} /></button>
+            <span className="ari-date-label" style={{ fontWeight: '600', color: '#374151' }}>{formatDate(currentDate)} – {formatDate(addDays(currentDate, 13))}</span>
+            <button aria-label={labelUi("14 ngày sau")} onClick={() => setCurrentDate(addDays(currentDate, 14))} style={{ border: 'none', background: 'none', padding: '6px', cursor: 'pointer', borderRadius: '4px' }}><ChevronRight size={18} /></button>
           </div>
           
           <div className="ari-search" style={{ position: 'relative' }}>
             <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} aria-hidden="true" />
-            <input type="search" aria-label="Tìm tên khách hoặc mã đặt phòng" value={query} onChange={e => setQuery(e.target.value)} placeholder="Tìm tên khách, mã..." style={{ padding: '8px 12px 8px 36px', borderRadius: '8px', border: '1px solid #d1d5db' }} />
+            <input type="search" aria-label={labelUi("Tìm tên khách hoặc mã đặt phòng")} value={query} onChange={e => setQuery(e.target.value)} placeholder={labelUi("Tìm tên khách, mã...")} style={{ padding: '8px 12px 8px 36px', borderRadius: '8px', border: '1px solid #d1d5db' }} />
           </div>
 
           <button aria-expanded={showFilter} aria-controls={showFilter ? 'ari-room-type-filter' : undefined} onClick={() => setShowFilter(!showFilter)} style={{ backgroundColor: '#fff', border: '1px solid #d1d5db', padding: '8px 12px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: '500', color: '#374151' }}>
@@ -51,16 +51,16 @@ export default function ARI() {
         </div>
       </div>
 
-      {showFilter && <select id="ari-room-type-filter" className="ari-room-type-filter" aria-label="Lọc loại phòng" value={typeFilter} onChange={e => setTypeFilter(e.target.value)} style={{ margin: '8px 12px', padding: '8px', border: '1px solid #d1d5db', borderRadius: '8px' }}><option value="">{tUi("common.allRoomTypes")}</option>{roomTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select>}
-      <p className="ari-mobile-hint">Vuốt ngang để xem ngày khác. Chạm đặt phòng để mở chi tiết.</p>
+      {showFilter && <select id="ari-room-type-filter" className="ari-room-type-filter" aria-label={labelUi("Lọc loại phòng")} value={typeFilter} onChange={e => setTypeFilter(e.target.value)} style={{ margin: '8px 12px', padding: '8px', border: '1px solid #d1d5db', borderRadius: '8px' }}><option value="">{tUi("common.allRoomTypes")}</option>{roomTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select>}
+      <p className="ari-mobile-hint">{labelUi("Vuốt ngang để xem ngày khác. Chạm đặt phòng để mở chi tiết.")}</p>
       {/* Main Gantt Chart Area */}
-      <div className="pms-legacy-chart" role="region" aria-label="Lịch đặt phòng, có thể cuộn ngang và dọc" tabIndex={0} style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column', backgroundColor: '#fff', borderRadius: '12px', border: '1px solid #e5e7eb', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+      <div className="pms-legacy-chart" role="region" aria-label={labelUi("Lịch đặt phòng, có thể cuộn ngang và dọc")} tabIndex={0} style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column', backgroundColor: '#fff', borderRadius: '12px', border: '1px solid #e5e7eb', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
         
         {/* Timeline Header (Dates) */}
         <div className="ari-chart-row" style={{ display: 'flex', position: 'sticky', top: 0, zIndex: 20, borderBottom: '1px solid #e5e7eb', backgroundColor: '#f9fafb' }}>
           {/* Top-left empty corner */}
           <div className="ari-room-column ari-room-heading" style={{ position: 'sticky', left: 0, zIndex: 21, flexShrink: 0, borderRight: '1px solid #e5e7eb', display: 'flex', alignItems: 'center' }}>
-            <span style={{ fontSize: '13px', fontWeight: '600', color: '#6b7280' }}>Loại phòng / Phòng</span>
+            <span style={{ fontSize: '13px', fontWeight: '600', color: '#6b7280' }}>{labelUi("Loại phòng / Phòng")}</span>
           </div>
           
           {/* Date Columns */}
@@ -119,7 +119,7 @@ export default function ARI() {
                   {rt.available.map((av, i) => (
                     <div key={i} style={{ width: '100px', flexShrink: 0, borderRight: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <span style={{ fontSize: '13px', fontWeight: 'bold', color: av === 0 ? '#ef4444' : '#6b7280' }}>
-                        {av === 0 ? 'Hết' : av}
+                        {av === 0 ? labelUi("Hết") : av}
                       </span>
                     </div>
                   ))}
@@ -137,7 +137,7 @@ export default function ARI() {
                       {dates.map((d, i) => {
                         const date = addDays(currentDate, i);
                         const blocked = roomIsBlocked(room, roomBlocks, date, addDays(date, 1));
-                        return <div key={i} data-date={date} className={blocked ? 'ari-cell-blocked' : undefined} title={blocked ? `${room.name}, ${date}: ${tUi('rooms.blocked')}` : undefined} style={{
+                        return <div key={i} data-date={date} className={blocked ? 'ari-cell-blocked' : undefined} title={blocked ? `${room.name}, ${formatDate(date)}: ${tUi('rooms.blocked')}` : undefined} style={{
                           width: '100px', flexShrink: 0, borderRight: '1px solid #f3f4f6',
                           backgroundColor: blocked ? undefined : isWeekend(d) ? '#fffaf5' : 'transparent'
                         }}>{blocked && <span className="ari-blocked-caption">{room.condition === 'maintenance' ? tUi('hk.maintenance') : tUi('rooms.blocked')}</span>}</div>;
@@ -145,7 +145,7 @@ export default function ARI() {
 
                       {/* Booking Pills */}
                       {roomBookings.map((booking) => (
-                        <button className="ari-booking" aria-label={`${booking.guest}, phòng ${room.name}, ${booking.checkIn} đến ${booking.checkOut}`} onClick={() => setSelectedBookingId(booking.id)} key={booking.id} style={{ border: 'none', textAlign: 'left',
+                        <button className="ari-booking" aria-label={`${booking.guest}, phòng ${room.name}, ${formatDate(booking.checkIn)} đến ${formatDate(booking.checkOut)}`} onClick={() => setSelectedBookingId(booking.id)} key={`${booking.id}:${booking.colStart}`} style={{ border: 'none', textAlign: 'left',
                           position: 'absolute',
                           left: `${booking.colStart * 100 + 2}px`, // 100px per day, 2px inset
                           width: `${booking.colSpan * 100 - 4}px`,
@@ -179,7 +179,7 @@ export default function ARI() {
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             border: '1px solid #fff',
                             marginLeft: 'auto', flexShrink: 0
-                          }} title={booking.payment === 'paid' ? tUi("rooms.paidFull") : booking.payment === 'partial' ? 'Đã cọc / Thanh toán 1 phần' : 'Chưa thanh toán'}>
+                          }} title={booking.payment === 'paid' ? tUi("rooms.paidFull") : booking.payment === 'partial' ? labelUi("Đã cọc / Thanh toán 1 phần") : labelUi("Chưa thanh toán")}>
                             <span style={{ fontSize: '11px', color: booking.payment === 'paid' ? '#fff' : (booking.payment === 'partial' ? '#fff' : '#6b7280'), fontWeight: 'bold' }}>$</span>
                           </div>
                         </button>

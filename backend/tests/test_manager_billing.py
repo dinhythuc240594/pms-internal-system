@@ -9,13 +9,13 @@ from threading import Barrier
 from alembic.migration import MigrationContext
 from alembic.operations import Operations
 from alembic.script import ScriptDirectory
-from domain_fixture import DomainTestCase
 from sqlalchemy import create_engine, func, select, text
 from sqlalchemy.exc import DBAPIError
 
 from pms_api.core_models import AuditLog, Plan, Subscription, Tenant, User, uid, utcnow
 from pms_api.extensions import db
 from pms_api.security import set_context
+from tests.domain_fixture import DomainTestCase
 
 
 class ManagerBillingTests(DomainTestCase):
@@ -97,7 +97,7 @@ class ManagerBillingTests(DomainTestCase):
         self.assertEqual(invoice["paid"], "0.0000")
         self.assertEqual(invoice["balance"], "100.1250")
         with self.app.app_context():
-            set_context(is_system=True)
+            set_context(is_system=True, is_service=True)
             subscription = db.session.get(Subscription, "sub-a")
             subscription.status = "expired"
             db.session.commit()
@@ -113,7 +113,7 @@ class ManagerBillingTests(DomainTestCase):
         self.assertEqual(last.json["status"], "paid")
         self.assertEqual(last.json["balance"], "0.0000")
         with self.app.app_context():
-            set_context(is_system=True)
+            set_context(is_system=True, is_service=True)
             self.assertEqual(db.session.get(Subscription, "sub-a").status, "expired")
             self.assertEqual(db.session.scalar(select(func.count()).select_from(LedgerEntry)), 0)
             self.assertEqual(
@@ -163,7 +163,7 @@ class ManagerBillingTests(DomainTestCase):
         self.assertEqual(changed.status_code, 409, changed.json)
         self.assertEqual(changed.json["error"]["code"], "idempotency_conflict")
         with self.app.app_context():
-            set_context("admin", is_system=True)
+            set_context("admin", is_system=True, is_service=True)
             for model in (SaaSInvoice, SaaSIdempotencyRecord):
                 self.assertEqual(db.session.scalar(select(func.count()).select_from(model)), 1)
             self.assertEqual(
@@ -176,7 +176,9 @@ class ManagerBillingTests(DomainTestCase):
             )
             set_context(self.owner_id, self.tenant_id)
             self.assertEqual(db.session.scalars(select(SaaSIdempotencyRecord)).all(), [])
-            self.assertEqual(db.session.scalars(select(SaaSInvoice)).all(), [])
+            self.assertEqual(
+                db.session.scalars(select(SaaSInvoice.id)).all(), [responses[0].json["id"]]
+            )
 
     def test_validation_rejects_invalid_money_currency_dates_and_unknown_fields(self):
         base = {
@@ -258,7 +260,7 @@ class ManagerBillingTests(DomainTestCase):
         self.assertEqual([response.status_code for response in responses], [201, 201])
         self.assertEqual(responses[0].json, responses[1].json)
         with self.app.app_context():
-            set_context(is_system=True)
+            set_context(is_system=True, is_service=True)
             self.assertEqual(db.session.scalar(select(func.count()).select_from(SaaSPayment)), 2)
 
     def test_concurrent_payments_cannot_overpay_and_void_cannot_race_payment(self):
@@ -368,7 +370,7 @@ class ManagerBillingTests(DomainTestCase):
         end = (start.replace(day=28) + timedelta(days=4)).replace(day=1)
         old = start - timedelta(days=1)
         with self.app.app_context():
-            set_context("admin", is_system=True)
+            set_context("admin", is_system=True, is_service=True)
             db.session.get(Tenant, self.other_tenant_id).status = "suspended"
             db.session.get(User, "hk").active = False
             db.session.add(Tenant(id="unassigned-hotel", name="Unassigned"))
@@ -433,6 +435,7 @@ class ManagerBillingTests(DomainTestCase):
                 "currency": "VND",
                 "invoiced": "200.0000",
                 "received": "55.0000",
+                "refunded": "0.0000",
                 "outstanding": "225.0000",
                 "overdue": "225.0000",
             },
@@ -443,6 +446,7 @@ class ManagerBillingTests(DomainTestCase):
                 "currency": "USD",
                 "invoiced": "9.5000",
                 "received": "1.1250",
+                "refunded": "0.0000",
                 "outstanding": "58.3750",
                 "overdue": "58.3750",
             },
@@ -456,15 +460,16 @@ class ManagerBillingTests(DomainTestCase):
         for query in ("start=bad", "start=20261001", "start=2026-10-02&end=2026-10-01"):
             self.assertEqual(self.system("GET", "/api/manager/overview?" + query).status_code, 422)
 
-    def test_forced_rls_blocks_tenant_billing_and_cache_and_preserves_payment_history(self):
+    def test_forced_rls_preserves_owner_reads_private_cache_and_immutable_payment_history(self):
         from pms_api.saas_billing.models import SaaSIdempotencyRecord, SaaSInvoice, SaaSPayment
 
         invoice = self.invoice()
         self.assertEqual(self.pay(invoice).status_code, 201)
         with self.app.app_context():
             set_context("owner-a", self.tenant_id)
-            for model in (SaaSInvoice, SaaSPayment, SaaSIdempotencyRecord):
-                self.assertEqual(db.session.scalars(select(model)).all(), [])
+            self.assertEqual(db.session.scalars(select(SaaSInvoice.id)).all(), [invoice["id"]])
+            self.assertEqual(len(db.session.scalars(select(SaaSPayment)).all()), 1)
+            self.assertEqual(db.session.scalars(select(SaaSIdempotencyRecord)).all(), [])
             self.assertEqual(
                 db.session.scalars(
                     select(AuditLog).where(AuditLog.entity_type == "saas_invoice")
@@ -483,15 +488,15 @@ class ManagerBillingTests(DomainTestCase):
                 )
                 db.session.flush()
             db.session.rollback()
-            set_context("admin", is_system=True)
+            set_context("admin", is_system=True, is_service=True)
             with self.assertRaises(DBAPIError):
                 db.session.execute(text("UPDATE saas_payments SET amount=1"))
             db.session.rollback()
-            set_context("admin", is_system=True)
+            set_context("admin", is_system=True, is_service=True)
             with self.assertRaises(DBAPIError):
                 db.session.execute(text("DELETE FROM saas_payments"))
             db.session.rollback()
-            set_context("admin", is_system=True)
+            set_context("admin", is_system=True, is_service=True)
             payment = db.session.scalar(select(SaaSPayment))
             with self.assertRaises(DBAPIError):
                 db.session.add(
@@ -505,7 +510,7 @@ class ManagerBillingTests(DomainTestCase):
                 )
                 db.session.flush()
             db.session.rollback()
-            set_context("admin", is_system=True)
+            set_context("admin", is_system=True, is_service=True)
             with self.assertRaises(DBAPIError):
                 db.session.add(
                     SaaSPayment(
@@ -518,7 +523,7 @@ class ManagerBillingTests(DomainTestCase):
                 )
                 db.session.flush()
             db.session.rollback()
-            set_context("admin", is_system=True)
+            set_context("admin", is_system=True, is_service=True)
             flags = db.session.execute(
                 text(
                     "SELECT relrowsecurity,relforcerowsecurity FROM pg_class "

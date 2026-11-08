@@ -1,9 +1,10 @@
 """Draft invoice headers; posted lines and cash movements are immutable snapshots."""
 
-from sqlalchemy import CheckConstraint, ForeignKeyConstraint, UniqueConstraint
+from sqlalchemy import CheckConstraint, ForeignKeyConstraint, UniqueConstraint, column
 from sqlalchemy.dialects.postgresql import JSONB
 
 from ..core_models import uid, utcnow
+from ..currencies import HOTEL_CURRENCIES
 from ..extensions import db
 from ..pricing.models import MoneySnapshot
 
@@ -162,7 +163,7 @@ class CommissionSettlement(MoneySnapshot, db.Model):
     reservation_id = db.Column(db.String(40), nullable=False)
     source_id = db.Column(db.String(40))
     source_name = db.Column(db.String(160), nullable=False)
-    percent = db.Column(db.Numeric(7, 4), nullable=False)
+    percent = db.Column(db.Numeric(7, 4))
     room_net = db.Column(db.Numeric(19, 4), nullable=False)
     base_room_net = db.Column(db.Numeric(19, 4), nullable=False)
     amount = db.Column(db.Numeric(19, 4), nullable=False)
@@ -173,16 +174,13 @@ class CommissionSettlement(MoneySnapshot, db.Model):
     __table_args__ = (
         UniqueConstraint("tenant_id", "id"),
         UniqueConstraint("tenant_id", "reservation_id"),
-        ForeignKeyConstraint(
-            ["tenant_id", "reservation_id"], ["reservations.tenant_id", "reservations.id"]
-        ),
+        ForeignKeyConstraint(["tenant_id", "reservation_id"], ["reservations.tenant_id", "reservations.id"]),
         CheckConstraint("percent BETWEEN 0 AND 100", name="percent"),
+        CheckConstraint("room_net >= 0 AND base_room_net >= 0 AND amount >= 0 AND base_amount >= 0", name="nonnegative_amounts"),
         CheckConstraint(
-            "room_net >= 0 AND base_room_net >= 0 AND amount >= 0 AND base_amount >= 0",
-            name="nonnegative_amounts",
-        ),
-        CheckConstraint(
-            "currency IN ('VND','USD') AND base_currency IN ('VND','USD') AND exchange_rate > 0",
+            column("currency").in_(HOTEL_CURRENCIES)
+            & column("base_currency").in_(HOTEL_CURRENCIES)
+            & (column("exchange_rate") > 0),
             name="currency_snapshot",
         ),
     )
@@ -198,11 +196,43 @@ class CommissionPayout(db.Model):
     __table_args__ = (
         UniqueConstraint("tenant_id", "id"),
         UniqueConstraint("tenant_id", "cash_document_id"),
-        ForeignKeyConstraint(
-            ["tenant_id", "commission_id"],
-            ["commission_settlements.tenant_id", "commission_settlements.id"],
-        ),
-        ForeignKeyConstraint(
-            ["tenant_id", "cash_document_id"], ["cash_documents.tenant_id", "cash_documents.id"]
-        ),
+        ForeignKeyConstraint(["tenant_id", "commission_id"], ["commission_settlements.tenant_id", "commission_settlements.id"]),
+        ForeignKeyConstraint(["tenant_id", "cash_document_id"], ["cash_documents.tenant_id", "cash_documents.id"]),
+    )
+
+
+class CommissionReview(MoneySnapshot, db.Model):
+    __tablename__ = "commission_reviews"
+    id = db.Column(db.String(40), primary_key=True, default=uid)
+    tenant_id = db.Column(db.String(40), db.ForeignKey("tenants.id"), nullable=False)
+    commission_id = db.Column(db.String(40), nullable=False)
+    room_net = db.Column(db.Numeric(19, 4), nullable=False)
+    base_room_net = db.Column(db.Numeric(19, 4), nullable=False)
+    amount = db.Column(db.Numeric(19, 4), nullable=False)
+    evidence = db.Column(JSONB, nullable=False)
+    allocations = db.Column(JSONB, nullable=False)
+    reason = db.Column(db.String(1000), nullable=False)
+    user_id = db.Column(db.String(40), db.ForeignKey("users.id"), nullable=False)
+    created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utcnow)
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "id"),
+        ForeignKeyConstraint(["tenant_id", "commission_id"], ["commission_settlements.tenant_id", "commission_settlements.id"]),
+        CheckConstraint("room_net >= 0 AND base_room_net >= 0 AND amount >= 0 AND base_amount >= 0 AND amount <= room_net", name="valid_amounts"),
+        CheckConstraint("exchange_rate > 0 AND length(btrim(reason)) > 0", name="review_details"),
+        db.Index("ix_commission_reviews_latest", "tenant_id", "commission_id", "created_at", "id"),
+    )
+
+
+class CommissionRecovery(db.Model):
+    __tablename__ = "commission_recoveries"
+    id = db.Column(db.String(40), primary_key=True, default=uid)
+    tenant_id = db.Column(db.String(40), db.ForeignKey("tenants.id"), nullable=False)
+    commission_id = db.Column(db.String(40), nullable=False)
+    cash_document_id = db.Column(db.String(40), nullable=False)
+    created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utcnow)
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "id"),
+        UniqueConstraint("tenant_id", "cash_document_id"),
+        ForeignKeyConstraint(["tenant_id", "commission_id"], ["commission_settlements.tenant_id", "commission_settlements.id"]),
+        ForeignKeyConstraint(["tenant_id", "cash_document_id"], ["cash_documents.tenant_id", "cash_documents.id"]),
     )

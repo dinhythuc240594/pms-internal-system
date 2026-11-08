@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600;1,700&family=Inter:ital,opsz,wght@0,14..32,300..900;1,14..32,300..900&display=swap');
+@import './shared/styles/fonts.css';
 
 :root {
   /* =========================================
@@ -58,9 +58,13 @@
 }
 
 body {
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-sans);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+}
+
+button, input, select, textarea {
+  font-family: inherit;
 }
 
 /* Base class for App Layout */
@@ -361,8 +365,6 @@ body {
   .pms-mobile-menu { display: block; margin: 8px 12px; }
   .pms-menu-backdrop { display: block; position: fixed; inset: 0; z-index: 90; background: rgba(0,0,0,.4); border: 0; }
   .pms-main { padding: 12px !important; }
-  .pms-shell header { height: auto !important; padding: 12px !important; gap: 12px; flex-wrap: wrap; }
-  .pms-shell header > div:first-child { width: 100% !important; }
   .pms-dialog { padding: 12px; }
   .pms-form-grid { grid-template-columns: minmax(0,1fr); }
   .pms-page h1 { font-size: 21px; }

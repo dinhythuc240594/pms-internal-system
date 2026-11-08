@@ -11,15 +11,16 @@ from datetime import date
 from decimal import Decimal
 from zoneinfo import ZoneInfo
 
+from pms_api.ports import runtime
+
 from ..core_models import utcnow
-from ..ports import runtime
+from ..currencies import is_hotel_currency
 from ..security import ApiError
 from .domain import CENT as CENT
 from .domain import LIMIT as LIMIT
 from .domain import allocate_discount as allocate_discount
 from .domain import eligible_promotion as eligible_promotion
 from .domain import rounded as rounded
-from .strategies import promotion_strategy
 
 
 def business_date(tenant):
@@ -34,8 +35,8 @@ def exchange_snapshot(tenant_id, currency=None):
     tenant = runtime().pricing.tenant(tenant_id)
     base = (tenant.settings or {}).get("currency", "VND")
     currency = currency or base
-    if currency not in ("VND", "USD"):
-        raise ApiError(422, "invalid_currency", "Chỉ hỗ trợ VND và USD.")
+    if not is_hotel_currency(currency) or not is_hotel_currency(base):
+        raise ApiError(422, "invalid_currency", "Tiền tệ không được hỗ trợ.")
     if currency == base:
         return currency, base, Decimal(1)
     require_feature("MULTI_CURRENCY")
@@ -81,6 +82,8 @@ def money_json(row):
 
 
 def promotional_discount(policy, nightly):
+    from .strategies import promotion_strategy
+
     return promotion_strategy(policy["kind"]).discount(policy, nightly)
 
 

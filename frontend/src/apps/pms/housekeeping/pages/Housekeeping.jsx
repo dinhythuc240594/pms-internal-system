@@ -1,3 +1,4 @@
+import DateInput from '../../../../shared/components/DateInput.jsx';
 import { t as tUi, tr as labelUi, useI18n } from '../../../../shared/i18n/useI18n.js';
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -11,6 +12,7 @@ import './Housekeeping.css';
 export default function Housekeeping() {
   useI18n();
   const [activeTab, setActiveTab] = useState('status'); // 'status' or 'history'
+  const [startValid, setStartValid] = useState(true), [endValid, setEndValid] = useState(true);
 
   const { rooms, bookings, cleanRoom, dirtyRoom, housekeepingLog, housekeepingWorkLogs, housekeepingTasks, housekeepingStaff, setCondition, roomTypes, settings, access, runAction } = usePms();
   const [query, setQuery] = useState('');
@@ -26,8 +28,9 @@ export default function Housekeeping() {
     return { id: 'R-' + r.id, number: r.id, typeId: r.typeId, condition: r.condition, booking: booking ? 'Đang ở' : 'Trống', hkCode: booking ? 'OCC' : r.condition === 'maintenance' ? 'OOO' : r.condition === 'inspection' ? 'VI' : r.condition === 'dirty' ? 'VD' : 'VC', hkDesc: booking ? 'Khách đang ở (' + booking.guest + ')' : r.condition === 'maintenance' ? 'Phòng bảo trì' : r.condition === 'inspection' ? 'Phòng chờ kiểm tra' : r.condition === 'dirty' ? 'Phòng trống cần dọn' : 'Phòng trống sạch', staff: worker?.name||'', staffId: task?.staffId, taskId: task?.id, note: task?.note||'' };
   }).filter(r => r.id.includes(query) && (!conditionFilter || r.condition === conditionFilter) && (!bookingFilter || r.booking === bookingFilter) && (!typeFilter || r.typeId === typeFilter)&&(!staffFilter||r.staffId===staffFilter));
   const allHistory=[...housekeepingLog,...housekeepingWorkLogs.filter(log=>!log.condition&&log.room)].map(log=>({...log,date:new Date(log.createdAt||log.at).toLocaleDateString('en-CA',{timeZone:settings.timezone}),time:timestamp(log.createdAt||log.at, settings.timezone),user:log.actor||log.actorName||log.actorId||'—',room:'R-'+log.room,action:({clean:'Phòng sạch',dirty:'Phòng bẩn',maintenance:'Phòng bảo trì',inspection:'Đang kiểm tra'})[log.condition]||({'housekeeping.task_created':'Tạo việc dọn','housekeeping.task_assigned':'Phân công','housekeeping.task_superseded':'Hủy việc cũ'})[log.action]||'Cập nhật công việc',note:log.note||log.details?.note||''}));
-  const historyList=allHistory.filter(log=>(!historyFilter.start||log.date>=historyFilter.start)&&(!historyFilter.end||log.date<=historyFilter.end)&&(!historyFilter.room||log.room===historyFilter.room)&&(!historyFilter.actor||log.user===historyFilter.actor));
+  const historyList=(!startValid || !endValid ? [] : allHistory).filter(log=>(!historyFilter.start||log.date>=historyFilter.start)&&(!historyFilter.end||log.date<=historyFilter.end)&&(!historyFilter.room||log.room===historyFilter.room)&&(!historyFilter.actor||log.user===historyFilter.actor));
   function exportHousekeeping() {
+    if (activeTab === 'history' && (!startValid || !endValid)) return;
     if (activeTab === 'history') downloadCsv(['Ngày', 'Thời gian', 'Phòng', 'Nhân viên', 'Thao tác', 'Ghi chú'], historyList.map(row => [row.date, row.time, row.room, row.user, row.action, row.note]), 'lich-su-buong-phong.csv');
     else downloadCsv(['Phòng', 'Loại phòng', 'Tình trạng', 'Lưu trú', 'Mã buồng phòng', 'Nhân viên', 'Ghi chú'], roomStatusList.map(row => [row.number, roomTypes.find(type => type.id === row.typeId)?.name || '', ({clean:'Sạch',dirty:'Bẩn',inspection:'Kiểm tra',maintenance:'Bảo trì'})[row.condition], row.booking, row.hkCode, row.staff, row.note]), 'buong-phong.csv');
   }
@@ -49,7 +52,8 @@ export default function Housekeeping() {
   };
 
   return (
-    <div className="pms-original pms-housekeeping" style={{ padding: '24px', backgroundColor: '#f4f5f7', minHeight: '100%', fontFamily: 'Inter, Arial, sans-serif' }}>
+    <div className="pms-original pms-housekeeping" style={{ padding: '24px', backgroundColor: '#f4f5f7', minHeight: '100%', fontFamily: 'var(--font-sans)' }}>
+      {activeTab === 'history' && (!startValid || !endValid) && <p className="domain-error" role="alert">{labelUi("Ngày không hợp lệ.")}</p>}
       
       {/* Header & Local Tabs */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '24px' }}>
@@ -57,8 +61,7 @@ export default function Housekeeping() {
           <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827', margin: '0 0 16px 0' }}>{tUi("hk.management")}</h1>
           <div style={{ display: 'flex', gap: '8px', backgroundColor: '#e5e7eb', padding: '4px', borderRadius: '8px', width: 'fit-content' }}>
             <button onClick={() => setActiveTab('status')} style={activeTab === 'status' ? activeTabStyle : inactiveTabStyle}>
-              <CheckCircle size={16} /> Trạng thái phòng
-            </button>
+              <CheckCircle size={16} />{" "}{labelUi("Trạng thái phòng")}</button>
             <button onClick={() => setActiveTab('history')} style={activeTab === 'history' ? activeTabStyle : inactiveTabStyle}>
               <History size={16} />{' '}{tUi("hk.history")}</button>
           </div>
@@ -90,9 +93,9 @@ export default function Housekeeping() {
             <>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Calendar size={18} color="#6b7280" />
-                <input aria-label={tUi("hk.historyFrom")} type="date" value={historyFilter.start} onChange={e=>setHistoryFilter(f=>({...f,start:e.target.value}))} style={inputStyle} />
+                <DateInput aria-label={tUi("hk.historyFrom")} value={historyFilter.start} max={historyFilter.end || undefined} onChange={start=>setHistoryFilter(f=>({...f,start}))} onValidityChange={setStartValid} style={inputStyle} />
                 <span>-</span>
-                <input aria-label={tUi("hk.historyTo")} type="date" value={historyFilter.end} onChange={e=>setHistoryFilter(f=>({...f,end:e.target.value}))} style={inputStyle} />
+                <DateInput aria-label={tUi("hk.historyTo")} min={historyFilter.start || undefined} value={historyFilter.end} onChange={end=>setHistoryFilter(f=>({...f,end}))} onValidityChange={setEndValid} style={inputStyle} />
               </div>
               <select aria-label={tUi("hk.historyRoom")} style={inputStyle} value={historyFilter.room} onChange={e=>setHistoryFilter(f=>({...f,room:e.target.value}))}><option value="">{tUi("common.allRooms")}</option>{[...new Set(allHistory.map(log=>log.room))].map(room=><option key={room}>{room}</option>)}</select>
               <select aria-label={tUi("hk.historyActor")} style={inputStyle} value={historyFilter.actor} onChange={e=>setHistoryFilter(f=>({...f,actor:e.target.value}))}><option value="">{tUi("common.allStaff")}</option>{[...new Set(allHistory.map(log=>log.user))].map(actor=><option key={actor}>{actor}</option>)}</select>
@@ -135,7 +138,7 @@ export default function Housekeeping() {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         {getConditionBadge(room.condition)}
                         {/* Quick toggle button */}
-                        <button disabled={Boolean(room.taskId)||room.condition==='inspection'||room.condition==='maintenance'||!access('housekeeping.manage').allowed} aria-label={'Đổi trạng thái ' + room.id} onClick={() => runAction('housekeeping.write', 'HOUSEKEEPING', () => room.condition === 'dirty' ? cleanRoom(room.number) : dirtyRoom(room.number))} style={{ background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer' }} title="Đổi trạng thái nhanh">
+                        <button disabled={Boolean(room.taskId)||room.condition==='inspection'||room.condition==='maintenance'||!access('housekeeping.manage').allowed} aria-label={'Đổi trạng thái ' + room.id} onClick={() => runAction('housekeeping.write', 'HOUSEKEEPING', () => room.condition === 'dirty' ? cleanRoom(room.number) : dirtyRoom(room.number))} style={{ background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer' }} title={labelUi("Đổi trạng thái nhanh")}>
                            <Clock size={16} />
                         </button>
                       </div>

@@ -96,7 +96,7 @@
   align-items: center;
   gap: 8px;
   width: 100%;
-  min-height: 42px;
+  min-height: 44px;
   padding: 7px 9px;
   border: 0;
   border-radius: 6px;
@@ -110,8 +110,12 @@
 
 .loha-language-option:hover,
 .loha-language-option:focus-visible {
-  outline: none;
   background: var(--manager-soft, var(--bg-main, #f1f6fa));
+}
+
+.loha-language-option:focus-visible {
+  outline: 2px solid var(--manager-accent, var(--accent-primary, #0871b9));
+  outline-offset: -2px;
 }
 
 .loha-language-option[aria-checked="true"] {

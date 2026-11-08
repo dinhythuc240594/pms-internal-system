@@ -23,5 +23,5 @@ test('remaining days use real expiry, show expired trials, and never invent date
   assert.deepEqual(overrideExpiry(null, now), { daysRemaining: null, expired: false });
   assert.equal(displayDate(null), '—');
   assert.equal(displayDate('not-a-date'), '—');
-  assert.equal(displayDate('2026-10-09T04:00:00.000Z'), '9/10/2026');
+  assert.equal(displayDate('2026-10-09T04:00:00.000Z'), '09/10/2026');
 });

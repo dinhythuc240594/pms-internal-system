@@ -1,6 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { positiveMoneyInput, dateFilterRange, currentMonthRange } from './saasBillingForm.js';
+import { nonnegativeMoneyInput, positiveMoneyInput, dateFilterRange, currentMonthRange } from './saasBillingForm.js';
+
+test('subscription history amounts allow zero while keeping the same decimal format as invoices', () => {
+  assert.equal(nonnegativeMoneyInput(' 0.0000 '), '0.0000');
+  assert.equal(nonnegativeMoneyInput('999999999999999.9999'), '999999999999999.9999');
+  for (const value of ['', '-1', '1e3', '1,5', '1.00001', '1000000000000000']) assert.throws(() => nonnegativeMoneyInput(value));
+});
 
 test('money inputs retain exact decimal strings including the maximum value', () => {
   assert.equal(positiveMoneyInput('999999999999999.9999'), '999999999999999.9999');

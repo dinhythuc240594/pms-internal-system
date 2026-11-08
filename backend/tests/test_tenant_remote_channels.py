@@ -16,6 +16,7 @@ from pms_api.security import set_context
 from tests import test_channex_airbnb as fake_airbnb
 from tests import test_channex_channels as fake_channels
 from tests.domain_fixture import DomainTestCase
+from tests.system_scope_fixture import grant_system_access, linked_property
 from tests.test_channex_airbnb import (
     CHANNEL as AIRBNB_CHANNEL,
 )
@@ -49,9 +50,10 @@ class TenantRemoteChannelFixture(DomainTestCase):
         self.descriptor, self.descriptors = adapter(), None
         self.readiness, self.async_result = [], False
         self.provider._request.side_effect = self.transport
-        factory = patch("pms_api.channels.factory.ChannexClient", return_value=self.provider)
+        factory = patch("pms_api.channels.remote_application.channel_adapter", return_value=self.provider)
         self.factory = factory.start()
         self.addCleanup(factory.stop)
+        linked_property(self, PROPERTY)
         _, self.stored_secrets = fake_channels.ChannexChannelTests.hotel_source(self)
 
     def transport(self, method, path, body=None, query=None, **kwargs):
@@ -148,7 +150,7 @@ class TenantRemoteChannelTests(TenantRemoteChannelFixture):
         )
         self.assertEqual(self.remote(tenant=self.other_tenant_id).status_code, 403)
         with self.app.app_context():
-            set_context("admin", is_system=True)
+            set_context("admin", is_system=True, is_service=True)
             db.session.add(FeatureControl(code="OTA_SYNC", enabled_global=False))
             db.session.commit()
         self.assertEqual(self.remote().status_code, 403)
@@ -230,7 +232,7 @@ class TenantRemoteChannelTests(TenantRemoteChannelFixture):
         )
         self.assertEqual(response.status_code, 200, response.json)
         with self.app.app_context():
-            set_context(is_system=True)
+            set_context(is_system=True, is_service=True)
             logs = list(
                 db.session.scalars(select(AuditLog).where(AuditLog.event.like("channex.channel.%")))
             )
@@ -280,7 +282,7 @@ class TenantRemoteChannelTests(TenantRemoteChannelFixture):
         self.assertEqual(response.status_code, 503, response.json)
         self.assertNotIn(self.stored_secrets[0], str(response.json))
         with self.app.app_context():
-            set_context(is_system=True)
+            set_context(is_system=True, is_service=True)
             db.session.get(Tenant, self.tenant_id).status = "suspended"
             db.session.commit()
         self.assertEqual(
@@ -341,7 +343,7 @@ class TenantAirbnbTests(TenantRemoteChannelFixture):
         self.assertEqual(response.status_code, 422, response.json)
         # An owner belonging to two hotels still cannot replay one hotel's OAuth state into the other.
         with self.app.app_context():
-            set_context(is_system=True)
+            set_context(is_system=True, is_service=True)
             db.session.add(
                 TenantUser(
                     tenant_id=self.other_tenant_id, user_id=self.owner_id, role="HOTEL_OWNER"
@@ -379,6 +381,7 @@ class TenantAirbnbTests(TenantRemoteChannelFixture):
         self.assertEqual(response.json["error"]["code"], "invalid_airbnb_state")
 
     def test_manager_airbnb_return_keeps_the_managed_hotel_context(self):
+        grant_system_access(self)
         manager, headers = self.login("manager@test.local")
         headers["Origin"] = ORIGIN
         response = self.remote(

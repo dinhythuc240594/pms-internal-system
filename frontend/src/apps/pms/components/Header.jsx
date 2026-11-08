@@ -9,6 +9,7 @@ import NotificationBell from './NotificationBell';
 import { usePms } from '../data/usePms';
 import { ROLE_NAMES } from '../data/access';
 import LanguageSwitcher from '../../../shared/i18n/LanguageSwitcher.jsx';
+import { useDraftNavigation } from '../../../shared/drafts/DraftGuardProvider';
 
 export default function Header({ onOpenNavigation }) {
   useI18n();
@@ -19,6 +20,7 @@ export default function Header({ onOpenNavigation }) {
   const profileRef = useRef(null);
   const triggerRef = useRef(null);
   const navigate = useNavigate();
+  const { requestLeave } = useDraftNavigation();
   const initials = (user?.name || user?.email || 'L').trim().split(/\s+/).slice(0, 2).map(word => word[0]).join('').toUpperCase();
   useEffect(() => {
     if (!profileOpen) return;
@@ -28,11 +30,13 @@ export default function Header({ onOpenNavigation }) {
     document.addEventListener('keydown', closeEscape);
     return () => { document.removeEventListener('pointerdown', closeOutside); document.removeEventListener('keydown', closeEscape); };
   }, [profileOpen]);
-  async function handleLogout() {
-    setSigningOut(true);
-    try { await logout(); navigate('/id/login'); }
-    catch { /* Provider displays the server error and keeps the session. */ }
-    finally { setSigningOut(false); }
+  function handleLogout() {
+    requestLeave(async () => {
+      setSigningOut(true);
+      try { await logout(); navigate('/id/login'); }
+      catch { /* Provider displays the server error and keeps the session. */ }
+      finally { setSigningOut(false); }
+    });
   }
   function openUsage() { setProfileOpen(false); setUsageOpen(true); }
   const links = [

@@ -24,9 +24,9 @@ from pms_api.admin.channex_remote_application import (
     verify_property,
 )
 from pms_api.channels.application import connection
+from pms_api.composition import channel_adapter
 from pms_api.ports import runtime
 
-from ..composition import channel_adapter
 from ..security import ApiError
 from .client import ProviderError
 from .credentials import load_credentials, valid_secret
@@ -86,7 +86,7 @@ def handle_save_remote_channel(tenant_id, channel_id=None):
 
 def handle_remote_channel_action(tenant_id, channel_id, action=None):
     deleting = runtime().request.method == "DELETE"
-    if not deleting and action not in {"readiness", "activate", "deactivate"}:
+    if not deleting and action not in {"readiness", "activate", "deactivate", "load_bookings"}:
         invalid()
     data = mutation_data({"revision", "confirm"}, {"revision"})
     if (deleting or action != "readiness") and data.get("confirm") is not True:

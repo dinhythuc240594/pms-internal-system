@@ -229,7 +229,7 @@ export default function AdminFeatures() {
   const statusBanner = loading || busy || error ? (
     <div role={error ? 'alert' : 'status'} style={{ padding: '14px 18px', border: `1px solid ${t.border}`, borderRadius: '14px', backgroundColor: t.bgInput, color: error ? '#EF4444' : t.textSecondary, display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px' }}>
       {error && <AlertCircle size={17} />}
-      <span style={{ flex: 1 }}>{error || (busy ? 'Đang lưu cấu hình tính năng…' : 'Đang tải cấu hình tính năng…')}</span>
+      <span style={{ flex: 1 }}>{error || (busy ? labelUi("Đang lưu cấu hình tính năng…") : labelUi("Đang tải cấu hình tính năng…"))}</span>
       {error && canManageOverrides && <button type="button" disabled={loading || busy} onClick={refreshFeatures} style={{ border: `1px solid ${t.border}`, borderRadius: '10px', padding: '6px 12px', backgroundColor: t.bgSurface, color: t.primary, cursor: 'pointer' }}>{tUi("common.retry")}</button>}
     </div>
   ) : null;
@@ -265,28 +265,28 @@ export default function AdminFeatures() {
       )}
 
       {statusBanner}
-      {canManageOverrides && !canToggleGlobal && <div style={{ fontSize: '12px', color: t.textSecondary }}>System Manager có thể quản lý ngoại lệ theo khách sạn. Chỉ Super Admin được thay đổi cờ Global.</div>}
+      {canManageOverrides && !canToggleGlobal && <div style={{ fontSize: '12px', color: t.textSecondary }}>{labelUi("System Manager có thể quản lý ngoại lệ theo khách sạn. Chỉ Super Admin được thay đổi cờ Global.")}</div>}
 
-      <section className="admin-features-summary" aria-label="Tổng quan tính năng">
+      <section className="admin-features-summary" aria-label={labelUi("Tổng quan tính năng")}>
         <div className="manager-panel admin-features-metric">
-          <span>Tổng số tính năng</span><strong>{loading ? '—' : features.length}</strong><small>Danh mục toàn hệ thống</small>
+          <span>{labelUi("Tổng số tính năng")}</span><strong>{loading ? '—' : features.length}</strong><small>{labelUi("Danh mục toàn hệ thống")}</small>
         </div>
         <div className="manager-panel admin-features-metric">
-          <span>Đang bật toàn hệ thống</span><strong>{loading ? '—' : totalActiveGlobal}<small> / {features.length}</small></strong><small>Áp dụng theo gói của khách sạn</small>
+          <span>{labelUi("Đang bật toàn hệ thống")}</span><strong>{loading ? '—' : totalActiveGlobal}<small> / {features.length}</small></strong><small>{labelUi("Áp dụng theo gói của khách sạn")}</small>
         </div>
         <div className="manager-panel admin-features-metric">
-          <span>Ngoại lệ theo khách sạn</span><strong>{loading ? '—' : totalAllOverrides}</strong><small>Tổng lượt cấp quyền riêng</small>
+          <span>{labelUi("Ngoại lệ theo khách sạn")}</span><strong>{loading ? '—' : totalAllOverrides}</strong><small>{labelUi("Tổng lượt cấp quyền riêng")}</small>
         </div>
       </section>
       <div className="manager-panel admin-features-filters">
         <label className="admin-features-search">
           <Search size={16} aria-hidden="true" />
-          <input type="search" aria-label="Tìm tính năng" placeholder="Tìm tên hoặc mã tính năng..." value={search} onChange={event => setSearch(event.target.value)} />
+          <input type="search" aria-label={labelUi("Tìm tính năng")} placeholder={labelUi("Tìm tên hoặc mã tính năng...")} value={search} onChange={event => setSearch(event.target.value)} />
         </label>
-        <div className="admin-features-categories" role="group" aria-label="Lọc theo nhóm tính năng">
+        <div className="admin-features-categories" role="group" aria-label={labelUi("Lọc theo nhóm tính năng")}>
           {categories.map(category => (
             <button key={category} type="button" aria-pressed={categoryFilter === category} onClick={() => setCategoryFilter(category)}>
-              {category === 'ALL' ? 'Tất cả nhóm' : category}
+              {category === 'ALL' ? labelUi("Tất cả nhóm") : category}
             </button>
           ))}
         </div>
@@ -296,7 +296,7 @@ export default function AdminFeatures() {
           FEATURES CARDS LIST WITH TOGGLES
           ------------------------------------------------------------- */}
       <div className="admin-features-grid">
-        {!loading && !error && filteredFeatures.length === 0 && <div role="status" style={{ padding: '24px', color: t.textSecondary }}>Không có tính năng phù hợp.</div>}
+        {!loading && !error && filteredFeatures.length === 0 && <div role="status" style={{ padding: '24px', color: t.textSecondary }}>{labelUi("Không có tính năng phù hợp.")}</div>}
         {filteredFeatures.map((f) => {
           const overrideCount = (tenantOverrides[f.code] || []).length;
 
@@ -319,7 +319,7 @@ export default function AdminFeatures() {
                       >
                         {f.category}
                       </span>
-                      <span style={{ fontSize: '11px', color: t.textSecondary, fontFamily: 'monospace' }}>
+                      <span style={{ fontSize: '11px', color: t.textSecondary, fontFamily: 'var(--font-mono)' }}>
                         {f.code}
                       </span>
                     </div>
@@ -334,7 +334,7 @@ export default function AdminFeatures() {
                     role="switch"
                     aria-checked={f.enabledGlobal}
                     aria-label={`Cờ Global: ${f.name}`}
-                    title={canToggleGlobal ? 'Bật hoặc tắt tính năng toàn hệ thống' : 'Chỉ Super Admin được thay đổi cờ Global'}
+                    title={canToggleGlobal ? labelUi("Bật hoặc tắt tính năng toàn hệ thống") : labelUi("Chỉ Super Admin được thay đổi cờ Global")}
                     disabled={!canToggleGlobal || actionsDisabled}
                     onClick={() => handleToggleFeature(f)}
                     style={{
@@ -374,7 +374,7 @@ export default function AdminFeatures() {
 
               <div className="admin-features-card-footer">
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 16px', fontSize: '12px' }}>
-                  <span style={{ color: t.textSecondary }}>Gói: <strong>{f.minPlan}</strong></span>
+                  <span style={{ color: t.textSecondary }}>{labelUi("Gói:")}{" "}<strong>{f.minPlan}</strong></span>
                   <span style={{ color: t.textSecondary }}>
                     Ngoại lệ: <strong style={{ color: overrideCount > 0 ? t.primary : t.textSecondary }}>{overrideCount}{' '}{tUi("common.hotelLower")}</strong>
                   </span>
@@ -498,7 +498,7 @@ export default function AdminFeatures() {
                     <span style={{ fontSize: '11px', fontWeight: '800', backgroundColor: t.aquaBg, color: t.aquaText, padding: '2px 8px', borderRadius: '6px', border: `1px solid ${t.aquaBorder}` }}>
                       {activeDrawerFeature.category}
                     </span>
-                    <span style={{ fontSize: '12px', color: t.textSecondary, fontFamily: 'monospace' }}>
+                    <span style={{ fontSize: '12px', color: t.textSecondary, fontFamily: 'var(--font-mono)' }}>
                       {activeDrawerFeature.code}
                     </span>
                   </div>
@@ -510,7 +510,7 @@ export default function AdminFeatures() {
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <button
-                  aria-label="Đóng bảng ngoại lệ"
+                  aria-label={labelUi("Đóng bảng ngoại lệ")}
                   disabled={busy}
                   onClick={handleCloseDrawer}
                   style={{
@@ -554,10 +554,10 @@ export default function AdminFeatures() {
             >
               <div style={{ fontSize: '12.5px', color: t.textSecondary, lineHeight: '1.4', flex: '1 1 280px' }}>
                 {activeDrawerFeature.description}
-                {!activeDrawerFeature.enabledGlobal && <div style={{ marginTop: '6px', fontWeight: '700' }}>Cờ Global đang tắt: mọi khách sạn đều bị chặn, kể cả khách sạn có ngoại lệ bật.</div>}
+                {!activeDrawerFeature.enabledGlobal && <div style={{ marginTop: '6px', fontWeight: '700' }}>{labelUi("Cờ Global đang tắt: mọi khách sạn đều bị chặn, kể cả khách sạn có ngoại lệ bật.")}</div>}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
-                <span style={{ fontSize: '11.5px', color: t.textSecondary }}>Cờ Global:</span>
+                <span style={{ fontSize: '11.5px', color: t.textSecondary }}>{labelUi("Cờ Global:")}</span>
                 <span 
                   style={{
                     fontSize: '11px',
@@ -568,7 +568,7 @@ export default function AdminFeatures() {
                     color: activeDrawerFeature.enabledGlobal ? '#10B981' : '#6B7280'
                   }}
                 >
-                  {activeDrawerFeature.enabledGlobal ? '✓ Bật toàn hệ thống' : '✕ Tắt toàn hệ thống'}
+                  {activeDrawerFeature.enabledGlobal ? labelUi("✓ Bật toàn hệ thống") : labelUi("✕ Tắt toàn hệ thống")}
                 </span>
               </div>
             </div>
@@ -600,8 +600,8 @@ export default function AdminFeatures() {
                 <Search size={15} color={t.textSecondary} />
                 <input 
                   type="text"
-                  aria-label="Tìm khách sạn có ngoại lệ"
-                  placeholder="Tìm khách sạn đã ghi đè..."
+                  aria-label={labelUi("Tìm khách sạn có ngoại lệ")}
+                  placeholder={labelUi("Tìm khách sạn đã ghi đè...")}
                   value={drawerSearch}
                   onChange={(e) => setDrawerSearch(e.target.value)}
                   style={{
@@ -645,7 +645,7 @@ export default function AdminFeatures() {
                 }}
               >
                 <Plus size={16} />
-                <span>Thêm khách sạn áp dụng ngoại lệ</span>
+                <span>{labelUi("Thêm khách sạn áp dụng ngoại lệ")}</span>
               </button>
             </div>
 
@@ -705,8 +705,7 @@ export default function AdminFeatures() {
                       gap: '6px'
                     }}
                   >
-                    <Plus size={14} /> Thêm khách sạn áp dụng ngoại lệ
-                  </button>
+                    <Plus size={14} />{" "}{labelUi("Thêm khách sạn áp dụng ngoại lệ")}</button>
                 </div>
               ) : (
                 /* Overrides Table */
@@ -723,9 +722,9 @@ export default function AdminFeatures() {
                   <table className="admin-features-overrides" role="table" style={{ width: '100%', minWidth: '680px', borderCollapse: 'collapse', textAlign: 'left' }}>
                     <thead role="rowgroup">
                       <tr role="row" style={{ backgroundColor: t.isDark ? '#191D24' : '#F8FAFC', borderBottom: `1px solid ${t.border}` }}>
-                        <th style={{ padding: '12px 16px', fontSize: '11px', fontWeight: '800', color: t.textSecondary, textTransform: 'uppercase' }}>Khách sạn áp dụng</th>
-                        <th style={{ padding: '12px 16px', fontSize: '11px', fontWeight: '800', color: t.textSecondary, textTransform: 'uppercase' }}>Hình thức ngoại lệ</th>
-                        <th style={{ padding: '12px 16px', fontSize: '11px', fontWeight: '800', color: t.textSecondary, textTransform: 'uppercase' }}>Lý do / Ghi chú</th>
+                        <th style={{ padding: '12px 16px', fontSize: '11px', fontWeight: '800', color: t.textSecondary, textTransform: 'uppercase' }}>{labelUi("Khách sạn áp dụng")}</th>
+                        <th style={{ padding: '12px 16px', fontSize: '11px', fontWeight: '800', color: t.textSecondary, textTransform: 'uppercase' }}>{labelUi("Hình thức ngoại lệ")}</th>
+                        <th style={{ padding: '12px 16px', fontSize: '11px', fontWeight: '800', color: t.textSecondary, textTransform: 'uppercase' }}>{labelUi("Lý do / Ghi chú")}</th>
                         <th style={{ padding: '12px 16px', fontSize: '11px', fontWeight: '800', color: t.textSecondary, textTransform: 'uppercase', textAlign: 'right' }}>{tUi("common.actions")}</th>
                       </tr>
                     </thead>
@@ -753,7 +752,7 @@ export default function AdminFeatures() {
                                 <div style={{ fontSize: '11px', color: t.textSecondary, marginTop: '2px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                   <span>{item.subdomain}</span>
                                   <span>•</span>
-                                  <span style={{ color: t.textMuted }}>Gói: {item.basePlan}</span>
+                                  <span style={{ color: t.textMuted }}>{labelUi("Gói:")}{" "}{item.basePlan}</span>
                                 </div>
                               </div>
                             </div>
@@ -786,12 +785,12 @@ export default function AdminFeatures() {
                               </span>
                               {item.overrideType === 'TRIAL' && item.daysRemaining !== null && (
                                 <div style={{ fontSize: '10.5px', color: '#F59E0B', marginTop: '4px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '3px' }}>
-                                  <Clock size={11} /> {item.expired ? 'Đã hết hạn' : `Còn lại ${item.daysRemaining} ngày`} · {displayDate(item.expiresAt)}
+                                  <Clock size={11} /> {item.expired ? labelUi("Đã hết hạn") : `Còn lại ${item.daysRemaining} ngày`} · {displayDate(item.expiresAt)}
                                 </div>
                               )}
-                              {item.overrideType === 'TRIAL' && item.daysRemaining === null && <div style={{ fontSize: '10.5px', color: t.textSecondary, marginTop: '4px' }}>Hết hạn: —</div>}
-                              {item.expiresAt && item.overrideType !== 'TRIAL' && <div style={{ fontSize: '10.5px', color: t.textSecondary, marginTop: '4px' }}>{item.expired ? 'Đã hết hạn' : 'Hết hạn'}: {displayDate(item.expiresAt)}</div>}
-                              {(!activeDrawerFeature.enabledGlobal || item.expired) && <div style={{ fontSize: '10.5px', color: t.textSecondary, marginTop: '4px' }}>{!activeDrawerFeature.enabledGlobal ? 'Đang bị chặn bởi cờ Global' : 'Đang áp dụng quyền theo gói'}</div>}
+                              {item.overrideType === 'TRIAL' && item.daysRemaining === null && <div style={{ fontSize: '10.5px', color: t.textSecondary, marginTop: '4px' }}>{labelUi("Hết hạn: —")}</div>}
+                              {item.expiresAt && item.overrideType !== 'TRIAL' && <div style={{ fontSize: '10.5px', color: t.textSecondary, marginTop: '4px' }}>{item.expired ? labelUi("Đã hết hạn") : labelUi("Hết hạn")}: {displayDate(item.expiresAt)}</div>}
+                              {(!activeDrawerFeature.enabledGlobal || item.expired) && <div style={{ fontSize: '10.5px', color: t.textSecondary, marginTop: '4px' }}>{!activeDrawerFeature.enabledGlobal ? labelUi("Đang bị chặn bởi cờ Global") : labelUi("Đang áp dụng quyền theo gói")}</div>}
                             </div>
                           </td>
 
@@ -810,7 +809,7 @@ export default function AdminFeatures() {
                             <button
                               disabled={actionsDisabled || !canManageOverrides}
                               onClick={() => handleRemoveOverride(item.tenantId, item.tenantName)}
-                              title="Gỡ bỏ quyền ghi đè, hoàn về mặc định"
+                              title={labelUi("Gỡ bỏ quyền ghi đè, hoàn về mặc định")}
                               style={{
                                 padding: '6px 12px',
                                 borderRadius: '10px',
@@ -835,7 +834,7 @@ export default function AdminFeatures() {
                               }}
                             >
                               <Trash2 size={12} />
-                              <span>Gỡ bỏ</span>
+                              <span>{labelUi("Gỡ bỏ")}</span>
                             </button>
                           </td>
                         </tr>
@@ -903,7 +902,7 @@ export default function AdminFeatures() {
             ref={modalRef}
             role="dialog"
             aria-modal="true"
-            aria-label="Thêm khách sạn áp dụng ngoại lệ"
+            aria-label={labelUi("Thêm khách sạn áp dụng ngoại lệ")}
             tabIndex={-1}
             style={{
               backgroundColor: t.bgSurface,
@@ -925,7 +924,7 @@ export default function AdminFeatures() {
                 </p>
               </div>
               <button 
-                aria-label="Đóng hộp thoại thêm ngoại lệ"
+                aria-label={labelUi("Đóng hộp thoại thêm ngoại lệ")}
                 disabled={busy}
                 onClick={() => setIsAddOverrideModalOpen(false)} 
                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: t.textSecondary }}
@@ -943,7 +942,7 @@ export default function AdminFeatures() {
                   Chọn Khách sạn áp dụng
                 </label>
                 <select
-                  aria-label="Khách sạn áp dụng ngoại lệ"
+                  aria-label={labelUi("Khách sạn áp dụng ngoại lệ")}
                   disabled={busy || loading}
                   required
                   value={newOverride.tenantId}
@@ -964,7 +963,7 @@ export default function AdminFeatures() {
                     const isAlreadyOverridden = (tenantOverrides[activeDrawerFeature.code] || []).some(o => o.tenantId === item.id);
                     return (
                       <option key={item.id} value={item.id}>
-                        {item.name} ({item.subdomain || '—'}) - {item.plan || '—'} {isAlreadyOverridden ? '[Đang có ngoại lệ]' : ''}
+                        {item.name} ({item.subdomain || '—'}) - {item.plan || '—'} {isAlreadyOverridden ? labelUi("[Đang có ngoại lệ]") : ''}
                       </option>
                     );
                   })}
@@ -1016,10 +1015,10 @@ export default function AdminFeatures() {
                 </label>
                 <input 
                   type="text"
-                  aria-label="Lý do hoặc ghi chú quản trị"
+                  aria-label={labelUi("Lý do hoặc ghi chú quản trị")}
                   disabled={busy || loading}
                   maxLength={1000}
-                  placeholder="Ví dụ: Khách VIP ký kết hợp đồng 2 năm, Cấp trải nghiệm trước..."
+                  placeholder={labelUi("Ví dụ: Khách VIP ký kết hợp đồng 2 năm, Cấp trải nghiệm trước...")}
                   value={newOverride.notes}
                   onChange={(e) => setNewOverride({ ...newOverride, notes: e.target.value })}
                   style={{
@@ -1065,7 +1064,7 @@ export default function AdminFeatures() {
                     boxShadow: '0 4px 14px rgba(79, 70, 229, 0.25)'
                   }}
                 >
-                  {busy ? tUi("common.saving") : 'Lưu & Áp dụng ngoại lệ'}
+                  {busy ? tUi("common.saving") : labelUi("Lưu & Áp dụng ngoại lệ")}
                 </button>
               </div>
             </form>

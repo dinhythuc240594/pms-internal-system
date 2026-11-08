@@ -23,6 +23,14 @@ class FlaskRuntime:
         return current_app.extensions["pms_services"].pricing
 
     @property
+    def channels(self):
+        return current_app.extensions["pms_services"].channels
+
+    @property
+    def revisions(self):
+        return current_app.extensions["pms_services"].revisions
+
+    @property
     def state(self):
         return g
 
@@ -43,4 +51,5 @@ class FlaskRuntime:
         return current_app.logger
 
     payload = staticmethod(RequestData.payload)
+    date_range = staticmethod(RequestData.date_range)
     json_response = staticmethod(jsonify)

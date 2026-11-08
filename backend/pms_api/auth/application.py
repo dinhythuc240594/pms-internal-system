@@ -1,3 +1,4 @@
+import re
 import secrets
 from datetime import timedelta
 
@@ -11,7 +12,6 @@ from ..core_models import AuthSession, LoginAttempt, Tenant, TenantUser, User, u
 from ..extensions import db
 from ..security import (
     COOKIE,
-    GLOBAL_ROLES,
     ApiError,
     audit,
     authenticate,
@@ -33,11 +33,20 @@ def validate_email(email):
     if not isinstance(email, str):
         raise ApiError(422, "invalid_email", "Email không hợp lệ.")
     email = email.strip().lower()
+    local, separator, domain = email.partition("@")
     if (
         len(email) > 254
-        or email.count("@") != 1
-        or not all(email.split("@"))
-        or any(char.isspace() for char in email)
+        or not separator
+        or not local
+        or len(local) > 64
+        or local.startswith(".")
+        or local.endswith(".")
+        or ".." in local
+        or not re.fullmatch(r"[a-z0-9!#$%&'*+/=?^_`{|}~.-]+", local)
+        or any(
+            not re.fullmatch(r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?", label)
+            for label in domain.split(".")
+        )
     ):
         raise ApiError(422, "invalid_email", "Email không hợp lệ.")
     return email
@@ -62,7 +71,12 @@ def tenant_json(tenant):
 
 
 def session_json(user, session):
-    tenants = db.session.scalars(select(Tenant).order_by(Tenant.name)).all()
+    tenants = db.session.scalars(
+        select(Tenant)
+        .join(TenantUser, TenantUser.tenant_id == Tenant.id)
+        .where(TenantUser.user_id == user.id, TenantUser.active.is_(True))
+        .order_by(Tenant.name)
+    ).all()
     return {
         "user": user_json(user),
         "tenants": [tenant_json(t) for t in tenants],
@@ -97,8 +111,9 @@ def handle_login():
     if not isinstance(password, str) or len(password) > 128:
         raise ApiError(401, "invalid_credentials", "Email hoặc mật khẩu không đúng.")
     runtime().state.commit_on_error = True  # Failed attempts persist across workers/restarts.
-    limited = count_attempt("email:" + email) > 10
-    limited = count_attempt("ip:" + (runtime().request.remote_addr or "unknown")) > 60 or limited
+    limited = count_attempt("ip:" + (runtime().request.remote_addr or "unknown")) > 60
+    if not limited:
+        limited = count_attempt("email:" + email) > 10
     if limited:
         raise ApiError(429, "rate_limited", "Bạn đã thử đăng nhập nhiều lần. Vui lòng chờ 15 phút.")
     # Session creation must finish before account changes revoke its sessions.
@@ -121,7 +136,7 @@ def handle_login():
         expires_at=utcnow() + lifetime,
     )
     db.session.add(session)
-    set_context(user.id, is_system=user.global_role in GLOBAL_ROLES)
+    set_context(user.id)
     response = runtime().json_response(session_json(user, session))
     response.set_cookie(
         COOKIE,

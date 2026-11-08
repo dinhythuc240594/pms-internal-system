@@ -24,6 +24,7 @@ from pms_api.admin.channex_remote_application import (
 from pms_api.ports import runtime
 
 from ..channels.client import BASES, ProviderError, remote_id
+from ..channels.onboarding import invalidate_linked_inventory
 from ..channels.service import catalog_values
 from ..extensions import db
 from ..security import ApiError, audit
@@ -39,11 +40,7 @@ FIELD_TYPES = {
     "switch",
     "hidden",
 }
-
-
 NAME = re.compile(r"[A-Za-z0-9_][A-Za-z0-9_.-]{0,79}\Z")
-
-
 SECRET = re.compile(r"password|token|secret|credential|api.?key|machine_account", re.I)
 
 
@@ -159,7 +156,7 @@ def get_adapter(client, code):
 def groups_json(property_entity):
     try:
         groups = property_entity["relationships"]["groups"]["data"]
-    except (KeyError, TypeError):
+    except KeyError, TypeError:
         return []
     if not isinstance(groups, list) or len(groups) > 100:
         raise ProviderError("provider_invalid_response")
@@ -256,7 +253,7 @@ def revision(client, entity):
     values["id"] = entity["id"]
     try:
         raw = json.dumps(values, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
-    except (ValueError, TypeError):
+    except ValueError, TypeError:
         raise ProviderError("provider_invalid_response") from None
     return hmac.new(client.api_key.encode(), raw, hashlib.sha256).hexdigest()
 
@@ -556,7 +553,7 @@ def handle_channel_detail(property_id, channel_id):
     try:
         _, client = account_client(args.get("accountId"))
         prop = verify_property(client, property_id)
-        return channel_detail_response(client, prop, channel_id)
+        return channel_detail_response(client, prop, channel_id, single_property=True)
     except ProviderError as error:
         provider_error(error)
 
@@ -594,7 +591,7 @@ def handle_save_channel(property_id, channel_id=None):
 
 def handle_channel_action(property_id, channel_id, action=None):
     deleting = runtime().request.method == "DELETE"
-    if not deleting and action not in {"readiness", "activate", "deactivate"}:
+    if not deleting and action not in {"readiness", "activate", "deactivate", "load_bookings"}:
         invalid()
     data = mutation_data({"accountId", "revision", "confirm"}, {"accountId", "revision"})
     if (deleting or action != "readiness") and data.get("confirm") is not True:
@@ -734,6 +731,8 @@ def save_channel(environment, client, prop, data, channel_id=None):
                             "Gỡ các ghép nối trước khi đổi thông tin tài khoản hoặc mã khách sạn OTA.",
                         )
             identifier = input_id(channel_id)
+            if {"settings", "mappings"} & set(data):
+                invalidate_linked_inventory(environment, prop["id"])
             # Reject external edits made while the adapter and rate catalogs were loading.
             current = verify_channel(client, identifier, prop["id"], mutable=True)
             check_revision(client, current, data["revision"])
@@ -762,6 +761,7 @@ def save_channel(environment, client, prop, data, channel_id=None):
                 "settings": settings_input(data["settings"], adapter["fields"]),
                 "rate_plans": mappings_input(data["mappings"], adapter["mappingFields"], options),
             }
+            invalidate_linked_inventory(environment, prop["id"])
             result = client._request("POST", "/channels", {"channel": values}, allow_async=True)
             identifier = None
         if pending_result(result):
@@ -801,6 +801,10 @@ def channel_action(environment, client, prop, data, channel_id, action=None):
         identifier, attrs = entity["id"], entity["attributes"]
         if action == "readiness":
             return readiness(client, identifier)
+        if action == "load_bookings":
+            from ..channels.onboarding import request_existing_bookings
+
+            return request_existing_bookings(environment, client, prop, entity)
         if deleting:
             if attrs["is_active"]:
                 raise ApiError(
@@ -825,6 +829,7 @@ def channel_action(environment, client, prop, data, channel_id, action=None):
                     "channel_not_ready",
                     "Kênh chưa sẵn sàng; kiểm tra thông tin và ghép phòng/gói giá.",
                 )
+            invalidate_linked_inventory(environment, prop["id"])
             current = verify_channel(client, identifier, prop["id"], mutable=True)
             check_revision(client, current, data["revision"])
         elif attrs["channel"].lower() == "airbnb" and attrs["rate_plans"]:

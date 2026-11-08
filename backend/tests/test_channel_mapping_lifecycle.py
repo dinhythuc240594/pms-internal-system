@@ -1,5 +1,6 @@
 """Mapping edits, durable publication protection and safe OTA pause transitions."""
 
+from copy import deepcopy
 from datetime import timedelta
 from unittest.mock import patch
 from uuid import UUID
@@ -27,6 +28,22 @@ class ChannelMappingLifecycleTests(ChannelTestCase):
         clock = patch("pms_api.channels.service.utcnow", side_effect=lambda: self.now)
         clock.start()
         self.addCleanup(clock.stop)
+
+    def catalog(self, resource, property_id):
+        values = super().catalog(resource, property_id)
+        for room_id, rate_id in (
+            (REMOTE_ROOM, str(UUID(int=99))),
+            (str(UUID(int=100)), str(UUID(int=101))),
+            (str(UUID(int=102)), str(UUID(int=103))),
+        ):
+            if resource == "room_types" and room_id == REMOTE_ROOM:
+                continue
+            entity = deepcopy(values[0])
+            entity["id"] = room_id if resource == "room_types" else rate_id
+            if resource == "rate_plans":
+                entity["relationships"]["room_type"]["data"]["id"] = room_id
+            values.append(entity)
+        return values
 
     def mapping(self, **changes):
         body = {
@@ -75,6 +92,11 @@ class ChannelMappingLifecycleTests(ChannelTestCase):
         self.publish()
         self.assertEqual(self.jobs()[0]["errorCode"], "channel_mapping_invalid")
         self.assertFalse(self.saved_mapping()["targetLocked"])
+        response = self.mapping(channexRatePlanId=str(UUID(int=99)))
+        self.assertEqual(response.status_code, 422, response.json)
+        self.assertEqual(response.json["error"]["code"], "channel_mapping_invalid")
+        self.assertEqual(self.saved_mapping()["channexRatePlanId"], REMOTE_RATE)
+        self.provider.catalog.side_effect = self.catalog
         response = self.mapping(channexRatePlanId=str(UUID(int=99)))
         self.assertEqual(response.status_code, 200, response.json)
         self.provider.push_availability.assert_not_called()
@@ -142,6 +164,8 @@ class ChannelMappingLifecycleTests(ChannelTestCase):
         with self.assertRaises(SystemExit):
             self.run_jobs()
         self.assertTrue(self.saved_mapping()["targetLocked"])
+        self.assertEqual((self.jobs()[0]["status"], self.jobs()[0]["attempts"]), ("processing", 1))
+        self.assertEqual(self.run_jobs(), 0, "A replacement worker preserves the crash cooldown")
         self.assertEqual(self.jobs()[0]["status"], "queued")
         self.assertEqual(self.mapping(channexRatePlanId=str(UUID(int=99))).status_code, 409)
 
@@ -236,7 +260,7 @@ class ChannelMappingLifecycleTests(ChannelTestCase):
 class ChannelMappingMigrationTests(DomainTestCase):
     def test_legacy_webhook_history_stays_editable_but_unknown_ari_history_is_protected(self):
         with self.app.app_context():
-            set_context(is_system=True)
+            set_context(is_system=True, is_service=True)
             for suffix, kind in (("a", "setup_webhook"), ("b", "push_ari")):
                 db.session.add(
                     ChannelMapping(
@@ -265,7 +289,7 @@ class ChannelMappingMigrationTests(DomainTestCase):
             result = self.app.test_cli_runner().invoke(args=list(args))
             self.assertEqual(result.exit_code, 0, result.output)
         with self.app.app_context():
-            set_context(is_system=True)
+            set_context(is_system=True, is_service=True)
             rows = {m.tenant_id: m for m in db.session.scalars(select(ChannelMapping))}
             self.assertIsNone(rows[self.tenant_id].used_at)
             other = rows[self.other_tenant_id]

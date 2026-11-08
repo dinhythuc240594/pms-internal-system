@@ -131,7 +131,7 @@ def listings(client, channel_id):
         if len({value["id"] for value in values}) != len(values):
             raise ValueError
         return values
-    except (KeyError, TypeError, ValueError):
+    except KeyError, TypeError, ValueError:
         raise ProviderError("provider_invalid_response") from None
 
 
@@ -155,7 +155,7 @@ def handle_airbnb_listings(property_id, channel_id):
     try:
         _, client = account_client(args.get("accountId"))
         prop = verify_property(client, property_id)
-        return airbnb_listings(client, prop, channel_id)
+        return airbnb_listings(client, prop, channel_id, single_property=True)
     except ProviderError as error:
         provider_error(error)
 
@@ -214,6 +214,9 @@ def airbnb_connection_link(environment, client, prop, data, *, tenant_id=None):
         }
         if channel_id:
             values["channel_id"] = channel_id
+        from ..channels.onboarding import invalidate_linked_inventory
+
+        invalidate_linked_inventory(environment, prop["id"])
         result = client._request(
             "POST", "/meta/airbnb/connection_link", body={"connection_link": values}
         )
@@ -348,6 +351,9 @@ def airbnb_mapping(environment, client, prop, data, channel_id, mapping_id=None)
             if rate_json(rate, room, property_id, prop["currency"])["id"] != rate_id:
                 raise ProviderError("provider_invalid_response")
         # External edits can happen while Airbnb listings load; reject a changed connection before writing.
+        from ..channels.onboarding import invalidate_linked_inventory
+
+        invalidate_linked_inventory(environment, property_id)
         channel = airbnb_channel(client, channel_id, property_id, mutable=True)
         check_revision(client, channel, data["revision"])
         # shortcut: provider mappings have no idempotency key; reload after uncertain results before retrying.

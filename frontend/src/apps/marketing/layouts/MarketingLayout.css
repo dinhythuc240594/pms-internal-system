@@ -1,7 +1,11 @@
 .loha-skip-link { position: fixed; top: -80px; left: 16px; z-index: 100; background: var(--loha-ink); color: #fff !important; padding: 12px 20px; border-radius: 4px; }
 .loha-skip-link:focus { top: 12px; }
 .loha-header { position: sticky; top: 0; z-index: 30; background: rgba(255, 255, 255, .97); border-bottom: 1px solid var(--loha-line); }
-.loha-header-inner { display: flex; align-items: center; justify-content: space-between; gap: 24px; height: 88px; }
+.loha-header-inner { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; min-height: 72px; padding-block: 14px; }
+.loha-header-controls { display: flex; align-items: center; gap: 12px; margin-left: auto; min-width: 0; }
+.loha-home :is(section[id], main[id]) { scroll-margin-top: calc(var(--loha-header-height, 88px) + 12px); }
+@media (min-width: 601px) { .loha-header-inner { min-height: 76px; padding-block: 0; gap: 24px; } }
+@media (min-width: 901px) { .loha-header-inner { min-height: 88px; } .loha-header-controls { margin-left: 0; } }
 .loha-desktop-nav { display: flex; gap: 32px; font-size: 13px; font-weight: 500; }
 .loha-desktop-nav a, .loha-footer nav a { transition: color .15s; }
 .loha-desktop-nav a:hover, .loha-footer nav a:hover { color: var(--loha-blue); }
@@ -30,15 +34,12 @@
   .loha-desktop-nav { gap: 20px; font-size: 12px; }
 }
 @media (max-width: 900px) {
-  .loha-header-inner { height: 76px; }
   .loha-desktop-nav { display: none; }
-  .loha-header-actions { margin-left: auto; }
   .loha-menu-button { display: flex; }
   .loha-footer-top { flex-wrap: wrap; gap: 24px; }
   .loha-footer-top > a { margin-left: auto; }
 }
 @media (max-width: 600px) {
-  .loha-header-inner { display: grid; grid-template-columns: minmax(0, 1fr) auto 44px; height: 72px; gap: 12px; }
   .loha-header-actions { margin-left: 0; }
   .loha-header-login { display: none; }
   .loha-menu-button { margin-left: 0; }

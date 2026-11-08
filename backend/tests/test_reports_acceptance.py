@@ -77,6 +77,7 @@ class ReportsAcceptanceTests(DomainTestCase):
                         reservation_id=key,
                         room_id=room_id,
                         room_number="report-" + key,
+                        room_type_id="rt-" + suffix,
                         date=start + timedelta(days=offset),
                         price=Decimal(price),
                         base_currency=currency,

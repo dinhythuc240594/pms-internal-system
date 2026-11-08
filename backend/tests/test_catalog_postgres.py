@@ -46,7 +46,7 @@ class CatalogPostgresTests(DomainTestCase):
         self.assertEqual(updated.json["policies"], "Check-in policy")
 
     def test_hotel_profile_settings_enforce_tenant_and_role_permissions(self):
-        saved = self.request("patch", "/settings", json={"phone": "Hotel A"})
+        saved = self.request("patch", "/settings", json={"phone": "0901234567"})
         self.assertEqual(saved.status_code, 200, saved.json)
         crossed = self.request(
             "patch", f"/api/tenants/{self.other_tenant_id}/settings", json={"phone": "Crossed"}

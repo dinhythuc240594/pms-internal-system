@@ -19,7 +19,7 @@ class SubscriptionAcceptanceTests(DomainTestCase):
         self, *, features=None, max_rooms=None, status="active", end_date=None, plan_active=True
     ):
         with self.app.app_context():
-            set_context(is_system=True)
+            set_context(is_system=True, is_service=True)
             db.session.add_all(
                 [
                     Plan(

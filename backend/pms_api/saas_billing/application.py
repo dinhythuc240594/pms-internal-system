@@ -1,21 +1,43 @@
-"""Manual SaaS invoicing and current system overview; no payment gateway or plan grants."""
+"""System-managed SaaS invoicing and tenant-owner billing reads; no plan grants."""
 
 import re
 from collections import defaultdict
 from datetime import UTC, date, datetime, time, timedelta
 from decimal import Decimal
 
-from sqlalchemy import case, func, select
+from sqlalchemy import case, func, select, union_all
 
-from pms_api.bookings.application import begin_money, decimal_text, iso, money_value, string_value
+from pms_api.bookings.application import (
+    begin_money,
+    begin_write,
+    decimal_text,
+    finish_write,
+    iso,
+    money_value,
+    string_value,
+)
 from pms_api.finance.application import pagination
 from pms_api.ports import runtime
 
-from ..core_models import Plan, Subscription, Tenant, User, utcnow
+from ..core_models import Plan, Subscription, SubscriptionHistory, Tenant, User, utcnow
 from ..extensions import db
 from ..security import ApiError, audit
-from ..subscriptions import plan_code
-from .models import SaaSIdempotencyRecord, SaaSInvoice, SaaSPayment
+from ..subscriptions import (
+    entitlement,
+    lock_tenant,
+    operational_access,
+    plan_code,
+    subscription_history_json,
+    subscription_json,
+    timestamp,
+)
+from .models import (
+    SaaSIdempotencyRecord,
+    SaaSInvoice,
+    SaaSOperationalAccess,
+    SaaSPayment,
+    SaaSRefund,
+)
 
 PREFIX = "/api/billing/invoices"
 
@@ -30,23 +52,12 @@ def parse_date(value):
 
 
 def window(*, default_month=False):
+    start_value, end_value = runtime().date_range()
     today = utcnow().date()
     first = today.replace(day=1)
     next_month = (first.replace(day=28) + timedelta(days=4)).replace(day=1)
-    start = (
-        parse_date(runtime().request.args["start"])
-        if "start" in runtime().request.args
-        else first
-        if default_month
-        else None
-    )
-    end = (
-        parse_date(runtime().request.args["end"])
-        if "end" in runtime().request.args
-        else next_month
-        if default_month
-        else None
-    )
+    start = parse_date(start_value) if start_value is not None else first if default_month else None
+    end = parse_date(end_value) if end_value is not None else next_month if default_month else None
     if start and end and start >= end:
         raise ApiError(422, "invalid_dates", "Ngày kết thúc phải sau ngày bắt đầu.")
     return (
@@ -60,23 +71,31 @@ def allowed_fields(data, fields):
         raise ApiError(422, "invalid_input", "Nội dung có trường không được hỗ trợ.")
 
 
-def payment_totals():
+def payment_totals(tenant_id=None):
+    payments = select(SaaSPayment.invoice_id, SaaSPayment.amount)
+    refunds = select(SaaSRefund.invoice_id, (-SaaSRefund.amount).label("amount"))
+    if tenant_id is not None:
+        payments = payments.where(SaaSPayment.tenant_id == tenant_id)
+        refunds = refunds.where(SaaSRefund.tenant_id == tenant_id)
+    movements = union_all(payments, refunds).subquery()
     return (
-        select(
-            SaaSPayment.invoice_id,
-            func.sum(SaaSPayment.amount).label("paid"),
-        )
-        .group_by(SaaSPayment.invoice_id)
+        select(movements.c.invoice_id, func.sum(movements.c.amount).label("paid"))
+        .group_by(movements.c.invoice_id)
         .subquery()
     )
 
 
-def invoice_query():
-    totals = payment_totals()
+def invoice_query(tenant_id=None):
+    totals = payment_totals(tenant_id)
     paid = func.coalesce(totals.c.paid, 0)
-    return select(SaaSInvoice, Tenant.name, paid).join(
-        Tenant, Tenant.id == SaaSInvoice.tenant_id
-    ).outerjoin(totals, totals.c.invoice_id == SaaSInvoice.id), paid
+    query = (
+        select(SaaSInvoice, Tenant.name, paid)
+        .join(Tenant, Tenant.id == SaaSInvoice.tenant_id)
+        .outerjoin(totals, totals.c.invoice_id == SaaSInvoice.id)
+    )
+    if tenant_id is not None:
+        query = query.where(SaaSInvoice.tenant_id == tenant_id)
+    return query, paid
 
 
 def invoice_status(row, paid):
@@ -91,8 +110,12 @@ def invoice_status(row, paid):
     )
 
 
-def invoice_json(row, tenant_name, payments):
-    paid = sum((payment.amount for payment in payments), Decimal(0))
+def invoice_json(row, tenant_name, payments, refunds=()):
+    refunded = sum((refund.amount for refund in refunds), Decimal(0))
+    paid = sum((payment.amount for payment in payments), Decimal(0)) - refunded
+    refunds_by_payment = defaultdict(Decimal)
+    for refund in refunds:
+        refunds_by_payment[refund.payment_id] += refund.amount
     return {
         "id": row.id,
         "number": f"SAAS-{row.number:06d}",
@@ -104,6 +127,7 @@ def invoice_json(row, tenant_name, payments):
         "dueDate": iso(row.due_date),
         "status": invoice_status(row, paid),
         "paid": decimal_text(paid),
+        "refunded": decimal_text(refunded),
         "balance": decimal_text(0 if row.voided_at else row.amount - paid),
         "createdAt": iso(row.created_at),
         "voidedAt": iso(row.voided_at),
@@ -112,12 +136,24 @@ def invoice_json(row, tenant_name, payments):
             {
                 "id": payment.id,
                 "amount": decimal_text(payment.amount),
+                "refunded": decimal_text(refunds_by_payment[payment.id]),
+                "refundable": decimal_text(payment.amount - refunds_by_payment[payment.id]),
                 "method": payment.method,
                 "reference": payment.reference,
                 "note": payment.note,
                 "createdAt": iso(payment.created_at),
             }
             for payment in payments
+        ],
+        "refunds": [
+            {
+                "id": refund.id,
+                "paymentId": refund.payment_id,
+                "amount": decimal_text(refund.amount),
+                "reason": refund.reason,
+                "createdAt": iso(refund.created_at),
+            }
+            for refund in refunds
         ],
     }
 
@@ -128,11 +164,18 @@ def invoice_response(row):
         .where(SaaSPayment.tenant_id == row.tenant_id, SaaSPayment.invoice_id == row.id)
         .order_by(SaaSPayment.created_at, SaaSPayment.id)
     ).all()
-    return invoice_json(row, db.session.get(Tenant, row.tenant_id).name, payments)
+    refunds = db.session.scalars(
+        select(SaaSRefund)
+        .where(SaaSRefund.tenant_id == row.tenant_id, SaaSRefund.invoice_id == row.id)
+        .order_by(SaaSRefund.created_at, SaaSRefund.id)
+    ).all()
+    return invoice_json(row, db.session.get(Tenant, row.tenant_id).name, payments, refunds)
 
 
-def find_invoice(invoice_id, *, locked=False):
+def find_invoice(invoice_id, *, tenant_id=None, locked=False):
     query = select(SaaSInvoice).where(SaaSInvoice.id == invoice_id)
+    if tenant_id is not None:
+        query = query.where(SaaSInvoice.tenant_id == tenant_id)
     if locked:
         query = query.with_for_update().execution_options(populate_existing=True)
     row = db.session.scalar(query)
@@ -141,11 +184,9 @@ def find_invoice(invoice_id, *, locked=False):
     return row
 
 
-def handle_list_invoices():
+def invoice_page(tenant_id=None):
     page, size = pagination()
-    query, paid = invoice_query()
-    if runtime().request.args.get("tenantId"):
-        query = query.where(SaaSInvoice.tenant_id == runtime().request.args["tenantId"])
+    query, paid = invoice_query(tenant_id)
     start, end = window()
     if start:
         query = query.where(SaaSInvoice.created_at >= start)
@@ -172,16 +213,90 @@ def handle_list_invoices():
         .offset((page - 1) * size)
         .limit(size)
     ).all()
-    grouped = defaultdict(list)
+    grouped, grouped_refunds = defaultdict(list), defaultdict(list)
     if rows:
+        payments = select(SaaSPayment).where(
+            SaaSPayment.invoice_id.in_([row.id for row, _, _ in rows])
+        )
+        if tenant_id is not None:
+            payments = payments.where(SaaSPayment.tenant_id == tenant_id)
         for payment in db.session.scalars(
-            select(SaaSPayment)
-            .where(SaaSPayment.invoice_id.in_([row.id for row, _, _ in rows]))
-            .order_by(SaaSPayment.created_at, SaaSPayment.id)
+            payments.order_by(SaaSPayment.created_at, SaaSPayment.id)
         ):
             grouped[payment.invoice_id].append(payment)
+        refunds = select(SaaSRefund).where(
+            SaaSRefund.invoice_id.in_([row.id for row, _, _ in rows])
+        )
+        if tenant_id is not None:
+            refunds = refunds.where(SaaSRefund.tenant_id == tenant_id)
+        for refund in db.session.scalars(refunds.order_by(SaaSRefund.created_at, SaaSRefund.id)):
+            grouped_refunds[refund.invoice_id].append(refund)
     return {
-        "invoices": [invoice_json(row, name, grouped[row.id]) for row, name, _ in rows],
+        "invoices": [
+            invoice_json(row, name, grouped[row.id], grouped_refunds[row.id])
+            for row, name, _ in rows
+        ],
+        "pagination": {"page": page, "pageSize": size, "totalItems": count},
+    }
+
+
+def handle_list_invoices():
+    return invoice_page(runtime().request.args.get("tenantId") or None)
+
+
+def handle_tenant_billing(tenant_id):
+    value = entitlement(tenant_id)
+    totals = payment_totals(tenant_id)
+    paid = func.coalesce(totals.c.paid, 0)
+    rows = db.session.execute(
+        select(
+            SaaSInvoice.currency,
+            func.sum(SaaSInvoice.amount),
+            func.sum(paid),
+            func.sum(SaaSInvoice.amount - paid),
+        )
+        .outerjoin(totals, totals.c.invoice_id == SaaSInvoice.id)
+        .where(SaaSInvoice.tenant_id == tenant_id, SaaSInvoice.voided_at.is_(None))
+        .group_by(SaaSInvoice.currency)
+        .order_by(SaaSInvoice.currency)
+    ).all()
+    return {
+        "subscription": subscription_json(value["subscription"], value["plan"]),
+        "summary": [
+            {
+                "currency": currency,
+                "amount": decimal_text(amount),
+                "paid": decimal_text(received),
+                "balance": decimal_text(balance),
+            }
+            for currency, amount, received, balance in rows
+        ],
+    }
+
+
+def handle_tenant_invoices(tenant_id):
+    return invoice_page(tenant_id)
+
+
+def handle_tenant_invoice(tenant_id, invoice_id):
+    return invoice_response(find_invoice(invoice_id, tenant_id=tenant_id))
+
+
+def handle_tenant_billing_history(tenant_id):
+    page, size = pagination()
+    query = (
+        select(SubscriptionHistory, Plan)
+        .join(Plan, Plan.id == SubscriptionHistory.plan_id)
+        .where(SubscriptionHistory.tenant_id == tenant_id)
+    )
+    count = db.session.scalar(select(func.count()).select_from(query.subquery()))
+    rows = db.session.execute(
+        query.order_by(SubscriptionHistory.created_at.desc(), SubscriptionHistory.id)
+        .offset((page - 1) * size)
+        .limit(size)
+    ).all()
+    return {
+        "history": [subscription_history_json(row, plan) for row, plan in rows],
         "pagination": {"page": page, "pageSize": size, "totalItems": count},
     }
 
@@ -219,17 +334,14 @@ def handle_create_invoice():
             "currency": row.currency,
         },
     )
-    response = invoice_response(row)
-    db.session.add(
-        SaaSIdempotencyRecord(
-            tenant_id=row.tenant_id,
-            key=key,
-            fingerprint=fingerprint,
-            response=response,
-        )
+    return finish_write(
+        row.tenant_id,
+        key,
+        fingerprint,
+        invoice_response(row),
+        status=201,
+        record_model=SaaSIdempotencyRecord,
     )
-    db.session.flush()
-    return response, 201
 
 
 def handle_add_payment(invoice_id):
@@ -244,11 +356,7 @@ def handle_add_payment(invoice_id):
     method = data.get("method")
     if not isinstance(method, str) or method not in {"bank", "cash"}:
         raise ApiError(422, "invalid_method", "Phương thức phải là bank hoặc cash.")
-    paid = db.session.scalar(
-        select(func.coalesce(func.sum(SaaSPayment.amount), 0)).where(
-            SaaSPayment.tenant_id == row.tenant_id, SaaSPayment.invoice_id == row.id
-        )
-    )
+    paid = Decimal(invoice_response(row)["paid"])
     if row.voided_at:
         raise ApiError(409, "invoice_void", "Không thể thu tiền hóa đơn đã hủy.")
     if amount > row.amount - paid:
@@ -275,17 +383,14 @@ def handle_add_payment(invoice_id):
             "currency": row.currency,
         },
     )
-    response = invoice_response(row)
-    db.session.add(
-        SaaSIdempotencyRecord(
-            tenant_id=row.tenant_id,
-            key=key,
-            fingerprint=fingerprint,
-            response=response,
-        )
+    return finish_write(
+        row.tenant_id,
+        key,
+        fingerprint,
+        invoice_response(row),
+        status=201,
+        record_model=SaaSIdempotencyRecord,
     )
-    db.session.flush()
-    return response, 201
 
 
 def handle_void_invoice(invoice_id):
@@ -293,11 +398,7 @@ def handle_void_invoice(invoice_id):
     allowed_fields(data, {"reason"})
     reason = string_value(data.get("reason"), "Lý do", 1000, required=True)
     row = find_invoice(invoice_id, locked=True)
-    paid = db.session.scalar(
-        select(func.coalesce(func.sum(SaaSPayment.amount), 0)).where(
-            SaaSPayment.tenant_id == row.tenant_id, SaaSPayment.invoice_id == row.id
-        )
-    )
+    paid = Decimal(invoice_response(row)["paid"])
     if row.voided_at or paid:
         raise ApiError(409, "invoice_not_unpaid", "Chỉ hủy được hóa đơn chưa thu tiền.")
     row.voided_at, row.voided_by, row.void_reason = utcnow(), runtime().state.user.id, reason
@@ -309,6 +410,129 @@ def handle_void_invoice(invoice_id):
         {"tenantId": row.tenant_id, "reason": reason},
     )
     return invoice_response(row)
+
+
+def handle_refund_payment(invoice_id, payment_id):
+    data = runtime().payload()
+    allowed_fields(data, {"amount", "reason"})
+    row = find_invoice(invoice_id)
+    key, fingerprint, replay = begin_money(row, data, record_model=SaaSIdempotencyRecord)
+    if replay is not None:
+        return replay, 201
+    row = find_invoice(invoice_id, locked=True)
+    payment = db.session.scalar(
+        select(SaaSPayment).where(
+            SaaSPayment.tenant_id == row.tenant_id,
+            SaaSPayment.invoice_id == row.id,
+            SaaSPayment.id == payment_id,
+        )
+    )
+    if payment is None:
+        raise ApiError(404, "not_found", "Không tìm thấy khoản thu của hóa đơn này.")
+    amount = money_value(data.get("amount"))
+    reason = string_value(data.get("reason"), "Lý do hoàn/đảo thu", 1000, required=True)
+    refunded = db.session.scalar(
+        select(func.coalesce(func.sum(SaaSRefund.amount), 0)).where(
+            SaaSRefund.tenant_id == row.tenant_id, SaaSRefund.payment_id == payment.id
+        )
+    )
+    if row.voided_at or amount > payment.amount - refunded:
+        raise ApiError(
+            409,
+            "refund_exceeds_payment",
+            "Số tiền vượt phần còn có thể hoàn/đảo của khoản thu.",
+        )
+    refund = SaaSRefund(
+        tenant_id=row.tenant_id,
+        invoice_id=row.id,
+        payment_id=payment.id,
+        amount=amount,
+        reason=reason,
+        user_id=runtime().state.user.id,
+    )
+    db.session.add(refund)
+    db.session.flush()
+    audit(
+        "saas.payment_refunded",
+        "saas_invoice",
+        row.id,
+        {
+            "tenantId": row.tenant_id,
+            "paymentId": payment.id,
+            "refundId": refund.id,
+            "amount": decimal_text(amount),
+            "currency": row.currency,
+            "reason": reason,
+        },
+    )
+    return finish_write(
+        row.tenant_id,
+        key,
+        fingerprint,
+        invoice_response(row),
+        status=201,
+        record_model=SaaSIdempotencyRecord,
+    )
+
+
+def handle_operational_access(tenant_id):
+    tenant = lock_tenant(tenant_id)
+    if runtime().request.method == "GET":
+        return {"access": operational_access(tenant_id, include_inactive=True)}
+    data = runtime().payload()
+    allowed_fields(data, {"until", "reason"})
+    key, fingerprint, replay = begin_write(tenant_id, data, record_model=SaaSIdempotencyRecord)
+    if replay is not None:
+        return replay, 201
+    reason = string_value(data.get("reason"), "Lý do", 1000, required=True)
+    if "until" not in data:
+        raise ApiError(422, "invalid_dates", "Cần thời hạn vận hành hoặc null để thu hồi.")
+    now = utcnow()
+    until = timestamp(data["until"], "Hạn vận hành") if data["until"] is not None else None
+    value = entitlement(tenant_id)
+    sub = value["subscription"]
+    if sub is None:
+        raise ApiError(409, "subscription_required", "Khách sạn chưa có thuê bao.")
+    if until is not None:
+        if not now < until <= now + timedelta(days=7):
+            raise ApiError(422, "invalid_dates", "Thời hạn vận hành phải trong 7 ngày tới.")
+        if (
+            tenant.status != "active"
+            or sub.status != "active"
+            or value["blockedReason"] != "expired"
+        ):
+            raise ApiError(
+                409,
+                "operational_access_unavailable",
+                "Chỉ cấp vận hành tạm cho thuê bao đang hoạt động đã hết hạn của khách sạn không bị khóa.",
+            )
+    record = SaaSOperationalAccess(
+        tenant_id=tenant_id,
+        subscription_id=sub.id,
+        plan_id=sub.plan_id,
+        subscription_end=sub.end_date,
+        until=until,
+        reason=reason,
+        user_id=runtime().state.user.id,
+        created_at=now,
+    )
+    db.session.add(record)
+    db.session.flush()
+    audit(
+        "subscription.operational_access",
+        "tenant",
+        tenant_id,
+        {"tenantId": tenant_id, "accessId": record.id, "until": iso(until), "reason": reason},
+    )
+    response = {"access": operational_access(tenant_id, include_inactive=True)}
+    return finish_write(
+        tenant_id,
+        key,
+        fingerprint,
+        response,
+        status=201,
+        record_model=SaaSIdempotencyRecord,
+    )
 
 
 def handle_overview():
@@ -356,6 +580,14 @@ def handle_overview():
             .group_by(SaaSInvoice.currency)
         ).all()
     )
+    refunded = dict(
+        db.session.execute(
+            select(SaaSInvoice.currency, func.sum(SaaSRefund.amount))
+            .join(SaaSInvoice, SaaSInvoice.id == SaaSRefund.invoice_id)
+            .where(SaaSRefund.created_at >= start, SaaSRefund.created_at < end)
+            .group_by(SaaSInvoice.currency)
+        ).all()
+    )
     recent = db.session.execute(
         select(SaaSPayment, SaaSInvoice.number, SaaSInvoice.currency, Tenant.name)
         .join(SaaSInvoice, SaaSInvoice.id == SaaSPayment.invoice_id)
@@ -364,6 +596,23 @@ def handle_overview():
         .order_by(SaaSPayment.created_at.desc(), SaaSPayment.id)
         .limit(10)
     ).all()
+    balances = {
+        currency: (invoiced, outstanding, overdue)
+        for currency, invoiced, outstanding, overdue in sums
+    }
+    currencies = []
+    for currency in sorted(balances.keys() | received.keys() | refunded.keys()):
+        invoiced, outstanding, overdue = balances.get(currency, (0, 0, 0))
+        currencies.append(
+            {
+                "currency": currency,
+                "invoiced": decimal_text(invoiced),
+                "received": decimal_text(received.get(currency, 0) - refunded.get(currency, 0)),
+                "refunded": decimal_text(refunded.get(currency, 0)),
+                "outstanding": decimal_text(outstanding),
+                "overdue": decimal_text(overdue),
+            }
+        )
     return {
         "start": start.date().isoformat(),
         "end": end.date().isoformat(),
@@ -378,16 +627,7 @@ def handle_overview():
             )
         },
         "plans": plans,
-        "currencies": [
-            {
-                "currency": currency,
-                "invoiced": decimal_text(invoiced),
-                "received": decimal_text(received.get(currency, 0)),
-                "outstanding": decimal_text(outstanding),
-                "overdue": decimal_text(overdue),
-            }
-            for currency, invoiced, outstanding, overdue in sorted(sums)
-        ],
+        "currencies": currencies,
         "recentPayments": [
             {
                 "invoiceNumber": f"SAAS-{number:06d}",

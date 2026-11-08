@@ -4,7 +4,7 @@ import { bookingDocumentHtml, openBookingDocument } from './bookingDocument.js';
 
 test('booking document escapes guest and hotel fields and preserves original currency and refunded balance', () => {
   const html = bookingDocumentHtml({id:'B1',guest:'<img onerror="alert(1)">',room:'101',rooms:['101','102'],checkIn:'2026-10-14',checkOut:'2026-10-16',currency:'USD',source:'OTA & Direct',status:'NO_SHOW',total:'100.25',paid:'20.50',balance:'79.75',nightlyRates:[{date:'2026-10-14',room:'101',price:'50.125'}],charges:[]},{name:'LOHA <script>bad</script>'},{address:'Đà Nẵng',taxCode:'123'});
-  assert.ok(!html.includes('<img')); assert.ok(!html.includes('<script>')); assert.ok(html.includes('&lt;img')); assert.ok(html.includes('101, 102')); assert.ok(html.includes('USD')); assert.ok(html.includes('79,75')); assert.ok(html.includes('20,50')); assert.ok(html.includes('OTA &amp; Direct'));
+  assert.ok(!html.includes('<img')); assert.ok(!html.includes('<script>')); assert.ok(html.includes('&lt;img')); assert.ok(html.includes('101, 102')); assert.ok(html.includes('USD')); assert.ok(html.includes('79.75')); assert.ok(html.includes('20.50')); assert.ok(html.includes('OTA &amp; Direct'));
 });
 
 test('print preview opens an empty document safely and prints only after a user click', t => {

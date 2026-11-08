@@ -10,6 +10,7 @@ from .events import EventBus
 if TYPE_CHECKING:
     from .bookings.ports import ReservationRepository
     from .channels.factory import ChannelAdapterFactory
+    from .channels.ports import RevisionRepository
     from .pricing.ports import PricingRepository
 
 
@@ -31,12 +32,20 @@ class Services:
     channels: "ChannelAdapterFactory"
     reservations: "ReservationRepository"
     pricing: "PricingRepository"
+    revisions: "RevisionRepository"
+
+
+def enqueue_channel_job(*args, **kwargs):
+    from .channels.service import queue_job
+
+    return queue_job(*args, **kwargs)
 
 
 def register_services(app):
     # Keep app creation and health checks independent of channel HTTP adapters.
     from .bookings.repository import SQLAlchemyReservationRepository
     from .channels.factory import ChannelAdapterFactory
+    from .channels.repository import SQLAlchemyRevisionRepository
     from .extensions import db
     from .pricing.repository import SQLAlchemyPricingRepository
 
@@ -48,6 +57,7 @@ def register_services(app):
         ChannelAdapterFactory(),
         SQLAlchemyReservationRepository(db.session),
         SQLAlchemyPricingRepository(db.session),
+        SQLAlchemyRevisionRepository(db.session, enqueue_channel_job),
     )
 
 
@@ -56,4 +66,6 @@ def services() -> Services:
 
 
 def channel_adapter(environment, api_key, *, provider="channex"):
-    return services().channels.create(provider, environment, api_key)
+    from .ports import runtime
+
+    return runtime().channels.create(provider, environment, api_key)

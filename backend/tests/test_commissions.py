@@ -304,7 +304,7 @@ class CommissionTests(DomainTestCase):
             {"bookingId": item["bookingId"], "legacyPercent": "20", "confirmLegacyRate": True},
         )
         self.assertEqual(changed.status_code, 409, changed.json)
-        for query in ["currency=EUR", "status=BAD", "startDate=2030-01-01&endDate=2029-01-01"]:
+        for query in ["currency=XXX", "status=BAD", "startDate=2030-01-01&endDate=2029-01-01"]:
             self.assertEqual(self.request("get", "/commissions?" + query).status_code, 422)
 
     def test_payout_validation_and_rollback_leave_no_partial_cash_or_payout(self):

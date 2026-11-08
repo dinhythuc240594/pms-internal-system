@@ -1,3 +1,4 @@
+import DateInput from '../../../../shared/components/DateInput.jsx';
 import { t as tUi, useI18n } from '../../../../shared/i18n/useI18n.js';
 import { useEffect, useRef, useState } from 'react';
 import { Plus } from 'lucide-react';
@@ -23,7 +24,7 @@ export default function ManualTaskForm({ initial, rooms, staff, requestTenant, s
     <p className="hk-plan-hint">{tUi("hk.manualIntro")}</p>
     <fieldset disabled={busy}>
       <div className="hk-plan-fields">
-        <label>{tUi("hk.workDate")}<input type="date" required value={form.date} onChange={event => setField('date', event.target.value)} /></label>
+        <label>{tUi("hk.workDate")}<DateInput required value={form.date} onChange={value => setField('date', value)} /></label>
         <label>{tUi("hk.roomToClean")}<select required value={form.room} onChange={event => setField('room', event.target.value)}><option value="">{tUi("hk.chooseRoom")}</option>{rooms.filter(room => room.active !== false && !['maintenance', 'inspection'].includes(room.condition)).map(room => <option key={room.uuid || room.id} value={room.id}>{tUi("common.room")}{' '}{room.id}</option>)}</select></label>
         <label>{tUi("hk.assignee")}<select value={form.staffId} onChange={event => setField('staffId', event.target.value)}><option value="">{tUi("hk.unassigned")}</option>{staff.filter(row => row.active).map(row => <option key={row.id} value={row.id}>{row.name}</option>)}</select></label>
         <label>{tUi("hk.shift")}<select value={form.shiftId} disabled={!form.staffId || loading || Boolean(loaded.error)} onChange={event => setField('shiftId', event.target.value)}><option value="">{loading ? tUi("hk.loadingShifts") : tUi("hk.noShift")}</option>{shifts.map(row => <option key={row.id} value={row.id}>{row.startTime} – {row.endTime}</option>)}</select></label>

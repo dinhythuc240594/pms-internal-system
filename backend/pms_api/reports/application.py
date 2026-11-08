@@ -24,15 +24,15 @@ from ..bookings.models import (
 )
 from ..catalog.models import PhysicalRoom, RoomType
 from ..core_models import utcnow
+from ..currencies import is_hotel_currency
 from ..extensions import db
 from ..finance.models import PosInvoice, PosPayment, PosRefund
 from ..security import ROLE_ACTIONS, ApiError
 from ..subscriptions import feature_enabled
 
 ZERO = Decimal(0)
-
-
 MONEY_FIELDS = (
+    "recognizedRevenue",
     "forecastRoomRevenue",
     "roomRevenue",
     "adr",
@@ -46,8 +46,6 @@ MONEY_FIELDS = (
     "opening",
     "closing",
 )
-
-
 REPORT_DEFINITION_KEYS = (
     "period",
     "forecastRoomRevenue",
@@ -72,7 +70,7 @@ def report_settings():
 
 def report_currency():
     currency = runtime().request.args.get("currency", report_settings()[1])
-    if currency not in {"VND", "USD"}:
+    if not is_hotel_currency(currency):
         raise ApiError(422, "invalid_currency", "Loại tiền tệ không hợp lệ.")
     return currency
 
@@ -102,7 +100,7 @@ def money_currency(model, basis):
 
 
 def report_period():
-    return stay_dates(runtime().request.args.get("start"), runtime().request.args.get("end"))
+    return stay_dates(*runtime().date_range())
 
 
 def ratio(amount, count):
@@ -182,6 +180,26 @@ def financial_data(tenant_id, start, end, currency, *, basis="original"):
         if status in {"IN_HOUSE", "CHECKED_OUT"} and day < today:
             days[day]["roomRevenue"] += amount
             days[day]["servedNights"] += count
+
+    from ..reconciliation.models import RevenueRecognition
+
+    for business_day, amount in db.session.execute(
+        select(
+            RevenueRecognition.business_date,
+            func.sum(
+                RevenueRecognition.base_amount if basis == "base" else RevenueRecognition.amount
+            ),
+        )
+        .where(
+            RevenueRecognition.tenant_id == tenant_id,
+            RevenueRecognition.business_date >= start,
+            RevenueRecognition.business_date < end,
+            (RevenueRecognition.base_currency if basis == "base" else RevenueRecognition.currency)
+            == currency,
+        )
+        .group_by(RevenueRecognition.business_date)
+    ):
+        days[business_day]["recognizedRevenue"] += amount
 
     closed = list(
         db.session.scalars(
@@ -613,7 +631,7 @@ def handle_business_report(tenant_id):
         if report == "room":
             identity, label = ReservationNight.room_id, ReservationNight.room_number
         elif report == "roomType":
-            identity, label = ReservationRoom.room_type_id, RoomType.name
+            identity, label = ReservationNight.room_type_id, RoomType.name
             definitions["roomType"] = report_definition("roomType")
         statement = (
             select(
@@ -642,13 +660,8 @@ def handle_business_report(tenant_id):
         )
         if report == "roomType":
             statement = statement.join(
-                ReservationRoom,
-                (ReservationRoom.reservation_id == Reservation.id)
-                & (ReservationRoom.room_id == ReservationNight.room_id)
-                & (ReservationRoom.tenant_id == tenant_id),
-            ).join(
                 RoomType,
-                (RoomType.id == ReservationRoom.room_type_id) & (RoomType.tenant_id == tenant_id),
+                (RoomType.id == ReservationNight.room_type_id) & (RoomType.tenant_id == tenant_id),
             )
         rows = [
             dict(row)

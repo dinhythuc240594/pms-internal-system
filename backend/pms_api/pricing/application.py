@@ -9,6 +9,7 @@ from pms_api.ports import runtime
 
 from ..catalog.models import RoomType
 from ..core_models import Tenant, uid, utcnow
+from ..currencies import is_hotel_currency
 from ..extensions import db
 from ..security import ApiError, audit
 from .engine import business_date, require_feature
@@ -44,7 +45,7 @@ def decimal(value, low=Decimal(0), high=Decimal("999999999999999.9999"), places=
         ):
             invalid()
         return str(number)
-    except (InvalidOperation, ValueError, TypeError):
+    except InvalidOperation, ValueError, TypeError:
         invalid()
 
 
@@ -55,7 +56,7 @@ def optional_date(value):
         return None
     try:
         return date.fromisoformat(value).isoformat()
-    except (ValueError, TypeError):
+    except ValueError, TypeError:
         invalid("Ngày cần dùng định dạng YYYY-MM-DD.")
 
 
@@ -304,7 +305,7 @@ def handle_save_exchange_rate(tenant_id):
     tenant = tenant_lock(tenant_id)
     base = (tenant.settings or {}).get("currency", "VND")
     currency = data.get("currency")
-    if currency not in ("VND", "USD") or currency == base:
+    if not is_hotel_currency(currency) or currency == base:
         invalid("Tỷ giá tiền tệ gốc luôn bằng 1; hãy chọn tiền tệ còn lại.")
     rate = Decimal(
         decimal(

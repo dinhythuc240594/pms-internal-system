@@ -14,8 +14,6 @@ from .notification_models import Notification, NotificationSetting
 from .security import ROLES, ApiError, audit
 
 PREFIX = "/api/tenants/<tenant_id>/notifications"
-
-
 EVENTS = {
     "NEW_BOOKING": ("HIGH", ["HOTEL_OWNER", "FRONT_DESK"]),
     "BOOKING_MODIFIED": ("MEDIUM", ["HOTEL_OWNER", "FRONT_DESK"]),
@@ -27,8 +25,6 @@ EVENTS = {
     "PAYMENT_RECEIVED": ("MEDIUM", ["HOTEL_OWNER", "FRONT_DESK", "ACCOUNTANT"]),
     "OTA_SYNC_ERROR": ("HIGH", ["HOTEL_OWNER", "FRONT_DESK"]),
 }
-
-
 AUDIT_EVENTS = {
     "reservation.created": "NEW_BOOKING",
     "reservation.updated": "BOOKING_MODIFIED",
@@ -155,7 +151,7 @@ def handle_inbox(tenant_id):
             stamp = datetime.fromisoformat(stamp)
             if stamp.tzinfo is None or not row_id or len(row_id) > 40:
                 raise ValueError
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             raise ApiError(422, "invalid_query", "Mốc trang thông báo không hợp lệ.") from None
         statement = statement.where(
             or_(

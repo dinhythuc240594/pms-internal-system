@@ -54,7 +54,8 @@ const navItems = [
     subItems: [
       { label: 'Báo cáo doanh thu', path: '/id/reports/revenue' },
       { label: 'Hiệu suất phòng', path: '/id/reports/occupancy' },
-      { label: 'Báo cáo chuyên sâu', path: '/id/reports/source' }
+      { label: 'Báo cáo chuyên sâu', path: '/id/reports/source' },
+      { label: 'Đối soát ngày', labelKey: 'reconciliation.title', path: '/id/reports/reconciliation' }
     ]
   },
 ];
@@ -88,7 +89,7 @@ export default function Sidebar({ isCollapsed = false, setIsCollapsed, onClose }
           const Icon = item.icon;
           return <div key={item.path} className="pms-nav-group">
             {item.subItems ? <button type="button" className={`pms-nav-link${active ? ' is-active' : ''}`} aria-label={labelUi(item.label)} aria-expanded={!collapsed && expanded} aria-controls={!collapsed && expanded ? `pms-submenu-${onClose ? 'mobile-' : ''}${item.path.split('/').at(-1)}` : undefined} title={collapsed ? labelUi(item.label) : undefined} onClick={() => toggleSubmenu(item)}><Icon size={19} aria-hidden="true" /><span>{labelUi(item.label)}</span>{!collapsed && (expanded ? <ChevronDown size={15} /> : <ChevronRight size={15} />)}{!hasAccess && <span className="pms-nav-lock" aria-label={tUi("nav.locked")}>🔒</span>}</button> : <Link to={item.path} className={`pms-nav-link${active ? ' is-active' : ''}`} aria-current={active ? 'page' : undefined} aria-label={labelUi(item.label)} title={collapsed ? labelUi(item.label) : undefined} onClick={onClose}><Icon size={19} aria-hidden="true" /><span>{labelUi(item.label)}</span></Link>}
-            {item.subItems && expanded && !collapsed && <div className="pms-submenu" id={`pms-submenu-${onClose ? 'mobile-' : ''}${item.path.split('/').at(-1)}`}>{item.subItems.map(sub => <Link key={sub.path} to={sub.path} className={`pms-submenu-link${pathname === sub.path ? ' is-active' : ''}`} aria-current={pathname === sub.path ? 'page' : undefined} onClick={onClose}>{labelUi(sub.label)}</Link>)}</div>}
+            {item.subItems && expanded && !collapsed && <div className="pms-submenu" id={`pms-submenu-${onClose ? 'mobile-' : ''}${item.path.split('/').at(-1)}`}>{item.subItems.map(sub => <Link key={sub.path} to={sub.path} className={`pms-submenu-link${pathname === sub.path ? ' is-active' : ''}`} aria-current={pathname === sub.path ? 'page' : undefined} onClick={onClose}>{sub.labelKey ? tUi(sub.labelKey) : labelUi(sub.label)}</Link>)}</div>}
           </div>;
         })}
       </nav>

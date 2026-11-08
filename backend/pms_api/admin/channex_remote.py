@@ -1,8 +1,10 @@
-"""HTTP adapters. Business operations live in the application module."""
+"""HTTP entry points; business behavior is implemented in the application layer."""
 
 from common import CommonMethodView
 
-from ..security import require_system
+from ..security import (
+    require_system,
+)
 from . import channex_remote_application as application
 
 

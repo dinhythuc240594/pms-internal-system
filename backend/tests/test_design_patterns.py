@@ -40,6 +40,62 @@ class EventTests(unittest.TestCase):
 
 
 class ChannelPatternTests(unittest.TestCase):
+    def test_worker_import_releases_queue_slot_before_ack_and_keeps_import_options(self):
+        from pms_api.channels.service import _run_job
+
+        client, repository = Mock(), Mock()
+        entity = {"id": "revision"}
+        client.revision.return_value = entity
+        receipt = SimpleNamespace(outcome="imported", revision_id="revision", booking_id="booking")
+        job = SimpleNamespace(
+            kind="pull_bookings",
+            payload={"revisionId": "revision", "retryReview": True},
+            actor_id="actor",
+            status="running",
+        )
+        with (
+            use_runtime(SimpleNamespace(revisions=repository)),
+            patch("pms_api.channels.service.db") as database,
+            patch("pms_api.channels.importer.import_revision", return_value=receipt) as importer,
+            patch("pms_api.channels.service.queue_job") as enqueue,
+        ):
+            database.session.scalar.side_effect = [None, None]
+            database.session.scalars.return_value.all.return_value = []
+            enqueue.side_effect = lambda *args: self.assertEqual(job.status, "succeeded")
+            self.assertEqual(
+                _run_job("hotel", job, SimpleNamespace(property_id="property"), client),
+                (receipt, True),
+            )
+            self.assertEqual(importer.call_args.args, ("hotel", entity, "property"))
+            self.assertTrue(importer.call_args.kwargs["retry_review"])
+            self.assertTrue(callable(importer.call_args.kwargs["verify_cancellation"]))
+            enqueue.assert_called_once_with(
+                "hotel", "actor", "ack_revision", {"revisionId": "revision"}, "ack:revision"
+            )
+            client.ack.assert_not_called()
+            database.session.commit.assert_not_called()
+
+    def test_worker_review_outcome_does_not_queue_or_send_ack(self):
+        from pms_api.channels.service import _run_job
+
+        client = Mock()
+        client.revision.return_value = {"id": "revision"}
+        receipt = SimpleNamespace(outcome="needs_review")
+        job = SimpleNamespace(kind="pull_bookings", payload={"revisionId": "revision"})
+        with (
+            use_runtime(SimpleNamespace(revisions=Mock())),
+            patch("pms_api.channels.service.db") as database,
+            patch("pms_api.channels.importer.import_revision", return_value=receipt),
+            patch("pms_api.channels.service.queue_job") as enqueue,
+        ):
+            database.session.scalar.side_effect = [None, None]
+            self.assertEqual(
+                _run_job("hotel", job, SimpleNamespace(property_id="property"), client),
+                (receipt, True),
+            )
+            enqueue.assert_not_called()
+            client.ack.assert_not_called()
+
     def test_factory_allows_another_provider_without_modifying_workers(self):
         factory, adapter = ChannelAdapterFactory(), object()
         builder = Mock(return_value=adapter)
@@ -63,6 +119,19 @@ class ChannelPatternTests(unittest.TestCase):
         with self.assertRaises(ProviderError) as error:
             policy.calculate(**{**values, "booked": 5})
         self.assertEqual(error.exception.code, "channel_inventory_inconsistent")
+
+    def test_inventory_hold_closes_sales_while_inconsistent_bookings_are_reconciled(self):
+        self.assertEqual(
+            AvailabilityPolicy().calculate(
+                capacity=1,
+                booked=2,
+                pause_requested=False,
+                room_active=True,
+                stop_sell=False,
+                inventory_hold=True,
+            ),
+            (0, True),
+        )
 
     def test_revision_import_queues_ack_without_acknowledging_remotely(self):
         adapter, repository, importer = Mock(), Mock(), Mock()
